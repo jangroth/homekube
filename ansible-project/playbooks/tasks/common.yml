@@ -1,0 +1,29 @@
+- name: Update all packages
+  apt:
+    update_cache: yes
+    upgrade: dist
+
+- name: Install common packages
+  apt:
+    name:
+      - git
+      - vim
+      - htop
+    state: present
+
+- name: Ensure SSH is installed
+  apt:
+    name: openssh-server
+    state: present
+
+- name: Start and enable SSH service
+  service:
+    name: ssh
+    state: started
+    enabled: yes
+
+- name: Create a directory for scripts
+  file:
+    path: /opt/scripts
+    state: directory
+    mode: '0755'

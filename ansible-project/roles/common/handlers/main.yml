@@ -1,0 +1,11 @@
+- name: Restart service
+  service:
+    name: my_service
+    state: restarted
+  when: service_changed
+
+- name: Reload service
+  service:
+    name: my_service
+    state: reloaded
+  when: service_reloaded

@@ -1,0 +1,4 @@
+- hosts: raspberry_pi
+  become: true
+  roles:
+    - common
