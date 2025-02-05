@@ -1,0 +1,35 @@
+- name: Check installed packages
+  package_facts:
+    manager: auto
+
+- name: Check service status
+  service_facts:
+
+- name: Turn off "dphys-swapfile"
+  command: dphys-swapfile swapoff
+  when: "'dphys-swapfile' in ansible_facts.packages"
+
+- name: Stop and disable dphys-swapfile service
+  systemd:
+    name: dphys-swapfile
+    state: stopped
+    enabled: false
+  when: "'dphys-swapfile.service' in ansible_facts.services"
+
+- name: Debug service status
+  debug:
+    msg: "Service dphys-swapfile.service is {{ ansible_facts.services['dphys-swapfile.service'].state }}"
+  when: "'dphys-swapfile.service' in ansible_facts.services"
+
+- name: Uninstall "dphys-swapfile"
+  command: dphys-swapfile uninstall
+  when: "'dphys-swapfile' in ansible_facts.packages"
+
+- name: Remove and purge "dphys-swapfile" package
+  apt:
+    pkg: dphys-swapfile
+    state: absent
+    purge: yes
+    autoclean: yes
+    autoremove: yes
+  when: "'dphys-swapfile' in ansible_facts.packages"

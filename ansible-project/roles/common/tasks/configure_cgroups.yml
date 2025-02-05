@@ -1,0 +1,19 @@
+---
+- name: Read current cmdline.txt content
+  slurp:
+    src: /boot/firmware/cmdline.txt
+  register: cmdline_content
+
+- name: Check if cgroup parameters are present
+  set_fact:
+    cgroup_missing: >-
+      {{ not (cmdline_content.content | b64decode is regex('cgroup_enable=cpuset.*cgroup_enable=memory.*cgroup_memory=1')) }}
+
+- name: Enable cgroup in /boot/firmware/cmdline.txt
+  lineinfile:
+    path: /boot/firmware/cmdline.txt
+    backrefs: yes
+    regexp: "^console(.*)dom=AU$"
+    line: '\g<0> cgroup_enable=cpuset cgroup_enable=memory cgroup_memory=1'
+  when: cgroup_missing
+  register: cgroup_update
