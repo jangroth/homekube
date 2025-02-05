@@ -1,0 +1,33 @@
+---
+- name: Set static IP address
+  nmcli:
+    conn_name: "Wired connection 1"
+    state: present
+    type: ethernet
+    ip4: "{{ ip_addresses[inventory_hostname] }}"
+    method4: manual
+    autoconnect: yes
+
+- name: Activate connection (if not already active)
+  nmcli:
+    conn_name: "Wired connection 1"
+    state: up
+
+- name: Make connection persistent across reboots
+  nmcli:
+    conn_name: "Wired connection 1"
+    state: present
+    autoconnect: yes
+
+- name: Restart networking
+  service:
+    name: NetworkManager
+    state: restarted
+
+- name: Update hosts file
+  template:
+    src: hosts.j2
+    dest: /etc/hosts
+    owner: root
+    group: root
+    mode: "0644"

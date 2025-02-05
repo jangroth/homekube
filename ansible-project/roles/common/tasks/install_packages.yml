@@ -1,0 +1,14 @@
+- name: Update apt packages
+  apt:
+    update_cache: yes
+    upgrade: dist
+    autoremove: yes
+
+- name: Install common packages
+  apt:
+    name:
+      - git
+      - htop
+      - tree
+      - vim
+    state: present
