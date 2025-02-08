@@ -2,19 +2,11 @@
 
 ## Overview
 
-| Static IP | Internal IP | Hostname |
-|-----------|------------|----------|
-| 192.168.86.220 | 10.0.0.20 | pi0 |
-| 192.168.86.221 | 10.0.0.21 | pi1 |
-| 192.168.86.222 | 10.0.0.22 | pi2 |
-
-### Notes
-- Kernel options pre-setup.
-
-```shell
-cat /boot/firmware/cmdline.txt
-console=serial0,115200 console=tty1 root=PARTUUID=b5376a11-02 rootfstype=ext4 fsck.repair=yes rootwait cfg80211.ieee80211_regdom=AU
-```
+| Static IP | Internal IP | Hostname | Device | OS |
+|-|-|-|-|-|
+| 192.168.86.220 | 10.0.0.20 | pi0 | Raspberry Pi 5, 8GB | Raspberry Pi OS Lite 64-bit |
+| 192.168.86.221 | 10.0.0.21 | pi1 | Raspberry Pi 5, 8GB | Raspberry Pi OS Lite 64-bit | 
+| 192.168.86.222 | 10.0.0.22 | pi2 | Raspberry Pi 5, 8GB | Raspberry Pi OS Lite 64-bit |
 
 ## Setup
 
@@ -66,4 +58,12 @@ Host pi0
 
 ```shell
 ansible-playbook setup-nodes.yml
+```
+
+## Notes
+- Kernel options as per original image
+
+```shell
+cat /boot/firmware/cmdline.txt
+console=serial0,115200 console=tty1 root=PARTUUID=b5376a11-02 rootfstype=ext4 fsck.repair=yes rootwait cfg80211.ieee80211_regdom=AU
 ```
