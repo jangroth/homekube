@@ -8,16 +8,26 @@
 | 192.168.86.221 | 10.0.0.21 | pi1 |
 | 192.168.86.222 | 10.0.0.22 | pi2 |
 
+### Notes
+- Kernel options pre-setup.
+
+```shell
+cat /boot/firmware/cmdline.txt
+console=serial0,115200 console=tty1 root=PARTUUID=b5376a11-02 rootfstype=ext4 fsck.repair=yes rootwait cfg80211.ieee80211_regdom=AU
+```
+
 ## Setup
 
-### Control machine
+### Manual
+
+#### Control machine
 - Create images
     - Raspberry Pi Imager -> Raspberry Pi OS Lite (64b)
 
-### Router
+#### Router
 - Assign static IPs
 
-### Nodes
+#### Nodes
 - Configure root user on each machine
 
 ```shell
@@ -27,7 +37,7 @@ sudo vi /etc/ssh/sshd_config # PermitRootLogin yes
 sudo systemctl restart ssh 
 ```
 
-### Control machine
+#### Control machine
 - Edit `/etc/hosts`
 - Confirm `~/.ssh/known_hosts`
 - Create and distribute ssh key
@@ -41,7 +51,8 @@ chmod 644 ~/.ssh/id_homekube.pub
 ssh-copy-id -i ~/.ssh/id_homekube root@pi0 # pi0/1/2
 ssh -i ~/.ssh/id_homekube root@pi0 #pi0/1/2
 ```
-### Control machine
+
+#### Control machine
 - edit `~/.ssh/config`
 
 ```shell
@@ -49,4 +60,10 @@ Host pi0
   HostName 192.168.86.220
   User root
   IdentityFile ~/.ssh/id_homekube
+```
+### Automated
+- Run ansible playbook
+
+```shell
+ansible-playbook setup-nodes.yml
 ```
