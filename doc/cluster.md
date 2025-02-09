@@ -1,20 +1,5 @@
 # Cluster
 
-## Overview
-
-| Static IP | Internal IP | Hostname | Device | OS |
-|-|-|-|-|-|
-| 192.168.86.220 | 10.0.0.20 | pi0 | Raspberry Pi 5, 8GB | Raspberry Pi OS Lite 64-bit |
-| 192.168.86.221 | 10.0.0.21 | pi1 | Raspberry Pi 5, 8GB | Raspberry Pi OS Lite 64-bit | 
-| 192.168.86.222 | 10.0.0.22 | pi2 | Raspberry Pi 5, 8GB | Raspberry Pi OS Lite 64-bit |
-
-### Dependencies
-
-- `Kubernetes` - 1.32
-- `containerd` - 2.0.0
-- `runc` - 
-- `cni` - 
-
 ## Setup
 
 ### Manual
