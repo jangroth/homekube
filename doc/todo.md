@@ -1,7 +1,19 @@
 ## Todos
 
-- disable password logins on nodes after ssh keys have been configured
+### Current
+- Install containerd
+    x binary
+    x config.toml
+    x systemd
+- install    
+    - runc  
+    - networking plugins
+- confirm configuration
 
+
+### Later
+
+- disable password logins on nodes after ssh keys have been configured
 - Make sure kubelet conf has cgroup driver set to systemd (https://kubernetes.io/docs/setup/production-environment/container-runtimes/#systemd-cgroup-driver)
     
 ## Notes

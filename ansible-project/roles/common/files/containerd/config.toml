@@ -1,3 +1,4 @@
+# source: Kube the hard way TODO: streamline
 version = 2
 
 [plugins."io.containerd.grpc.v1.cri"]
@@ -11,3 +12,6 @@ version = 2
 [plugins."io.containerd.grpc.v1.cri".cni]
   bin_dir = "/opt/cni/bin"
   conf_dir = "/etc/cni/net.d"
+
+# "Ignoring unknown key in TOML for plugin" error="strict mode: fields in the document are missing in the target struct" key="containerd snapshotter" plugin=io.containerd.cri.v1.runtime
+# "Configuration migrated from version 2, use `containerd config migrate` to avoid migration" t="16.408µs"

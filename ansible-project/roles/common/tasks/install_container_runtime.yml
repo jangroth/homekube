@@ -1,4 +1,8 @@
 ---
+#
+# Networking and kernel modules
+#
+
 # possibly not required for >=1.30
 - name: Copy kernel modules configuration
   ansible.builtin.copy:
@@ -27,19 +31,54 @@
 - name: sysctl --system
   ansible.builtin.command: sysctl --system
 
-# deb packages outdated
+#
+# basic CNI
+#
+- name: runc, cni-plugins
+  ansible.builtin.apt:
+    pkg:
+      - runc
+      - containernetworking-plugins
+
+- name: Copy cni configurations
+  ansible.builtin.copy:
+    src: "cni/{{ item.file }}"
+    dest: "/etc/cni/net.d/{{ item.file }}"
+    backup: no
+    owner: root
+    group: root
+    mode: "0644"
+  loop:
+    - { file: "10-bridge.conf" }
+    - { file: "99-loopback.conf" }
+
+#
+# Container runtime
+#
+
+- name: Check if containerd already downloaded
+  stat:
+    path: "{{ playbook_dir }}/../downloads/containerd-{{ containerd_version }}.tar.gz"
+  register: containerd_archive
+  run_once: true
+  delegate_to: localhost
+  become: false
+
 - name: Download containerd
   get_url:
     url: "https://github.com/containerd/containerd/releases/download/v{{ containerd_version }}/containerd-{{ containerd_version }}-{{ containerd_arch }}.tar.gz"
-    dest: "/tmp/containerd-{{ containerd_version }}.tar.gz"
-    checksum: "{{ containerd_checksum }}"
+    dest: "{{ playbook_dir }}/../downloads/containerd-{{ containerd_version }}.tar.gz"
     mode: "0644"
+  run_once: true
+  delegate_to: localhost
+  become: false
+  when: not containerd_archive.stat.exists
 
-- name: Create containerd directory
-  file:
-    path: /etc/containerd/
-    state: directory
-    mode: "0755"
+- name: Copy containerd to remote hosts
+  copy:
+    src: "{{ playbook_dir }}/../downloads/containerd-{{ containerd_version }}.tar.gz"
+    dest: "/tmp/containerd-{{ containerd_version }}.tar.gz"
+    mode: "0644"
 
 - name: Extract containerd
   unarchive:
@@ -47,3 +86,41 @@
     dest: /usr/local
     remote_src: yes
     creates: /usr/local/bin/containerd
+
+- name: Create containerd directory
+  file:
+    path: /etc/containerd/
+    state: directory
+    mode: "0755"
+
+- name: Copy containerd configuration
+  copy:
+    src: containerd/config.toml
+    dest: /etc/containerd/config.toml
+    backup: no
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Copy containerd systemd service
+  copy:
+    src: containerd/containerd.service
+    dest: /etc/systemd/system/containerd.service
+    backup: no
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Reload systemd
+  systemd:
+    daemon_reload: yes
+
+- name: Enable and start containerd
+  systemd:
+    name: containerd
+    enabled: yes
+    state: started
+#
+# runc, cni-plugins
+#
+# TODO
