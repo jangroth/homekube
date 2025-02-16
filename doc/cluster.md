@@ -1,5 +1,19 @@
 # Cluster
 
+## Configuration & Logs
+
+### containerd
+- conf:
+  - `/etc/containerd/config.toml`
+  - `/etc/systemd/system/containerd.service`
+- logs
+  - `journalctl -u containerd.service`
+
+### CNI-plugins
+Conf:
+  - `/etc/cni/net.d/`
+
+
 ## Setup
 
 ### Manual

@@ -5,7 +5,7 @@
 
 # possibly not required for >=1.30
 - name: Copy kernel modules configuration
-  ansible.builtin.copy:
+  copy:
     src: modules-load/k8s.conf
     dest: /etc/modules-load.d/k8s.conf
     backup: no
@@ -14,13 +14,13 @@
     mode: "0644"
 
 - name: modprobe overlay
-  ansible.builtin.command: modprobe overlay
+  command: modprobe overlay
 
 - name: modprobe br_netfilter
-  ansible.builtin.command: modprobe br_netfilter
+  command: modprobe br_netfilter
 
 - name: Copy sysctl configuration
-  ansible.builtin.copy:
+  copy:
     src: sysctl/k8s.conf
     dest: /etc/sysctl.d/k8s.conf
     backup: no
@@ -29,19 +29,25 @@
     mode: "0644"
 
 - name: sysctl --system
-  ansible.builtin.command: sysctl --system
+  command: sysctl --system
 
 #
 # basic CNI
 #
 - name: runc, cni-plugins
-  ansible.builtin.apt:
+  apt:
     pkg:
       - runc
       - containernetworking-plugins
 
+- name: Create CNI configuration directory
+  file:
+    path: /etc/cni/net.d
+    state: directory
+    mode: "0755"
+
 - name: Copy cni configurations
-  ansible.builtin.copy:
+  copy:
     src: "cni/{{ item.file }}"
     dest: "/etc/cni/net.d/{{ item.file }}"
     backup: no
@@ -49,8 +55,15 @@
     group: root
     mode: "0644"
   loop:
-    - { file: "10-bridge.conf" }
     - { file: "99-loopback.conf" }
+
+- name: Copy cni brige configuration
+  template:
+    src: 10-bridge.conf.j2
+    dest: "/etc/cni/net.d/10-bridge.conf"
+    owner: root
+    group: root
+    mode: "0644"
 
 #
 # Container runtime
@@ -66,7 +79,7 @@
 
 - name: Download containerd
   get_url:
-    url: "https://github.com/containerd/containerd/releases/download/v{{ containerd_version }}/containerd-{{ containerd_version }}-{{ containerd_arch }}.tar.gz"
+    url: "https://github.com/containerd/containerd/releases/download/v{{ containerd_version }}/containerd-{{ containerd_version }}-{{ system_arch }}.tar.gz"
     dest: "{{ playbook_dir }}/../downloads/containerd-{{ containerd_version }}.tar.gz"
     mode: "0644"
   run_once: true
@@ -120,7 +133,3 @@
     name: containerd
     enabled: yes
     state: started
-#
-# runc, cni-plugins
-#
-# TODO

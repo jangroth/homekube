@@ -1,3 +1,3 @@
 ---
 containerd_version: "2.0.0"
-containerd_arch: "linux-arm64"
+system_arch: "linux-arm64"

@@ -6,8 +6,8 @@
     x config.toml
     x systemd
 - install    
-    - runc  
-    - networking plugins
+    x runc  
+    x networking plugins
 - confirm configuration
 
 

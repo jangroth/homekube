@@ -15,10 +15,11 @@ Running Kubernetes on Raspberry Pi.
 ### Dependencies
 
 - Kubernetes - tbd
-- Container Runtime
+- CRI
     - `containerd` - 2.0.0
-    - `cni plugins` - tbd
-    - `runc` - tbd
+    - `runc` - 1.1.5
+- CNI
+    - `containernetworking-plugins` - 1.1.1
 
 ## Documentation / Notes
 

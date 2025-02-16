@@ -12,7 +12,7 @@
     path: /var/run/reboot-required
 
 - name: Reboot if needed
-  ansible.builtin.reboot:
+  reboot:
     msg: "Reboot initiated by Ansible for kernel updates"
     connect_timeout: 5
     reboot_timeout: 300
@@ -26,6 +26,7 @@
     name:
       - git
       - htop
+      - traceroute
       - tree
       - vim
     state: present
