@@ -1,0 +1,103 @@
+---
+- name: Install apt-transport-https ca-certificates
+  apt:
+    pkg:
+      - apt-transport-https
+      - ca-certificates
+
+- name: Check if Kubernetes apt key is already in keyring
+  stat:
+    path: /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+  register: kubernetes_keyring_stat
+
+- name: Download Kubernetes apt key
+  get_url:
+    url: https://pkgs.k8s.io/core:/stable:/v1.31/deb/Release.key
+    dest: /tmp/kubernetes-apt.key
+    validate_certs: yes
+    owner: root
+    group: root
+    mode: "0644"
+  when: not kubernetes_keyring_stat.stat.exists
+
+- name: Add Kubernetes apt key to keyring (only if not present)
+  command: gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg /tmp/kubernetes-apt.key
+  become: true
+  when: not kubernetes_keyring_stat.stat.exists
+
+- name: Remove temporary key file
+  file:
+    path: /tmp/kubernetes-apt.key
+    state: absent
+  when: not kubernetes_keyring_stat.stat.exists
+
+- name: Check if Kubernetes apt repository file exists
+  stat:
+    path: /etc/apt/sources.list.d/kubernetes.list
+  register: kubernetes_repo_stat
+
+- name: Add Kubernetes apt repository (only if file doesn't exist)
+  blockinfile:
+    path: /etc/apt/sources.list.d/kubernetes.list
+    create: yes
+    block: |
+      deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.31/deb/ /
+  become: true
+  when: not kubernetes_repo_stat.stat.exists
+
+- name: Update apt cache
+  apt:
+    update_cache: yes
+
+- name: Install kubelet kubeadm kubectl
+  apt:
+    pkg:
+      - kubelet
+      - kubeadm
+      - kubectl
+
+- name: Hold kubelet
+  dpkg_selections:
+    name: kubelet
+    selection: hold
+
+- name: Hold kubeadm
+  dpkg_selections:
+    name: kubeadm
+    selection: hold
+
+- name: Hold kubectl
+  dpkg_selections:
+    name: kubectl
+    selection: hold
+
+#
+# output versions
+#
+
+- name: Get kubectl version
+  command: kubectl version --client
+  register: kubectl_version_result
+  changed_when: false # kubectl version doesn't change anything
+
+- name: Debug kubectl version
+  debug:
+    msg: "Kubectl version: {{ kubectl_version_result.stdout }}"
+
+- name: Get kubelet version
+  command: kubelet --version
+  register: kubelet_version_result
+  changed_when: false
+
+- name: Debug kubelet version
+  debug:
+    msg: "Kubelet version: {{ kubelet_version_result.stdout }}"
+
+- name: Get kubeadm version
+  command: kubeadm version
+  register: kubeadm_version_result
+  changed_when: false
+
+- name: Debug kubeadm version
+  debug:
+    msg: "Kubeadm version: {{ kubeadm_version_result.stdout }}"

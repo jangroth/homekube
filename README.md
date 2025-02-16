@@ -4,6 +4,13 @@ Running Kubernetes on Raspberry Pi.
 
 ![Homekube](./doc/homekube.png)
 
+<!-- TOC -->
+- [Overview](#overview)
+    - [Dependencies](#dependencies)
+- [Documentation / Notes](#documentation--notes)
+- [Thanks / References / Inspiration](#thanks--references--inspiration)
+<!-- /TOC -->
+
 ## Overview
 
 | Hostname | Device | OS | Static IP | Internal IP |
@@ -14,12 +21,16 @@ Running Kubernetes on Raspberry Pi.
 
 ### Dependencies
 
-- Kubernetes - tbd
+- Kubernetes
+    - `kubectl` - _1.31.6_
+    - `kubelet` - _1.31.6_
+    - `kubeadm` - _1.31.6_
+
 - CRI
-    - `containerd` - 2.0.0
-    - `runc` - 1.1.5
+    - `containerd` - _2.0.0_
+    - `runc` - _1.1.5_
 - CNI
-    - `containernetworking-plugins` - 1.1.1
+    - `containernetworking-plugins` - _1.1.1_
 
 ## Documentation / Notes
 

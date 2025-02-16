@@ -1,3 +1,4 @@
+---
 - name: Check installed packages
   package_facts:
     manager: auto

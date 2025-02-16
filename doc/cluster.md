@@ -1,18 +1,30 @@
 # Cluster
 
+<!-- TOC -->
+* [Configuration & Logs](#configuration--logs)
+  * [containerd](#containerd)
+  * [CNI-plugins](#cni-plugins)
+* [Setup](#setup)
+  * [Manual](#manual)
+    * [Control machine](#control-machine)
+    * [Router](#router)
+    * [Nodes](#nodes)
+  * [Automated](#automated)
+* [Notes](#notes)
+<!-- /TOC -->
+
 ## Configuration & Logs
 
 ### containerd
-- conf:
+- conf
   - `/etc/containerd/config.toml`
   - `/etc/systemd/system/containerd.service`
 - logs
   - `journalctl -u containerd.service`
 
 ### CNI-plugins
-Conf:
+- conf
   - `/etc/cni/net.d/`
-
 
 ## Setup
 

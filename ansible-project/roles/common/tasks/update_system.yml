@@ -24,7 +24,11 @@
 - name: Install common packages
   apt:
     name:
+      - apt-transport-https
+      - ca-certificates
+      - curl
       - git
+      - gpg
       - htop
       - traceroute
       - tree

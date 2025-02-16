@@ -1,9 +1,7 @@
 ---
 #
-# Networking and kernel modules
+# networking and kernel modules
 #
-
-# possibly not required for >=1.30
 - name: Copy kernel modules configuration
   copy:
     src: modules-load/k8s.conf
@@ -68,7 +66,6 @@
 #
 # Container runtime
 #
-
 - name: Check if containerd already downloaded
   stat:
     path: "{{ playbook_dir }}/../downloads/containerd-{{ containerd_version }}.tar.gz"

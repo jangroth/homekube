@@ -1,6 +1,7 @@
 ---
-- import_tasks: update_system.yml
-- import_tasks: disable_swap.yml
-- import_tasks: configure_networking.yml
-- import_tasks: configure_cgroups.yml
-- import_tasks: install_container_runtime.yml
+# - import_tasks: update_system.yml
+# - import_tasks: disable_swap.yml
+# - import_tasks: configure_networking.yml
+# - import_tasks: configure_cgroups.yml
+# - import_tasks: install_container_runtime.yml
+- import_tasks: install_kubeadm.yml
