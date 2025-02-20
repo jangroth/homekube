@@ -1,14 +1,7 @@
 ## Todos
 
 ### Current
-- Install containerd
-    x binary
-    x config.toml
-    x systemd
-- install    
-    x runc  
-    x networking plugins
-- confirm configuration
+- install kube
 
 
 ### Later

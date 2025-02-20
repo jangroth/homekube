@@ -27,9 +27,12 @@
       - apt-transport-https
       - ca-certificates
       - curl
+      - dnsutils
       - git
       - gpg
       - htop
+      - net-tools
+      - nmap
       - traceroute
       - tree
       - vim

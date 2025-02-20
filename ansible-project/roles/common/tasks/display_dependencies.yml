@@ -1,0 +1,31 @@
+---
+- name: Get Kubernetes package version information
+  vars:
+    k8s_components:
+      - containernetworking-plugins
+      - kubeadm
+      - kubectl
+      - kubelet
+      - runc
+  block:
+    - name: Get package information
+      command: "apt-cache policy {{ item }}"
+      register: version_output
+      changed_when: false
+      failed_when: version_output.rc != 0
+      loop: "{{ k8s_components }}"
+
+    - name: Print version information
+      debug:
+        msg: "{{ item }} - {{ version_output.results[k8s_components.index(item)].stdout_lines[1] }} - {{ version_output.results[k8s_components.index(item)].stdout_lines[2] }}"
+      loop: "{{ k8s_components }}"
+
+- name: Get containerd version
+  command: "containerd --version"
+  register: containerd_version
+  changed_when: false
+  failed_when: containerd_version.rc != 0
+
+- name: Print containerd informversionation
+  debug:
+    msg: "containerd - {{ containerd_version.stdout }}"

@@ -35,7 +35,6 @@ Running Kubernetes on Raspberry Pi.
 ## Documentation / Notes
 
 - [Cluster setup](./doc/cluster.md)
-- [Ansible playbooks](./ansible-project/ansible.md)
 
 ## Thanks / References / Inspiration
 

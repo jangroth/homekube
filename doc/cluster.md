@@ -1,15 +1,18 @@
 # Cluster
 
 <!-- TOC -->
+* [Cluster](#cluster)
 * [Configuration & Logs](#configuration--logs)
   * [containerd](#containerd)
   * [CNI-plugins](#cni-plugins)
 * [Setup](#setup)
-  * [Manual](#manual)
-    * [Control machine](#control-machine)
-    * [Router](#router)
-    * [Nodes](#nodes)
-  * [Automated](#automated)
+  * [1. Manual Prep](#1-manual-prep)
+    * [1.1. Control machine](#11-control-machine)
+    * [1.2. Home router](#12-home-router)
+    * [1.3. Pi nodes](#13-pi-nodes)
+    * [1.4. Control machine](#14-control-machine)
+    * [1.5. Control machine](#15-control-machine)
+  * [2. Ansible](#2-ansible)
 * [Notes](#notes)
 <!-- /TOC -->
 
@@ -28,16 +31,16 @@
 
 ## Setup
 
-### Manual
+### 1. Manual prep
 
-#### Control machine
+#### 1.1. Control machine
 - Create images
     - Raspberry Pi Imager -> Raspberry Pi OS Lite (64b)
 
-#### Router
+#### 1.2. Home router
 - Assign static IPs
 
-#### Nodes
+#### 1.3. Pi nodes
 - Configure root user on each machine
 
 ```shell
@@ -47,7 +50,7 @@ sudo vi /etc/ssh/sshd_config # PermitRootLogin yes
 sudo systemctl restart ssh 
 ```
 
-#### Control machine
+#### 1.4. Control machine
 - Edit `/etc/hosts`
 - Confirm `~/.ssh/known_hosts`
 - Create and distribute ssh key
@@ -62,7 +65,7 @@ ssh-copy-id -i ~/.ssh/id_homekube root@pi0 # pi0/1/2
 ssh -i ~/.ssh/id_homekube root@pi0 #pi0/1/2
 ```
 
-#### Control machine
+#### 1.5. Control machine
 - edit `~/.ssh/config`
 
 ```shell
@@ -71,7 +74,7 @@ Host pi0
   User root
   IdentityFile ~/.ssh/id_homekube
 ```
-### Automated
+### 2. Ansible
 - Run ansible playbook
 
 ```shell

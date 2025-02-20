@@ -70,34 +70,3 @@
   dpkg_selections:
     name: kubectl
     selection: hold
-
-#
-# output versions
-#
-
-- name: Get kubectl version
-  command: kubectl version --client
-  register: kubectl_version_result
-  changed_when: false # kubectl version doesn't change anything
-
-- name: Debug kubectl version
-  debug:
-    msg: "Kubectl version: {{ kubectl_version_result.stdout }}"
-
-- name: Get kubelet version
-  command: kubelet --version
-  register: kubelet_version_result
-  changed_when: false
-
-- name: Debug kubelet version
-  debug:
-    msg: "Kubelet version: {{ kubelet_version_result.stdout }}"
-
-- name: Get kubeadm version
-  command: kubeadm version
-  register: kubeadm_version_result
-  changed_when: false
-
-- name: Debug kubeadm version
-  debug:
-    msg: "Kubeadm version: {{ kubeadm_version_result.stdout }}"
