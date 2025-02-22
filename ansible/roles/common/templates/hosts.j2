@@ -6,6 +6,6 @@ ff02::1 ip6-allnodes
 ff02::2 ip6-allrouters
 
 127.0.1.1 {{ ansible_hostname }}.kubernetes.local {{ ansible_hostname }}
-{% for host in groups['raspberry_pis'] %}
+{% for host in groups['all_nodes'] %}
 {{ ip_addresses[host] | regex_replace('/24','') }} {{ hostvars[host]['inventory_hostname'] }}.kubernetes.local {{ hostvars[host]['inventory_hostname'] }}
 {% endfor %}

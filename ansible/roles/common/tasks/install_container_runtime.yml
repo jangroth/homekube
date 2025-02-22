@@ -44,25 +44,6 @@
     state: directory
     mode: "0755"
 
-- name: Copy cni configurations
-  copy:
-    src: "cni/{{ item.file }}"
-    dest: "/etc/cni/net.d/{{ item.file }}"
-    backup: no
-    owner: root
-    group: root
-    mode: "0644"
-  loop:
-    - { file: "99-loopback.conf" }
-
-- name: Copy cni brige configuration
-  template:
-    src: 10-bridge.conf.j2
-    dest: "/etc/cni/net.d/10-bridge.conf"
-    owner: root
-    group: root
-    mode: "0644"
-
 #
 # Container runtime
 #

@@ -18,6 +18,11 @@
 
 ## Configuration & Logs
 
+### kubelet
+- conf
+  - `/var/lib/kubelet`
+  - `/etc/systemd/system/kubelet.service`
+
 ### containerd
 - conf
   - `/etc/containerd/config.toml`
@@ -74,7 +79,7 @@ Host pi0
   User root
   IdentityFile ~/.ssh/id_homekube
 ```
-### 2. Ansible
+### 2. Automated installation pre kubeadm
 - Run ansible playbook
 
 ```shell
@@ -88,3 +93,26 @@ ansible-playbook setup-nodes.yml
 cat /boot/firmware/cmdline.txt
 console=serial0,115200 console=tty1 root=PARTUUID=b5376a11-02 rootfstype=ext4 fsck.repair=yes rootwait cfg80211.ieee80211_regdom=AU
 ```
+
+### 3. kubeadm
+`--apiserver-advertise-address=10.0.0.20`
+`--pod-network-cidr=10.244.0.0/16`
+
+#### Initialize control plane
+```shell
+kubeadm config print init-defaults
+kubeadm init --dry-run
+kubeadm init --config ~/kubeadmconf.yaml
+```
+
+#### Configure kubelet
+```shell
+kubeadm config kubelet > kubelet-config.yaml
+
+vi kubelet-config.yaml
+apiVersion: kubelet.config.k8s.io/v1beta1
+kind: KubeletConfiguration
+cgroupDriver: systemd
+```
+
+For kubelets on all nodes, the --node-ip option can be passed in .nodeRegistration.kubeletExtraArgs inside a kubeadm configuration file (InitConfiguration or JoinConfiguration).

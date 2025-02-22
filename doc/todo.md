@@ -1,13 +1,17 @@
 ## Todos
 
 ### Current
-- install kube
+- install kube on controlplane
+- install flannel
+- configure kubelet
 
+- Make sure kubelet conf has cgroup driver set to systemd (https://kubernetes.io/docs/setup/production-environment/container-runtimes/#systemd-cgroup-driver)
 
 ### Later
 
+- remove manual cni plugins from kthw installtion ansible playbookx
 - disable password logins on nodes after ssh keys have been configured
-- Make sure kubelet conf has cgroup driver set to systemd (https://kubernetes.io/docs/setup/production-environment/container-runtimes/#systemd-cgroup-driver)
+- consider ansible-lint
     
 ## Notes
 

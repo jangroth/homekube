@@ -32,6 +32,7 @@
       - gpg
       - htop
       - net-tools
+      - netcat-openbsd
       - nmap
       - traceroute
       - tree

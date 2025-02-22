@@ -1,6 +1,6 @@
 # Homekube
 
-Running Kubernetes on Raspberry Pi.
+Running Upstream Kubernetes on Raspberry Pi.
 
 ![Homekube](./doc/homekube.png)
 
@@ -8,7 +8,7 @@ Running Kubernetes on Raspberry Pi.
 - [Overview](#overview)
     - [Dependencies](#dependencies)
 - [Documentation / Notes](#documentation--notes)
-- [Thanks / References / Inspiration](#thanks--references--inspiration)
+- [References / Inspiration](#thanks--references--inspiration)
 <!-- /TOC -->
 
 ## Overview
@@ -36,7 +36,7 @@ Running Kubernetes on Raspberry Pi.
 
 - [Cluster setup](./doc/cluster.md)
 
-## Thanks / References / Inspiration
+## References / Inspiration
 
 - ['Kubernetes the hard way'](https://github.com/kelseyhightower/kubernetes-the-hard-way/tree/master) - Kelsey Hightower
 - ['How to install Kubernetes on Raspberry PI'](https://medium.com/karlmax-berlin/how-to-install-kubernetes-on-raspberry-pi-53b4ce300b58) - Ralph Bergmann
