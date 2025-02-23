@@ -15,3 +15,6 @@ for HOST in "$@"; do
     ssh $HOST "$COMMAND"
     echo
 done
+
+# ./scripts/run-command.sh 'vcgencmd measure_temp' pi0 pi1 pi2
+# ./scripts/run-command.sh 'reboot now' pi0 pi1 pi2

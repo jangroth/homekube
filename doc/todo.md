@@ -1,16 +1,25 @@
 ## Todos
 
 ### Current
-- install kube on controlplane
-- install flannel
-- configure kubelet
-    - Make sure kubelet conf has cgroup driver set to systemd (https://kubernetes.io/docs/setup/production-environment/container-runtimes/#systemd-cgroup-driver)
-- install dns?
-- join nodes
+- verify system
+    - deploy pods
+    - check logs
+        - OK kubelet x3
+        - OK containerd x3
+        - OK kubeproxy x3
+        - OK apiserver
+        - ~ scheduler
+        - OK controllermanager
+- access from control node
+
+Scheduler:
+```
+W0223 03:09:03.661753       1 requestheader_controller.go:196] Unable to get configmap/extension-apiserver-authentication in kube-system.  Usually fixed by 'kubectl create rolebinding -n kube-system ROLEBINDING_NAME --role=extension-apiserver-authentication-reader --serviceaccount=YOUR_NS:YOUR_SA'
+W0223 03:09:03.661777       1 authentication.go:370] Error looking up in-cluster authentication configuration: configmaps "extension-apiserver-authentication" is forbidden: User "system:kube-scheduler" cannot get resource "configmaps" in API group "" in the namespace "kube-system"
+```
 
 ### Later
 
-- role out aliases (k, ...)
 - disable password logins on nodes after ssh keys have been configured
 - consider ansible-lint
     

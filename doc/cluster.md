@@ -22,25 +22,31 @@
 - conf
   - `/etc/kubernetes`
 
+### api-server
+- log
+  - `k logs -n kube-system -f kube-apiserver-pi0`
+
 ### kubelet
 - conf
   - `/var/lib/kubelet`
   - `/lib/systemd/system/kubelet.service`
 - logs
-  - `journalctl -u containerd.service`
+  - `journalctl -b -u kubelet.service`
 
 ### containerd
 - conf
   - `/etc/containerd/config.toml`
   - `/etc/systemd/system/containerd.service`
 - logs
-  - `journalctl -u containerd.service`
+  - `journalctl -b -u containerd.service`
 
 ### CNI-plugins
 - conf
   - `/etc/cni/net.d/`
 
 ## Setup
+
+⚠️ The following steps outline the tasks required to install Kubernetes on _my_ Raspberry Pi cluster. It's not unlikely that _your_ cluster is slightly different. Use this repository as a guide, but don't expect every step to work for your setup.
 
 ### 1. Manual prep
 
@@ -124,4 +130,14 @@ kubectl apply -f https://github.com/flannel-io/flannel/releases/latest/download/
 ```shell
 kubeadm join 10.0.0.20:6443 --token abcde \
 	--discovery-token-ca-cert-hash sha256:12345 
+```
+
+#### 3.3 Later changes
+- Generate kubeadm config from existing cluster
+```shell
+kubectl get configmap kubeadm-config -n kube-system -o yaml
+```
+- E.g. Add SAN to certs
+```shell
+kubeadm certs renew apiserver --config kubeadm-config.yaml
 ```
