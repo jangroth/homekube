@@ -40,3 +40,11 @@
       - vim
       - yq
     state: present
+
+- name: Copy .bashrc
+  copy:
+    src: system/bashrc
+    dest: /root/.bashrc
+    owner: root
+    group: root
+    mode: "0644"

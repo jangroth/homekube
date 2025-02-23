@@ -2,7 +2,9 @@
 
 Running Upstream Kubernetes on Raspberry Pi.
 
-![Homekube](./doc/homekube.png)
+![Homekube](./doc/images/homekube.png)
+
+![k9s](./doc/images/k9s.png)
 
 <!-- TOC -->
 - [Overview](#overview)
