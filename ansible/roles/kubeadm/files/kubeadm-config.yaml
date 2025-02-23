@@ -15,7 +15,7 @@ nodeRegistration:
   criSocket: unix:///var/run/containerd/containerd.sock
   imagePullPolicy: IfNotPresent
   imagePullSerial: true
-  name: node
+  name: pi0 # custom
   taints: null
 timeouts:
   controlPlaneComponentHealthCheck: 4m0s
@@ -31,7 +31,7 @@ apiVersion: kubeadm.k8s.io/v1beta4
 caCertificateValidityPeriod: 87600h0m0s
 certificateValidityPeriod: 8760h0m0s
 certificatesDir: /etc/kubernetes/pki
-clusterName: kubernetes
+clusterName: homekube # custom
 controllerManager: {}
 dns: {}
 encryptionAlgorithm: RSA-2048

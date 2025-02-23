@@ -30,6 +30,7 @@ Running Upstream Kubernetes on Raspberry Pi.
     - `containerd` - _2.0.0_
     - `runc` - _1.1.5_
 - CNI
+    - `flannel` - _0.26.4_
     - `containernetworking-plugins` - _1.1.1_
 
 ## Documentation / Notes

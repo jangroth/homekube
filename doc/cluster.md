@@ -18,10 +18,16 @@
 
 ## Configuration & Logs
 
+### kubernetes
+- conf
+  - `/etc/kubernetes`
+
 ### kubelet
 - conf
   - `/var/lib/kubelet`
-  - `/etc/systemd/system/kubelet.service`
+  - `/lib/systemd/system/kubelet.service`
+- logs
+  - `journalctl -u containerd.service`
 
 ### containerd
 - conf
@@ -98,21 +104,24 @@ console=serial0,115200 console=tty1 root=PARTUUID=b5376a11-02 rootfstype=ext4 fs
 `--apiserver-advertise-address=10.0.0.20`
 `--pod-network-cidr=10.244.0.0/16`
 
-#### Initialize control plane
+#### 3.1 Initialize control plane
+- Run kubeadm init
 ```shell
 kubeadm config print init-defaults
-kubeadm init --dry-run
-kubeadm init --config ~/kubeadmconf.yaml
+kubeadm init --dry-run --config ~/kubeadm-config.yaml
+kubeadm init --config ~/kubeadm-config.yaml
 ```
 
-#### Configure kubelet
+- Confirm kubelet config has `cgroupDriver` set to `systemd`
+
+- CNI installation
 ```shell
-kubeadm config kubelet > kubelet-config.yaml
-
-vi kubelet-config.yaml
-apiVersion: kubelet.config.k8s.io/v1beta1
-kind: KubeletConfiguration
-cgroupDriver: systemd
+kubectl apply -f https://github.com/flannel-io/flannel/releases/latest/download/kube-flannel.yml
 ```
 
-For kubelets on all nodes, the --node-ip option can be passed in .nodeRegistration.kubeletExtraArgs inside a kubeadm configuration file (InitConfiguration or JoinConfiguration).
+#### 3.2 Add nodes to cluster
+- Join nodes to clusetr
+```shell
+kubeadm join 10.0.0.20:6443 --token abcde \
+	--discovery-token-ca-cert-hash sha256:12345 
+```

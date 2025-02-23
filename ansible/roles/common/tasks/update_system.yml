@@ -31,10 +31,12 @@
       - git
       - gpg
       - htop
+      - jq
       - net-tools
       - netcat-openbsd
       - nmap
       - traceroute
       - tree
       - vim
+      - yq
     state: present
