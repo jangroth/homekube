@@ -24,6 +24,7 @@
     - MetalLB
 - TLS
     - certmanager
+    - write code to update DNS entry on domain with my ip
 - External Connectivity
     - Traefik/Cloudflare/Wireguard/tailscale
 - SSO
