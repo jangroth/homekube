@@ -31,6 +31,7 @@
     - KeyCloak/Crossplane
 - Secrets
     - Vault
+- Container registry
 
 
 ### Later

@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: debug-utils
+  labels:
+    app: debug-utils
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: debug-utils
+  template:
+    metadata:
+      labels:
+        app: debug-utils
+    spec:
+      containers:
+        - name: debug-utils
+          image: jangroth/debug-utils:1.0
+          imagePullPolicy: IfNotPresent
+          resources:
+            limits:
+              memory: "128Mi"
+              cpu: "100m"
