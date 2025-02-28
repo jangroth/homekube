@@ -63,9 +63,9 @@ graph TD
         end
         
         subgraph K8s Services [Kubernetes Services]
-            API[kube-apiserver]
+            API[kube-apiserver</br> Cluster Ip Network</br>10.96.0.0/12]
             CNI[Flannel CNI]
-            Pods[Pod Network]
+            Pods[Pod Network</br> 10.244.0.0/16]
         end
 
         InternalSwitch[Internal Network Switch 10.0.0.0/24]

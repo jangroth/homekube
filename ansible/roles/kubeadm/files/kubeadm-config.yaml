@@ -29,7 +29,7 @@ timeouts:
 apiVersion: kubeadm.k8s.io/v1beta4
 kind: ClusterConfiguration
 apiServer:
-  certSANs:
+  certSANs: # custom
     - "kubernetes"
     - "kubernetes.default"
     - "kubernetes.default.svc"

@@ -5,6 +5,8 @@
   - `/etc/kubernetes`
   
 ### api-server
+- conf
+  - `service-cluster-ip-range`: 10.96.0.0/12 # 1,048,574 (10.96.0.0 -> 10.111.255.255)
 - log
   - `k logs -n kube-system -f kube-apiserver-pi0`
 
@@ -31,3 +33,6 @@
   - `/etc/cni/net.d/`
 - bin
   - `/opt/cni/bin`
+
+### CNI
+- `pod-network-cidr`:10.244.0.0/16 # 65,536 (10.244.0.0 -> 10.244.255.255)
