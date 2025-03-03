@@ -1,0 +1,21 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: root-app
+  namespace: argocd
+  annotations:
+    opentofu.org/managed-by: "opentofu"
+    opentofu.org/version: "1.9.0"
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/jangroth/homekube-apps.git
+    path: applications
+    targetRevision: HEAD
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true

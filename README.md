@@ -95,7 +95,8 @@ See [Configuration & Logs](./doc/01_conf_logs.md).
 1. [Environment preparation](./doc/02_env_preparation.md) (manual)
 2. [Node configuration](./doc/02_node_configuration.md) (Ansible)
 3. [Kubernetes installation](./doc/02_kube_installation.md) (kubeadm, semi-manual)
-4. [ArgoCD rollout](./doc/02_argo_rollout.md) (OpenTofu/tf)
+4. [ArgoCD rollout & app of apps](./doc/02_argo_rollout.md) (OpenTofu/tf, kubernetes)
+5. [ArgoCD applications repository]
 
 ## References / Inspiration
 

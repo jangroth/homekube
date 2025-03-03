@@ -1,10 +1,10 @@
-#!/bin/bash -eu
+#!/bin/bash -e
 
 DOCKER_USERNAME="jangroth"
 IMAGE_NAME="${DOCKER_USERNAME}/debug-utils"
 IMAGE_TAG="1.0"
 
-docker login -u ${DOCKER_USERNAME}
+echo "${DOCKER_PAT}" | docker login -u ${DOCKER_USERNAME} --password-stdin
 
 docker buildx build \
     --platform linux/arm64 \

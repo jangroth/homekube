@@ -3,7 +3,6 @@ FROM alpine:3.19
 LABEL maintainer="Jan Groth" \
     description="Debugging tools for Kubernetes troubleshooting"
 
-# Install networking tools
 # bind-tools: Provides dig, nslookup
 # iproute2: Provides ip command
 # busybox-extras: Provides telnet

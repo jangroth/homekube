@@ -3,25 +3,27 @@
 ### Current
 
 - ArgoCD
-    - deploy demo app
-    - set up seperate repo
-    - LB/TLS setup
-    - OIDC
-    - dark theme via volume mount -> https://argo-cd.readthedocs.io/en/stable/operator-manual/custom-styles/#adding-styles-via-volume-mounts
+    - integrate aoa into tf rollout
+    - documentation
+    x deploy demo app
+    x set up seperate repo
+- Diagram cluster setup
 
 ### Queue
 
 - Implement storage
+    - install ssds
+    - partition & configure
     - Longhorn
     - s3-csi-driver
+- Provide Ingress
+    - MetalLB
 - Implement observability
     - Prometheus/Grafana/Loki
     - Kube Metrics server
     - RaspPi metrics
 - Upgrade networking capabilities
     - Cilium
-- Provide Ingress
-    - MetalLB
 - TLS
     - certmanager
     - write code to update DNS entry on domain with my ip
@@ -32,7 +34,10 @@
 - Secrets
     - Vault
 - Container registry
-
+- ArgoCD
+    - LB/TLS setup
+    - OIDC
+    - dark theme via volume mount -> https://argo-cd.readthedocs.io/en/stable/operator-manual/custom-styles/#adding-styles-via-volume-mounts
 
 ### Later
 - create user/context for opentofu deployments
