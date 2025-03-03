@@ -2,12 +2,7 @@
 
 ### Current
 
-- ArgoCD
-    - integrate aoa into tf rollout
-    - documentation
-    x deploy demo app
-    x set up seperate repo
-- Diagram cluster setup
+- ./.
 
 ### Queue
 

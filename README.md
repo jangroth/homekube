@@ -83,6 +83,35 @@ graph TD
     API -- Controls --> CNI
     CNI -- Manages --> Pods
 ```
+### Kubernetes Cluster Architecture
+
+```mermaid
+graph TD
+    subgraph Kubernetes Cluster
+        subgraph ControlPlane [pi0: Control Plane]
+            API[kube-apiserver]
+            Cont_manager[kube-controller-manager]
+            Scheduler[kube-scheduler]
+            Etcd[etcd]
+        end
+        
+        subgraph DataPlane [pi1, pi2: Data Plane]
+            subgraph NsArgo[ArgoCD]
+                argocd[ArgoCD]
+                argocd_svc[ArgoCD Service</br> NodePort</br> 30000]
+                aoa[Root App]
+                app1
+                app2
+            end
+        end
+    end
+
+    argocd_svc -- Exposes --> argocd
+    argocd -- Deploys --> aoa
+    aoa --> app1
+    aoa --> app2
+
+```
 
 ### Details
 
@@ -95,7 +124,7 @@ See [Configuration & Logs](./doc/01_conf_logs.md).
 1. [Environment preparation](./doc/02_env_preparation.md) (manual)
 2. [Node configuration](./doc/02_node_configuration.md) (Ansible)
 3. [Kubernetes installation](./doc/02_kube_installation.md) (kubeadm, semi-manual)
-4. [ArgoCD rollout & app of apps](./doc/02_argo_rollout.md) (OpenTofu/tf, kubernetes)
+4. [ArgoCD rollout & App of Apps deployment](./doc/02_argo_rollout.md) (OpenTofu/tf)
 5. [ArgoCD applications repository]
 
 ## References / Inspiration
