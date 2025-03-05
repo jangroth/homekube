@@ -16,8 +16,17 @@
 
 ### kubelet
 - conf
-  - `/var/lib/kubelet`
+  - `/var/lib/kubelet`  
+  - `/var/lib/kubelet/pki`
   - `/lib/systemd/system/kubelet.service`
+
+- via API server:
+```shell
+kubectl proxy
+curl -X GET http://127.0.0.1:8001/api/v1/nodes/pi0/proxy/configz | jq # pi0,1,2
+```
+
+
 - logs
   - `journalctl -b -u kubelet.service`
 

@@ -2,7 +2,21 @@
 
 Running Upstream Kubernetes on Raspberry Pi.
 
+---
+
+<div style="display: flex; justify-content: space-around;">
+  <img src="./doc/images/logo-kubernetes.svg.png" alt="kubernetes" style="height: 50px;">
+  <img src="./doc/images/logo-argocd.png" alt="argocd" style="height: 50px;">
+  <img src="./doc/images/logo-flannel.png" alt="flannel" style="height: 50px;">
+  <img src="./doc/images/logo-metallb.png" alt="metallb" style="height: 50px;">
+</div>
+
+---
+
 ![Homekube](./doc/images/homekube.png)
+
+---
+
 ![Homekube](./doc/images/k9s.png)
 
 ---
@@ -34,6 +48,7 @@ Running Upstream Kubernetes on Raspberry Pi.
 | pi0 | Raspberry Pi 5, 8GB | Raspberry Pi OS Lite 64-bit | 192.168.86.220 | 10.0.0.20 |
 | pi1 | Raspberry Pi 5, 8GB | Raspberry Pi OS Lite 64-bit | 192.168.86.221 | 10.0.0.21 | 
 | pi2 | Raspberry Pi 5, 8GB | Raspberry Pi OS Lite 64-bit | 192.168.86.222 | 10.0.0.22 |
+
 
 ### Kubernetes Network Architecture
 
@@ -125,7 +140,7 @@ See [Configuration & Logs](./doc/01_conf_logs.md).
 2. [Node configuration](./doc/02_node_configuration.md) (Ansible)
 3. [Kubernetes installation](./doc/02_kube_installation.md) (kubeadm, semi-manual)
 4. [ArgoCD rollout & App of Apps deployment](./doc/02_argo_rollout.md) (OpenTofu/tf)
-5. [ArgoCD applications repository]
+5. [ArgoCD applications repository](https://github.com/jangroth/homekube-apps)
 
 ## References / Inspiration
 
