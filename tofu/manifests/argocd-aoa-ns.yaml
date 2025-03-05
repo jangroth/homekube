@@ -1,7 +1,0 @@
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: argocd-aoa-test
-  annotations:
-    opentofu.org/managed-by: "opentofu"
-    opentofu.org/version: "1.9.0"

@@ -4,6 +4,7 @@
 
 - ./.
 
+
 ### Queue
 
 - Implement storage
@@ -11,8 +12,6 @@
     - partition & configure
     - Longhorn
     - s3-csi-driver
-- Provide Ingress
-    - MetalLB
 - Implement observability
     - Prometheus/Grafana/Loki
     - Kube Metrics server
@@ -22,17 +21,30 @@
 - TLS
     - certmanager
     - write code to update DNS entry on domain with my ip
+    - mtls (istio ambient)
 - External Connectivity
     - Traefik/Cloudflare/Wireguard/tailscale
 - SSO
     - KeyCloak/Crossplane
+    - Google OIDC
+- service-mesh
+    - istio
 - Secrets
     - Vault
-- Container registry
+    - https://external-secrets.io/latest/
+- Set up Container registry
 - ArgoCD
+    - create argocd projects
     - LB/TLS setup
     - OIDC
-    - dark theme via volume mount -> https://argo-cd.readthedocs.io/en/stable/operator-manual/custom-styles/#adding-styles-via-volume-mounts
+- kube-chaos
+- Loadbalancer
+    - nginx controller
+    - api-gateway
+- Security
+    - kube-sec, kube-linter
+    - kube-bench
+
 
 ### Later
 - create user/context for opentofu deployments
