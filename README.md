@@ -115,8 +115,8 @@ graph TD
                 argocd[ArgoCD]
                 argocd_svc[ArgoCD Service</br> NodePort</br> 30000]
                 aoa[Root App]
-                app1
-                app2
+                app1[MetalLB]
+                app2[Metrics-Server]
             end
         end
     end
@@ -140,7 +140,7 @@ See [Configuration & Logs](./doc/01_conf_logs.md).
 2. [Node configuration](./doc/02_node_configuration.md) (Ansible)
 3. [Kubernetes installation](./doc/02_kube_installation.md) (kubeadm, semi-manual)
 4. [ArgoCD rollout & App of Apps deployment](./doc/02_argo_rollout.md) (OpenTofu/tf)
-5. [ArgoCD applications repository](https://github.com/jangroth/homekube-apps)
+5. [ArgoCD application notes](https://github.com/jangroth/homekube-apps)
 
 ## References / Inspiration
 

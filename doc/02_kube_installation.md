@@ -1,6 +1,12 @@
 # 3. kubeadm & CNI
 
 ## 3.1 Initialize control plane
+
+- Verify [kubeadm-config.yaml](../ansible/roles/kubeadm/files/kubeadm-config.yaml)
+
+
+
+
 - Run kubeadm init
 ```shell
 kubeadm config print init-defaults

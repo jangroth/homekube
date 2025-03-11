@@ -10,6 +10,7 @@
     https://github.com/kubernetes-sigs/metrics-server/issues/576#issuecomment-1820504816
 
     - ns: metrics-server
+-> change kubeadmin config map
 
 
 ### Queue
@@ -49,7 +50,6 @@
 - Security
     - kube-sec, kube-linter
     - kube-bench
-
 
 ### Later
 - implement script to check for new releases of everything that's installed
