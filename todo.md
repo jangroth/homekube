@@ -2,28 +2,36 @@
 
 ### Current
 
-- Metrics Server
-    https://github.com/kubernetes-sigs/metrics-server#requirements
-->    !!! Kubelet certificate needs to be signed by cluster Certificate Authority (or disable certificate validation by passing --kubelet-insecure-tls to Metrics Server) !!!
-    https://github.com/kubernetes-sigs/metrics-server/blob/master/FAQ.md#how-to-run-metrics-server-securely
-    https://github.com/kubernetes-sigs/metrics-server/issues/146#issuecomment-459239615
-    https://github.com/kubernetes-sigs/metrics-server/issues/576#issuecomment-1820504816
+- 1.31.6 -> 1.32.x
 
-    - ns: metrics-server
--> change kubeadmin config map
 
 
 ### Queue
-
+- backups
+    - etcd
+- MetalLB
+    - set up loadbalancer class
+- kube-dashboard
+    - argo app
+    - configure for raspi usage
+    - user/sa to access
+- argocd
+    - root-app deletion deletes apps, but not resources
+    - move namespace into app manifests
+- DNS
+    - bind9
+- Identity provider
+    - Authentik?
+    - ArgoCD
+    - Dashboard
 - ArgoCD
     - LB/TLS setup
     - create argocd projects
     - OIDC
 - Implement storage
-    - install ssds
-    - partition & configure
     - Longhorn
     - s3-csi-driver
+    - minio
 - Implement observability
     - Prometheus/Grafana/Loki
     - RaspPi metrics
@@ -59,4 +67,4 @@
     
 ## Notes
 
-./.
+- https://picluster.ricsanfre.com/docs/home/

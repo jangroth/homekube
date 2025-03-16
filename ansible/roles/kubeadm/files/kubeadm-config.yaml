@@ -56,5 +56,7 @@ networking:
   serviceSubnet: 10.96.0.0/12
 proxy: {}
 scheduler: {}
-kubeletConfiguration: # custom -> https://github.com/kubernetes-sigs/metrics-server/issues/576#issuecomment-1820504816
-  serverTLSBootstrap: true
+---
+apiVersion: kubeadm.k8s.io/v1beta1
+kind: KubeletConfiguration
+serverTLSBootstrap: true

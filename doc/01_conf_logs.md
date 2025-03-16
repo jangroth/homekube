@@ -18,6 +18,7 @@
 - conf
   - `/var/lib/kubelet`  
   - `/var/lib/kubelet/pki`
+  - `/var/lib/kubelet/config.yaml`
   - `/lib/systemd/system/kubelet.service`
 
 - via API server:

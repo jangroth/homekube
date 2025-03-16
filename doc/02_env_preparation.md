@@ -61,3 +61,51 @@ Linux pi0 6.6.74+rpt-rpi-2712
 [...]
 root@pi0:~#
 ```
+
+## 1.6 Pi nodes
+
+- Optional: Install NVMEe drives [-> see here](https://learn.pimoroni.com/article/getting-started-with-nvme-base)
+
+```shell
+# if k8s already installed: cordon, drain, stop kubelet
+
+rpi-eeprom-update
+raspi-config # use latest bootloader
+
+# copy sd drive to NVMe drive
+lsblk
+dd if=/dev/mmcblk0 of=/dev/nvme0n1 bs=4M status=progress # long running (~25min)
+# 1:15
+
+vi /boot/firmware/config.txt
+# [all]
+# dtparam=pciex1_gen=3
+
+raspi-config # change boot order
+shutdown 0 # power off, remove sd card, power on and boot into NVMe
+
+vi /etc/motd # change text
+
+# create and mount partition for remaining space
+parted
+    print
+        mkpart primary
+        ext4
+        128GB
+        100%
+    print
+mkfs.ext4 /dev/nvme0n1p3
+
+# mount manually
+mkdir /storage
+mount /dev/nvme0n1p3 /storage
+
+# change fstabo
+blkid
+vi /etc/fstab
+# PARTUUID=b5376a11-03  /storage ext4 defaults  0 2
+systemctl daemon-reload
+findmnt --verify
+
+reboot 0
+```
