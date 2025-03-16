@@ -1,0 +1,4 @@
+#!/bin/sh
+echo
+echo "uptime is $( uptime )"
+echo "date   is $( date   )"

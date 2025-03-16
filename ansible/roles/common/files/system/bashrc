@@ -17,3 +17,6 @@ alias egrep='egrep --color=auto'
 alias vi='vim'
 
 alias k='kubectl'
+
+# enable vi mode
+set -o vi

@@ -28,6 +28,7 @@
       - ca-certificates
       - curl
       - dnsutils
+      - figlet
       - git
       - gpg
       - htop
@@ -40,6 +41,22 @@
       - vim
       - yq
     state: present
+
+- name: Configure motd
+  copy:
+    src: system/motd-hostname
+    dest: /etc/update-motd.d/20-hostname
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Configure motd
+  copy:
+    src: system/motd-updates
+    dest: /etc/update-motd.d/20-updates
+    owner: root
+    group: root
+    mode: "0755"
 
 - name: Copy .bashrc
   copy:
