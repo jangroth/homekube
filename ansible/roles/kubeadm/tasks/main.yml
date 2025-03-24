@@ -1,9 +1,3 @@
 ---
-- name: Copy kubeadm configuration
-  copy:
-    src: kubeadm-config.yaml
-    dest: /root/kubeadm-config.yaml
-    backup: no
-    owner: root
-    group: root
-    mode: "0644"
+- import_tasks: copy_kubeadm_config.yml
+  tags: update-only

@@ -1,2 +1,2 @@
 #!/bin/sh
-figlet $(hostname)
+figlet -c $(hostname)

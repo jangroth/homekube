@@ -1,3 +1,17 @@
+---
+- name: Add Kubernetes apt repository key
+  apt_key:
+    url: https://pkgs.k8s.io/core:/stable:/v{{ kubernetes_version }}/deb/Release.key
+    state: present
+    keyring: /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+
+- name: Add Kubernetes apt repository
+  apt_repository:
+    repo: "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v{{ kubernetes_version }}/deb/ /"
+    state: present
+    filename: kubernetes
+    update_cache: yes
+
 - name: Update apt packages
   apt:
     update_cache: yes
@@ -33,6 +47,7 @@
       - gpg
       - htop
       - jq
+      - kubectx
       - net-tools
       - netcat-openbsd
       - nmap
@@ -41,6 +56,11 @@
       - vim
       - yq
     state: present
+
+- name: Remove /etc/motd
+  file:
+    path: /etc/motd
+    state: absent
 
 - name: Configure motd
   copy:
@@ -58,10 +78,34 @@
     group: root
     mode: "0755"
 
-- name: Copy .bashrc
+- name: Copy .bashrc for root
   copy:
     src: system/bashrc
     dest: /root/.bashrc
     owner: root
     group: root
+    mode: "0644"
+
+- name: Copy .bash_aliases for root
+  copy:
+    src: system/bash_aliases
+    dest: "/root/.bash_aliases"
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Copy .bashrc for user
+  copy:
+    src: system/bashrc
+    dest: "/home/{{ ssh_username }}/.bashrc"
+    owner: "{{ ssh_username }}"
+    group: "{{ ssh_username }}"
+    mode: "0644"
+
+- name: Copy .bash_aliases for user
+  copy:
+    src: system/bash_aliases
+    dest: "/home/{{ ssh_username }}/.bash_aliases"
+    owner: "{{ ssh_username }}"
+    group: "{{ ssh_username }}"
     mode: "0644"

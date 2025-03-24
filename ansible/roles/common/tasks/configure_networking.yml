@@ -1,10 +1,14 @@
 ---
+- name: Include group variables for Raspberry Pis
+  include_vars:
+    dir: "{{ playbook_dir }}/group_vars"
+
 - name: Set static IP address
   nmcli:
     conn_name: "Wired connection 1"
     state: present
     type: ethernet
-    ip4: "{{ ip_addresses[inventory_hostname] }}"
+    ip4: "{{ ip_addresses_internal[inventory_hostname] }}"
     method4: manual
     autoconnect: yes
 

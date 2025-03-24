@@ -1,0 +1,16 @@
+- name: Ensure /boot/firmware/config.txt exists
+  file:
+    path: /boot/firmware/config.txt
+    state: touch
+    mode: "0644"
+
+- name: Add dtparam=pciex1_gen=3 to /boot/firmware/config.txt under [all]
+  blockinfile:
+    path: /boot/firmware/config.txt
+    block: |
+      dtparam=pciex1
+      dtparam=pciex1_gen=3
+    marker: "# {mark} ANSIBLE MANAGED PCIEX1_GEN"
+    insertafter: '^\[all\]$'
+    state: present
+  register: pciex_config

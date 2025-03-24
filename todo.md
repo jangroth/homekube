@@ -1,51 +1,65 @@
 ## Todos
 
 ### Current
+root@pi2:/home/homekube# vcgencmd bootloader_version
+2025/03/10 17:10:37
+version 2bb2ae640058a2f3aa8dcbdc2da33302e509668d (release)
+timestamp 1741626637
+update-time 1742765095
+capabilities 0x0000007f
 
-- 1.31.6 -> 1.32.x
+homekube@pi2:~ $ rpi-eeprom-config
+[all]
+BOOT_UART=1
+POWER_OFF_ON_HALT=0
+BOOT_ORDER=0xf461
+
+-> SD, NVME, USB
+
+restore color for bash shell
 
 
 
 ### Queue
-- backups
-    - etcd
-- MetalLB
-    - set up loadbalancer class
-- kube-dashboard
-    - argo app
-    - configure for raspi usage
-    - user/sa to access
-- argocd
-    - root-app deletion deletes apps, but not resources
-    - move namespace into app manifests
-- DNS
-    - bind9
-- Identity provider
-    - Authentik?
-    - ArgoCD
-    - Dashboard
-- ArgoCD
-    - LB/TLS setup
-    - create argocd projects
-    - OIDC
-- Implement storage
+- Longhorn
+    - install via helm chart
+    - configure to use storage partition
+- Implement persistent storage
     - Longhorn
     - s3-csi-driver
+    - secret-store-csi driver -> https://github.com/kubernetes-sigs/secrets-store-csi-driver
     - minio
 - Implement observability
     - Prometheus/Grafana/Loki
+        - store prometheus data on longhorn volumes
     - RaspPi metrics
-- Upgrade networking capabilities
-    - Cilium
+- Identity provider
+    - Authentik?
+- SSO
+    - KeyCloak/Crossplane
+    - Google OIDC
 - TLS
     - certmanager
     - write code to update DNS entry on domain with my ip
     - mtls (istio ambient)
+- backups
+    - etcd
+- kube-dashboard
+    - sso
+    - configure for raspi usage
+    - user/sa to access
+- argocd
+    - sso
+    - LB/TLS setup
+    - move namespace into app manifests
+    - create argocd projects
+    - ApplicationSet, pull request generator
+- DNS
+    - bind9, pihole?
+- Upgrade networking capabilities
+    - Cilium
 - External Connectivity
     - Traefik/Cloudflare/Wireguard/tailscale
-- SSO
-    - KeyCloak/Crossplane
-    - Google OIDC
 - service-mesh
     - istio
 - Secrets
@@ -56,8 +70,13 @@
     - nginx controller
     - api-gateway
 - Security
+    - configure podsecurity
     - kube-sec, kube-linter
     - kube-bench
+    - trivy, admission-controller for security scans https://github.com/devopstales/trivy-operator
+    - Falco
+- Tweak Pi
+    https://www.jeffgeerling.com/blog/2024/raspberry-pi-boosts-pi-5-performance-sdram-tuning
 
 ### Later
 - implement script to check for new releases of everything that's installed

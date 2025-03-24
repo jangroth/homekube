@@ -26,6 +26,17 @@
   changed_when: false
   failed_when: containerd_version.rc != 0
 
-- name: Print containerd informversionation
+- name: Get latest containerd release
+  uri:
+    url: "https://api.github.com/repos/containerd/containerd/releases/latest"
+    return_content: yes
+    method: GET
+  register: latest_release
+
+- name: Set latest containerd version fact
+  set_fact:
+    containerd_latest_version: "{{ latest_release.json.tag_name }}"
+
+- name: Print containerd version information
   debug:
-    msg: "containerd - {{ containerd_version.stdout }}"
+    msg: "containerd - {{ containerd_version.stdout }} \n latest version - {{ containerd_latest_version }}"

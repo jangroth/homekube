@@ -1,0 +1,9 @@
+---
+#
+#  ./prepare-pis/README.md
+#
+
+- hosts: [all_nodes]
+  become: true
+  roles:
+    - role: prepare-pis

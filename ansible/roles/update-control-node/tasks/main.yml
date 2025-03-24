@@ -1,0 +1,4 @@
+---
+- import_tasks: update_etc_hosts.yml
+- import_tasks: update_known-hosts.yml
+- import_tasks: update_ssh_config.yml

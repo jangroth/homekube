@@ -1,0 +1,12 @@
+---
+- name: Include group variables for Raspberry Pis
+  include_vars:
+    dir: "{{ playbook_dir }}/group_vars"
+
+- name: Ensure entries in /etc/hosts for Raspberry Pis
+  lineinfile:
+    path: /etc/hosts
+    line: "{{ ip_addresses_external[item.key] }} {{ item.key }}.kubernetes.local, {{ item.key }}"
+    state: present
+  loop: "{{ ip_addresses_external | dict2items }}"
+  become: true

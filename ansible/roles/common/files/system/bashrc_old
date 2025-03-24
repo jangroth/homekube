@@ -1,0 +1,24 @@
+# ~/.bashrc: executed by bash(1) for non-login shells.
+
+export LS_OPTIONS='--color=auto'
+eval "$(dircolors)"
+
+alias l='ls -CF $LS_OPTIONS'
+alias la='ls -A $LS_OPTIONS'
+alias ll='ls -alF $LS_OPTIONS'
+alias ls='ls -laG $LS_OPTIONS'
+alias lsa='ls -lah $LS_OPTIONS'
+alias rm='rm -i'
+alias cp='cp -i'
+alias mv='mv -i'
+alias grep='grep --color=auto'
+alias fgrep='fgrep --color=auto'
+alias egrep='egrep --color=auto'
+alias vi='vim'
+
+alias k='kubectl'
+alias kc='kubectx'
+alias kn='kubens'
+
+# enable vi mode
+set -o vi

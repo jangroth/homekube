@@ -1,0 +1,60 @@
+# ---
+# #
+# # copy sd card to nvme, mount nvme partitions
+# #
+
+# - name: Copy mmcblk0p1 to nvme0n1p1
+#   command: dd if=/dev/mmcblk0p1 of=/dev/nvme0n1p1 bs=4M status=progress
+
+# - name: Ensure filesystem integrity (nvme0n1p1)
+#   command: fsck -fy /dev/nvme0n1p1
+#   ignore_errors: true
+
+# - name: Resize filesystems to match partition size (nvme0n1p1)
+#   command: resize2fs /dev/nvme0n1p1
+#   ignore_errors: true
+
+# - name: Copy mmcblk0p2 to nvme0n1p2 (long-running, about 25min)
+#   command: dd if=/dev/mmcblk0p2 of=/dev/nvme0n1p2 bs=4M status=progress
+
+# - name: Ensure filesystem integrity (nvme0n1p2)
+#   command: fsck -fy /dev/nvme0n1p2
+#   ignore_errors: true
+
+# - name: Resize filesystems to match partition size (nvme0n1p1)
+#   command: resize2fs /dev/nvme0n1p1
+#   ignore_errors: true
+
+# - name: Resize filesystems to match partition size (nvme0n1p2)
+#   command: resize2fs /dev/nvme0n1p2
+#   ignore_errors: true
+
+# - name: Create /storage directory
+#   file:
+#     path: /storage
+#     state: directory
+
+# - name: Mount nvme0n1p1 to /boot/firmware
+#   mount:
+#     path: /boot/firmware
+#     src: /dev/nvme0n1p1
+#     fstype: vfat
+#     state: mounted
+#     opts: defaults
+
+# - name: Mount nvme0n1p2 to /
+#   mount:
+#     path: /
+#     src: /dev/nvme0n1p2
+#     fstype: ext4
+#     state: mounted
+#     opts: defaults
+#     passno: 1
+
+# - name: Mount nvme0n1p3 to /storage
+#   mount:
+#     path: /storage
+#     src: /dev/nvme0n1p3
+#     fstype: ext4
+#     state: mounted
+#     opts: defaults
