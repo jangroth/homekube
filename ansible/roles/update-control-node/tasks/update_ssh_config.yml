@@ -1,0 +1,25 @@
+---
+- name: Include group variables for Raspberry Pis
+  include_vars:
+    dir: "{{ playbook_dir }}/group_vars"
+
+- name: Add Pi hosts to SSH config file
+  blockinfile:
+    path: "~/.ssh/config"
+    create: yes
+    mode: "0600"
+    block: |
+      {% for hostname, ip in ip_addresses_external.items() %}
+      Host {{ hostname }}
+        HostName {{ ip }}
+        User {{ ssh_username }}
+        IdentityFile ~/.ssh/id_darth_homekube
+
+      Host {{ ip }}
+        HostName {{ ip }}
+        User {{ ssh_username }}
+        IdentityFile ~/.ssh/id_darth_homekube
+
+      {% endfor %}
+    marker: "# {mark} ANSIBLE MANAGED BLOCK - HOMEKUBE PI HOSTS"
+  become: false

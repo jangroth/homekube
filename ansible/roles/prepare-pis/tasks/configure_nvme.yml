@@ -1,0 +1,62 @@
+---
+- name: Get disk information using parted
+  command: parted -s {{ device }} print
+  register: parted_output
+  failed_when: parted_output.rc != 0
+  changed_when: false
+  vars:
+    device: /dev/nvme0n1 # Make sure this is correct
+
+- name: Debug parted output
+  debug:
+    var: parted_output
+
+- name: Calculate the end of the new partition
+  set_fact:
+    end_sector: "{{ parted_output.stdout_lines | select('match', 'Disk /dev/nvme0n1: (\\d+)GB') | map('regex_replace', 'Disk /dev/nvme0n1: (\\d+)GB', '\\1') | map('int') | first * 1000 }}" # get the total disk size in GB, and convert to MB.
+
+- name: Create the new partition using parted
+  command: parted -s {{ device }} mkpart primary ext4 129GB "{{ end_sector }}MB"
+  register: parted_create_output
+  changed_when: "'created successfully' in parted_create_output.stderr"
+  vars:
+    device: /dev/nvme0n1
+
+- name: Get the PARTUUID of the new partition
+  command: blkid -o export {{ device }}p3 # hard coded partition number
+  register: blkid_output
+  changed_when: false
+  vars:
+    device: /dev/nvme0n1
+
+- name: Debug blkid output
+  debug:
+    var: blkid_output
+
+- name: Set PARTUUID fact
+  set_fact:
+    partuuid: "{{ blkid_output.stdout_lines | select('match', '^PARTUUID=') | first | regex_replace('^PARTUUID=', '') if blkid_output.stdout_lines | select('match', '^PARTUUID=') | first is defined else 'PARTUUID_NOT_FOUND' }}"
+
+- name: Debug PARTUUID output
+  debug:
+    var: partuuid
+
+- name: Create the EXT4 filesystem on the new partition
+  filesystem:
+    dev: "{{ device }}p3"
+    fstype: ext4
+  vars:
+    device: /dev/nvme0n1
+
+- name: Create the mount point directory
+  file:
+    path: /storage
+    state: directory
+
+- name: Add the mount point to /etc/fstab using PARTUUID
+  mount:
+    path: /storage
+    src: "PARTUUID={{ partuuid }}"
+    fstype: ext4
+    opts: defaults
+    state: mounted

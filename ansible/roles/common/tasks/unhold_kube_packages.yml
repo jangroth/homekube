@@ -1,0 +1,15 @@
+---
+- name: Unhold kubelet
+  dpkg_selections:
+    name: kubelet
+    selection: install
+
+- name: Unhold kubeadm
+  dpkg_selections:
+    name: kubeadm
+    selection: install
+
+- name: Unhold kubectl
+  dpkg_selections:
+    name: kubectl
+    selection: install

@@ -9,10 +9,25 @@
   - `service-cluster-ip-range`: 10.96.0.0/12 # 1,048,574 (10.96.0.0 -> 10.111.255.255)
 - log
   - `k logs -n kube-system -f kube-apiserver-pi0`
+  - `sudo crictl logs -f $(sudo crictl ps | grep kube-apiserver | awk '{print $1}')`
+
+### etcd
+- log
+  - `sudo crictl logs $(sudo crictl ps | grep etcd | awk '{print $1}')`
+
+### controller-manager
+- log
+  - `sudo crictl logs $(sudo crictl ps | grep kube-controller-manager | awk '{print $1}')`
 
 ### scheduler
 - log
   - `k logs -n kube-system -f kube-scheduler-pi0`
+  - `sudo crictl logs $(sudo crictl ps | grep kube-scheduler | awk '{print $1}')`
+
+### kube-proxy
+- log
+  - `k logs -n kube-system -f kube-proxy-pi0`
+  - `sudo crictl logs $(sudo crictl ps | grep kube-proxy | awk '{print $1}')`
 
 ### kubelet
 - conf
@@ -27,9 +42,8 @@ kubectl proxy
 curl -X GET http://127.0.0.1:8001/api/v1/nodes/pi0/proxy/configz | jq # pi0,1,2
 ```
 
-
 - logs
-  - `journalctl -b -u kubelet.service`
+  - `journalctl -b -f -u kubelet.service`
 
 ### containerd
 - conf

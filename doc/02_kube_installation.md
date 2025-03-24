@@ -4,22 +4,25 @@
 
 - Verify [kubeadm-config.yaml](../ansible/roles/kubeadm/files/kubeadm-config.yaml)
 
-
-
-
-- Run kubeadm init
+- Validate kubeadm
 ```shell
 kubeadm config print init-defaults
+kubeadm config print init-defaults --component-configs KubeletConfiguration
 kubeadm init --dry-run --config ~/kubeadm-config.yaml
 kubeadm init --config ~/kubeadm-config.yaml
 ```
 
-- Confirm kubelet config has `cgroupDriver` set to `systemd`
+- Apply kubeadm init
+```shell
+kubeadm init --config ~/kubeadm-config.yaml
+```
 
 - CNI installation
 ```shell
 kubectl apply -f https://github.com/flannel-io/flannel/releases/latest/download/kube-flannel.yml
 ```
+
+- Reboot
 
 ## 3.2 Add nodes to cluster
 - Join nodes to cluster
@@ -42,6 +45,3 @@ rm /etc/kubernetes/pki/apiserver.key
 kubeadm init phase certs apiserver --config ~/kubeadm-config.yaml
 # restart api-server
 ```
-
-
-

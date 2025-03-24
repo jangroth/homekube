@@ -1,9 +1,0 @@
----
-- hosts: all_nodes
-  become: true
-  roles:
-    - common
-# - hosts: control_plane
-#   become: true
-#   roles:
-#     - kubeadm

@@ -1,0 +1,16 @@
+---
+- import_tasks: create_user_account.yml
+  tags: init
+  when: "'init' in ansible_run_tags"
+- import_tasks: update_system.yml
+  tags: init
+  when: "'init' in ansible_run_tags"
+- import_tasks: disable_password_auth.yml
+  tags: init
+  when: "'init' in ansible_run_tags"
+- import_tasks: enable_pciex.yml
+  tags: nvme
+  when: "'nvme' in ansible_run_tags"
+- import_tasks: configure_nvme.yml
+  tags: nvme
+  when: "'nvme' in ansible_run_tags"
