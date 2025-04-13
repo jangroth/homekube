@@ -6,7 +6,7 @@
   
 ### api-server
 - conf
-  - `service-cluster-ip-range`: 10.96.0.0/12 # 1,048,574 (10.96.0.0 -> 10.111.255.255)
+  - `service-cluster-ip-range`: `10.96.0.0/12` # 1,048,574 (10.96.0.0 -> 10.111.255.255)
 - log
   - `k logs -n kube-system -f kube-apiserver-pi0`
   - `sudo crictl logs -f $(sudo crictl ps | grep kube-apiserver | awk '{print $1}')`
@@ -59,4 +59,4 @@ curl -X GET http://127.0.0.1:8001/api/v1/nodes/pi0/proxy/configz | jq # pi0,1,2
   - `/opt/cni/bin`
 
 ### CNI
-- `pod-network-cidr`:10.244.0.0/16 # 65,536 (10.244.0.0 -> 10.244.255.255)
+- `pod-network-cidr`: `10.244.0.0/16` # 65,536 (10.244.0.0 -> 10.244.255.255)

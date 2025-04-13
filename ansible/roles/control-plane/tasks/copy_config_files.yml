@@ -1,0 +1,18 @@
+---
+- name: Copy kubeadm configuration
+  copy:
+    src: kubeadm-config.yaml
+    dest: "/home/{{ ssh_username }}/kubeadm-config.yaml"
+    backup: no
+    owner: "{{ ssh_username }}"
+    group: "{{ ssh_username }}"
+    mode: "0644"
+
+- name: Copy Cilium helm values configuration
+  copy:
+    src: cilium-helm-values.yaml
+    dest: "/home/{{ ssh_username }}/cilium-helm-values.yaml"
+    backup: no
+    owner: "{{ ssh_username }}"
+    group: "{{ ssh_username }}"
+    mode: "0644"

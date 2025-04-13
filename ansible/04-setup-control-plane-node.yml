@@ -1,0 +1,9 @@
+---
+#
+# ./kubeadm/README.md
+#
+
+- hosts: [control_plane]
+  become: true
+  roles:
+    - role: control-plane

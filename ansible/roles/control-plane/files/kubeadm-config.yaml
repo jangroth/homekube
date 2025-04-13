@@ -2,10 +2,11 @@
 # https://kubernetes.io/docs/reference/config-api/kubeadm-config.v1beta4/
 apiVersion: kubeadm.k8s.io/v1beta4
 kind: InitConfiguration
+skipPhases:
+  - addon/kube-proxy # custom, -> cilium
 bootstrapTokens:
   - groups:
       - system:bootstrappers:kubeadm:default-node-token
-    token: abcdef.0123456789abcdef
     ttl: 24h0m0s
     usages:
       - signing
@@ -18,7 +19,6 @@ nodeRegistration:
   imagePullPolicy: IfNotPresent
   imagePullSerial: true
   name: pi0 # custom
-  taints: null
 timeouts:
   controlPlaneComponentHealthCheck: 4m0s
   discovery: 5m0s
@@ -27,6 +27,13 @@ timeouts:
   kubernetesAPICall: 1m0s
   tlsBootstrap: 5m0s
   upgradeManifests: 5m0s
+
+---
+# https://kubernetes.io/docs/reference/config-api/kubeadm-config.v1beta4/
+apiVersion: kubeadm.k8s.io/v1beta4
+kind: JoinConfiguration
+skipPhases:
+  - addon/kube-proxy # custom, -> cilium
 
 ---
 # https://kubernetes.io/docs/reference/config-api/kubeadm-config.v1beta4/#kubeadm-k8s-io-v1beta4-ClusterConfiguration
@@ -56,9 +63,8 @@ imageRepository: registry.k8s.io
 kubernetesVersion: 1.32.3 # custom
 networking:
   dnsDomain: cluster.local
-  podSubnet: "10.244.0.0/16" # custom
+  podSubnet: "10.244.0.0/16" # custom cHEKC
   serviceSubnet: 10.96.0.0/12
-proxy: {}
 scheduler: {}
 
 ---
@@ -82,33 +88,23 @@ cgroupDriver: systemd
 clusterDNS:
   - 10.96.0.10
 clusterDomain: cluster.local
-containerRuntimeEndpoint: ""
+containerRuntimeEndpoint: "unix:///var/run/containerd/containerd.sock"
 cpuManagerReconcilePeriod: 0s
 crashLoopBackOff: {}
-evictionPressureTransitionPeriod: 0s
+evictionPressureTransitionPeriod: 5m
 fileCheckFrequency: 0s
 healthzBindAddress: 127.0.0.1
 healthzPort: 10248
-httpCheckFrequency: 0s
-imageMaximumGCAge: 0s
-imageMinimumGCAge: 0s
-logging:
-  flushFrequency: 0
-  options:
-    json:
-      infoBufferSize: "0"
-    text:
-      infoBufferSize: "0"
-  verbosity: 0
+httpCheckFrequency: 20s
 memorySwap: {}
-nodeStatusReportFrequency: 0s
-nodeStatusUpdateFrequency: 0s
+nodeStatusReportFrequency: 5m
+nodeStatusUpdateFrequency: 10s
 rotateCertificates: true
 runtimeRequestTimeout: 0s
-serverTLSBootstrap: true
-shutdownGracePeriod: 0s
-shutdownGracePeriodCriticalPods: 0s
+serverTLSBootstrap: true # custom
+shutdownGracePeriod: 30s
+shutdownGracePeriodCriticalPods: 10s
 staticPodPath: /etc/kubernetes/manifests
-streamingConnectionIdleTimeout: 0s
-syncFrequency: 0s
-volumeStatsAggPeriod: 0s
+streamingConnectionIdleTimeout: 4h
+syncFrequency: 1m
+volumeStatsAggPeriod: 1m

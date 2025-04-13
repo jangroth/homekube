@@ -1,7 +1,5 @@
 # update-control-node
 
-
-
 ### Updates files on localhost:
 - /etc/hosts
 - ~/.ssh/known_hosts

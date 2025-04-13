@@ -1,15 +1,9 @@
 ---
 #
 # ./common/README.md
-# ./kubeadm/README.md
 #
 
 - hosts: [all_nodes]
   become: true
   roles:
     - role: common
-
-- hosts: [control_plane]
-  become: true
-  roles:
-    - role: kubeadm

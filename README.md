@@ -7,8 +7,15 @@ Running Upstream Kubernetes on Raspberry Pi.
 <div style="display: flex; justify-content: space-around;">
   <img src="./doc/images/logo-kubernetes.svg.png" alt="kubernetes" style="height: 50px;">
   <img src="./doc/images/logo-argocd.png" alt="argocd" style="height: 50px;">
-  <img src="./doc/images/logo-flannel.png" alt="flannel" style="height: 50px;">
+  <img src="./doc/images/logo-cilium.png" alt="cilium" style="height: 50px;">
   <img src="./doc/images/logo-metallb.png" alt="metallb" style="height: 50px;">
+</div>
+
+---
+
+<div style="display: flex; justify-content: space-around;">
+  <img src="./doc/images/logo-ansible.png" alt="ansible" style="height: 50px;">
+  <img src="./doc/images/logo-opentofu.png" alt="ansible" style="height: 50px;">
 </div>
 
 ---
@@ -34,10 +41,10 @@ Running Upstream Kubernetes on Raspberry Pi.
 ### Components
 | Component | Package | Version |
 |-|-|-|
-| Kubernetes | `k8s` | _1.31.6_ |
-| CRI | `containerd` | _2.0.0_ |
+| Kubernetes | `k8s` | _1.32.3_ |
+| CRI | `containerd` | _2.0.4_ |
 | | `runc` | _1.1.5_ |
-| CNI | `flannel` | _0.26.4_ |
+| CNI | `cilium` | _1.17.2_ |
 | | `containernetworking-plugins` | _1.1.1_ |
 | CSI | `longhorn` | tbd |
 
@@ -79,7 +86,7 @@ graph TD
         
         subgraph K8s Services [Kubernetes Services]
             API[kube-apiserver</br> Cluster Ip Network</br>10.96.0.0/12]
-            CNI[Flannel CNI]
+            CNI[Cilum CNI]
             Pods[Pod Network</br> 10.244.0.0/16]
         end
 
@@ -136,10 +143,9 @@ See [Configuration & Logs](./doc/01_conf_logs.md).
 
 ⚠️ The following steps outline the tasks required to install Kubernetes on _my_ Raspberry Pi cluster. It's likely that _your_ cluster is  different. Use this repository as a guide, but don't expect every step to work for your system.
 
-1. [Environment preparation](./doc/02_env_preparation.md) (manual)
-2. [Node configuration](./doc/02_node_configuration.md) (Ansible)
-3. [Kubernetes installation](./doc/02_kube_installation.md) (kubeadm, semi-manual)
-4. [ArgoCD rollout & App of Apps deployment](./doc/02_argo_rollout.md) (OpenTofu/tf)
+2. [Node configuration](./doc/02_01_node-configuration.md) (Ansible)
+3. [Kubernetes installation](./doc/02_02_kube_installation.md) (kubeadm, semi-manual)
+4. [ArgoCD rollout & App of Apps deployment](./doc/02_03_argo_rollout.md) (OpenTofu/tf)
 5. [ArgoCD application notes](https://github.com/jangroth/homekube-apps)
 
 ## References / Inspiration
@@ -147,3 +153,4 @@ See [Configuration & Logs](./doc/01_conf_logs.md).
 - ['Kubernetes the hard way'](https://github.com/kelseyhightower/kubernetes-the-hard-way/tree/master) - Kelsey Hightower
 - ['How to install Kubernetes on Raspberry PI'](https://medium.com/karlmax-berlin/how-to-install-kubernetes-on-raspberry-pi-53b4ce300b58) - Ralph Bergmann
 - [Kubernetes documentation](https://kubernetes.io/docs/setup/production-environment/)
+- [Pi Kubernetes Cluster](https://picluster.ricsanfre.com/docs/home/)

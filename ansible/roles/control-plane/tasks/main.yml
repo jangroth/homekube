@@ -1,0 +1,5 @@
+---
+- import_tasks: copy_config_files.yml
+  tags: update-only
+# - import_tasks: install_cilium_cli.yml
+- import_tasks: install_helm.yml
