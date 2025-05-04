@@ -1,0 +1,18 @@
+---
+- name: Install helm via Homebrew
+  community.general.homebrew:
+    name: helm
+    state: latest
+  register: helm_install
+
+- name: Install k9s via Homebrew
+  community.general.homebrew:
+    name: k9s
+    state: latest
+  register: k9s_install
+
+- name: Install cilium CLI via Homebrew
+  community.general.homebrew:
+    name: cilium-cli
+    state: latest
+  register: cilium_install

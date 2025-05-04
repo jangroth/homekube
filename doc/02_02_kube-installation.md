@@ -16,12 +16,12 @@ sudo reboot 0
 - Verify [kubeadm-config.yaml](../ansible/roles/control-plane/files/kubeadm-config.yaml)
 - Verify [cilium-helm-values.yaml](../ansible/roles/control-plane/files/cilium-helm-values.yaml)
 
-### control node
+### On control node...
 ```shell
 ansible-playbook 04-setup-control-plane-node.yml
 ```
 
-### pi0
+### On pi0...
 ```shell
 sudo kubeadm init --config ~/kubeadm-config.yaml | tee ~/install_k8s.log
 mkdir -p $HOME/.kube
@@ -32,13 +32,13 @@ sudo chown $(id -u):$(id -g) $HOME/.kube/config
 - kubeadm runs without errors
 - pi0 node "not ready"
 
-### control node
+### On control node...
 ```shell
 scp pi0:~/install_k8s.log ../downloads
 scp pi0:~/.kube/config ~/.kube/config
 vi ~/.kube/config # change ip 
 ```
-### pi0
+### On pi0...
 ```shell
 helm repo add cilium https://helm.cilium.io/
 helm install cilium cilium/cilium --version 1.17.2 \
@@ -51,13 +51,13 @@ helm install cilium cilium/cilium --version 1.17.2 \
 - reboot
 - approve (new) pending csrs
 
-### control node
+### On control node...
 ```shell
 scp pi0:~/install_cilium.log ../downloads
 ```
 
-### pi1, pi2
+### On pi1, pi2...
 - join nodes
 
-### control node
-approve kubelet CSR
+### On control node
+- approve kubelet CSR

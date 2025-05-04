@@ -29,9 +29,9 @@ Running Upstream Kubernetes on Raspberry Pi.
 ---
 
 <!-- TOC -->
-- [Overview](#overview)
-- [Documentation / Notes](#documentation--notes)
-- [References / Inspiration](#thanks--references--inspiration)
+* [Overview](#overview)
+* [Setup](#setup)
+* [References / Inspiration](#references--inspiration)
 <!-- /TOC -->
 
 ---
@@ -50,12 +50,11 @@ Running Upstream Kubernetes on Raspberry Pi.
 
 ### Nodes
 
-| Hostname | Device | OS | Static IP | Internal IP |
+| Hostname | Device | OS | Architecture | Static IP | Internal IP |
 |-|-|-|-|-|
-| pi0 | Raspberry Pi 5, 8GB | Raspberry Pi OS Lite 64-bit | 192.168.86.220 | 10.0.0.20 |
-| pi1 | Raspberry Pi 5, 8GB | Raspberry Pi OS Lite 64-bit | 192.168.86.221 | 10.0.0.21 | 
-| pi2 | Raspberry Pi 5, 8GB | Raspberry Pi OS Lite 64-bit | 192.168.86.222 | 10.0.0.22 |
-
+| pi0 | Raspberry Pi 5, 8GB | Raspberry Pi OS Lite 64-bit | aarch64 | 192.168.86.220 | 10.0.0.20 |
+| pi1 | Raspberry Pi 5, 8GB | Raspberry Pi OS Lite 64-bit | aarch64 | 192.168.86.221 | 10.0.0.21 | 
+| pi2 | Raspberry Pi 5, 8GB | Raspberry Pi OS Lite 64-bit | aarch64 | 192.168.86.222 | 10.0.0.22 |
 
 ### Kubernetes Network Architecture
 
@@ -147,6 +146,13 @@ See [Configuration & Logs](./doc/01_conf_logs.md).
 3. [Kubernetes installation](./doc/02_02_kube_installation.md) (kubeadm, semi-manual)
 4. [ArgoCD rollout & App of Apps deployment](./doc/02_03_argo_rollout.md) (OpenTofu/tf)
 5. [ArgoCD application notes](https://github.com/jangroth/homekube-apps)
+
+### Quick update
+
+```shell
+ansible-playbook 01-update-control-node.yml --tags update-only
+ansible-playbook 03-setup-nodes.yml --tags update-only
+```
 
 ## References / Inspiration
 
