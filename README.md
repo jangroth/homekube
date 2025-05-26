@@ -44,7 +44,7 @@ Running Upstream Kubernetes on Raspberry Pi.
 | Kubernetes | `k8s` | _1.32.3_ |
 | CRI | `containerd` | _2.0.4_ |
 | | `runc` | _1.1.5_ |
-| CNI | `cilium` | _1.17.2_ |
+| CNI | `cilium` | _1.17.3_ |
 | | `containernetworking-plugins` | _1.1.1_ |
 | CSI | `longhorn` | tbd |
 
@@ -140,18 +140,18 @@ See [Configuration & Logs](./doc/01_conf_logs.md).
 
 ## Setup
 
-⚠️ The following steps outline the tasks required to install Kubernetes on _my_ Raspberry Pi cluster. It's likely that _your_ cluster is  different. Use this repository as a guide, but don't expect every step to work for your system.
+⚠️ The following steps outline the tasks required to install Kubernetes on _my_ Raspberry Pi cluster. It's likely that _your_ cluster is  different. Use this repository as a guide, but don't expect every step to work for your system. ⚠️
 
-2. [Node configuration](./doc/02_01_node-configuration.md) (Ansible)
-3. [Kubernetes installation](./doc/02_02_kube_installation.md) (kubeadm, semi-manual)
-4. [ArgoCD rollout & App of Apps deployment](./doc/02_03_argo_rollout.md) (OpenTofu/tf)
-5. [ArgoCD application notes](https://github.com/jangroth/homekube-apps)
+1. [Node configuration](./doc/02_01_node-configuration.md) (Ansible)
+2. [Kubernetes installation](./doc/02_02_kube_installation.md) (kubeadm, semi-manual)
+3. [ArgoCD rollout & App of Apps deployment](./doc/02_03_argo_rollout.md) (OpenTofu/tf)
+4. [ArgoCD application notes](https://github.com/jangroth/homekube-apps)
 
 ### Quick update
 
 ```shell
 ansible-playbook 01-update-control-node.yml --tags update-only
-ansible-playbook 03-setup-nodes.yml --tags update-only
+ansible-playbook 03-setup-k8s-nodes.yml --tags update-only
 ```
 
 ## References / Inspiration

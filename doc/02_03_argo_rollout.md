@@ -8,4 +8,4 @@ tofu init
 tofu plan
 tofu apply -auto-approve
 ```
-- This will deploy ArgoCD as well as a [root-app](../tofu/manifests/argocd-root-app.yaml) ("App of apps"-patttern).
+- This will deploy ArgoCD as well as a [root-app](../tofu/manifests/argocd-root-app.yaml) ("App of apps"-pattern).

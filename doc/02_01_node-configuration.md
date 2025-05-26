@@ -12,7 +12,9 @@
 
 ## 1.4 Control node
 
-- Run [playbook](../ansible/roles/update-control-node/README.md) to update control node itself
-- Run [playbook](../ansible/roles/prepare-pis/README.md) to prepare pis for ansible
-- Run [playbook](../ansible/roles/common/README.md) to install and configure pis for Kubernetes
-- Run [playbook](../ansible/roles/control-plane/README.md) to prepare the control plane for kubeadm
+Run the following playbooks in order (see [ansible/README.md](../ansible/README.md) for details):
+
+- [01-update-control-node](../ansible/01-update-control-node.yml) to update the control node 
+- [02-setup-raspberry-pi](../ansible/02-setup-raspberry-pi.yml) to run basic Pi configuration
+- [03-setup-k8s-nodes](../ansible/03-setup-k8s-nodes.yml) to configure the nodes for Kubernetes
+- [04-setup-k8s-control-plane](../ansible/04-setup-k8s-control-plane.yml) to configure the control plane for Kubernetes

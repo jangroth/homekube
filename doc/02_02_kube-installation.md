@@ -7,18 +7,18 @@ cilium uninstall
 sudo kubeadm reset --force
 sudo rm -rf /etc/cni/net.d /var/lib/etcd /var/lib/kubelet /etc/kubernetes
 sudo reboot 0
-ansible-playbook 03-setup-nodes.yml
+ansible-playbook 03-setup-k8s-nodes.yml
 sudo reboot 0
 ```
 
 ## 3.1 Initialize control plane
 
-- Verify [kubeadm-config.yaml](../ansible/roles/control-plane/files/kubeadm-config.yaml)
-- Verify [cilium-helm-values.yaml](../ansible/roles/control-plane/files/cilium-helm-values.yaml)
+- Verify [kubeadm-config.yaml](../ansible/roles/k8s-control-plane/files/kubeadm-config.yaml)
+- Verify [cilium-helm-values.yaml](../ansible/roles/k8s-control-plane/files/cilium-helm-values.yaml)
 
 ### On control node...
 ```shell
-ansible-playbook 04-setup-control-plane-node.yml
+ansible-playbook 04-setup-k8s-control-plane.yml
 ```
 
 ### On pi0...

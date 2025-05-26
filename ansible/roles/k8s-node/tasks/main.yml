@@ -4,6 +4,8 @@
 - import_tasks: disable_swap.yml
 - import_tasks: configure_networking.yml
 - import_tasks: configure_cgroups.yml
+- import_tasks: configure_storage.yml
+  tags: update-only
 - import_tasks: install_container_runtime.yml
 - import_tasks: unhold_kube_packages.yml
   tags: unhold-kube

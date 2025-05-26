@@ -35,7 +35,7 @@
     test_command: uptime
   when: reboot_required_file.stat.exists
 
-- name: Install common pack
+- name: Install common packages
   apt:
     name:
       - apt-transport-https

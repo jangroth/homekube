@@ -1,6 +1,6 @@
 ---
 cilium_version: "1.17.2"
 containerd_version: "2.0.4"
-kubernetes_version: "1.32"
+kubernetes_version: "1.33"
 ssh_username: "homekube"
 system_arch: "linux-arm64"

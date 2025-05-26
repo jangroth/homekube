@@ -1,10 +1,6 @@
 ---
-#
-#  ./update-control-node/README.md
-#
-
 - hosts: localhost
   connection: local
   gather_facts: false
   roles:
-    - role: update-control-node
+    - role: control-node

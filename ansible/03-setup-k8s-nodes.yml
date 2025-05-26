@@ -1,9 +1,5 @@
 ---
-#
-# ./common/README.md
-#
-
 - hosts: [all_nodes]
   become: true
   roles:
-    - role: common
+    - role: k8s-node

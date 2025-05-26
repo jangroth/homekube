@@ -1,0 +1,41 @@
+---
+- name: Include group variables for Raspberry Pis
+  include_vars:
+    dir: "{{ playbook_dir }}/group_vars"
+
+- name: Install storage package
+  apt:
+    name:
+      - open-iscsi
+      - cryptsetup
+      - dmsetup
+    state: present
+
+- name: Install cryptsetup package
+  apt:
+    name: cryptsetup
+    state: present
+    update_cache: yes
+
+- name: Enable and start iscsid service
+  systemd:
+    name: iscsid
+    enabled: yes
+    state: started
+
+- name: Load iscsi_tcp kernel module
+  modprobe:
+    name: iscsi_tcp
+    state: present
+
+- name: Add iscsi_tcp to /etc/modules to load on boot
+  lineinfile:
+    path: /etc/modules
+    line: iscsi_tcp
+    state: present
+
+- name: Check if iscsi_tcp module is loaded
+  shell: lsmod | grep iscsi_tcp
+  register: iscsi_tcp_loaded
+  changed_when: false
+  failed_when: false
