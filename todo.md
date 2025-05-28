@@ -2,7 +2,6 @@
 
 ### Current
 - install longhorn
-    curl -sSfL https://raw.githubusercontent.com/longhorn/longhorn/v1.8.1/scripts/environment_check.sh | bash
 
 ## Notes
 
