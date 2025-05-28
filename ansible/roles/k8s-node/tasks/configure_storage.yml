@@ -11,12 +11,6 @@
       - dmsetup
     state: present
 
-- name: Install cryptsetup package
-  apt:
-    name: cryptsetup
-    state: present
-    update_cache: yes
-
 - name: Enable and start iscsid service
   systemd:
     name: iscsid
@@ -37,5 +31,17 @@
 - name: Check if iscsi_tcp module is loaded
   shell: lsmod | grep iscsi_tcp
   register: iscsi_tcp_loaded
+  changed_when: false
+  failed_when: false
+
+- name: Add dm_crypt to /etc/modules to load on boot
+  lineinfile:
+    path: /etc/modules
+    line: dm_crypt
+    state: present
+
+- name: Check if dm_crypt module is loaded
+  shell: lsmod | grep dm_crypt
+  register: dm_crypt_loaded
   changed_when: false
   failed_when: false

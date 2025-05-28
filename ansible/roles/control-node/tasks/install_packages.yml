@@ -26,3 +26,27 @@
     name: argocd
     state: latest
   register: argocd_install
+
+- name: Check if Longhorn CLI is already installed with correct version
+  ansible.builtin.command: longhornctl version
+  register: longhorn_version_check
+  changed_when: false
+  failed_when: false
+  check_mode: false
+
+- name: Download Longhorn CLI from GitHub
+  ansible.builtin.get_url:
+    url: "https://github.com/longhorn/cli/releases/download/v{{ longhorn_version }}/longhornctl-darwin-arm64"
+    dest: "{{ playbook_dir }}/../downloads"
+    mode: "0755"
+  when: longhorn_version_check.rc != 0 or longhorn_version not in longhorn_version_check.stdout
+
+- name: Install Longhorn CLI to /usr/local/bin
+  ansible.builtin.copy:
+    src: "{{ playbook_dir }}/../downloads/longhornctl-darwin-arm64"
+    dest: /usr/local/bin/longhornctl
+    mode: "0755"
+    remote_src: yes
+  become: true
+  register: longhorn_install
+  when: longhorn_version_check.rc != 0 or longhorn_version not in longhorn_version_check.stdout

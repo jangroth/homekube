@@ -2,5 +2,6 @@
 cilium_version: "1.17.2"
 containerd_version: "2.0.4"
 kubernetes_version: "1.33"
+longhorn_version: "1.9.0"
 ssh_username: "homekube"
 system_arch: "linux-arm64"
