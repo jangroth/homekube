@@ -2,6 +2,7 @@
 - name: Set connection variables for initial setup
   set_fact:
     ansible_user: boot
+    # ansible_user: homekube
     ansible_ssh_pass: boot
   no_log: true
 
@@ -27,7 +28,43 @@
     owner: "{{ ssh_username }}"
     group: "{{ ssh_username }}"
 
-- name: Add public keys to authorized_keys
+- name: Check if SSH key already exists
+  stat:
+    path: "/home/{{ ssh_username }}/.ssh/id_ed25519.pub"
+  register: ssh_key_file
+
+- name: Generate SSH key pair for node
+  openssh_keypair:
+    path: "/home/{{ ssh_username }}/.ssh/id_ed25519"
+    type: ed25519
+    size: 4096
+    state: present
+    owner: "{{ ssh_username }}"
+    group: "{{ ssh_username }}"
+    mode: "0600"
+  when: not ssh_key_file.stat.exists
+
+- name: Set correct permissions for public key
+  file:
+    path: "/home/{{ ssh_username }}/.ssh/id_ed25519.pub"
+    state: file
+    owner: "{{ ssh_username }}"
+    group: "{{ ssh_username }}"
+    mode: "0644"
+  when: not ssh_key_file.stat.exists
+
+- name: Update hostname in public key on the host
+  shell: sed -i "s/$(cat /home/{{ ssh_username }}/.ssh/id_ed25519.pub | cut -d' ' -f3)$/{{ inventory_hostname }}@homekube/" /home/{{ ssh_username }}/.ssh/id_ed25519.pub
+  when: not ssh_key_file.stat.exists
+
+- name: Copy node's public SSH key to control node
+  fetch:
+    src: "/home/{{ ssh_username }}/.ssh/id_ed25519.pub"
+    dest: "{{ role_path }}/files/pub_keys/{{ inventory_hostname }}.pub"
+    flat: yes
+  # become_user: "{{ ssh_username }}"
+
+- name: Add other node's public keys to authorized_keys
   authorized_key:
     user: homekube
     key: "{{ lookup('file', item) }}"
