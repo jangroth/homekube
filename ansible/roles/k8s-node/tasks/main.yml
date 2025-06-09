@@ -2,6 +2,8 @@
 - import_tasks: update_system.yml
   tags: update-only
 - import_tasks: disable_swap.yml
+- import_tasks: configure_kernel.yml
+  tags: update-only
 - import_tasks: configure_networking.yml
 - import_tasks: configure_cgroups.yml
 - import_tasks: configure_storage.yml
