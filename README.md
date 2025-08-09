@@ -39,6 +39,7 @@ Running Upstream Kubernetes on Raspberry Pi.
 ## Overview
 
 ### Components
+
 | Component | Package | Version |
 |-|-|-|
 | Kubernetes | `k8s` | _1.32.3_ |
@@ -51,9 +52,9 @@ Running Upstream Kubernetes on Raspberry Pi.
 ### Nodes
 
 | Hostname | Device | OS | Architecture | Static IP | Internal IP |
-|-|-|-|-|-|
+|-|-|-|-|-|-|
 | pi0 | Raspberry Pi 5, 8GB | Raspberry Pi OS Lite 64-bit | aarch64 | 192.168.86.220 | 10.0.0.20 |
-| pi1 | Raspberry Pi 5, 8GB | Raspberry Pi OS Lite 64-bit | aarch64 | 192.168.86.221 | 10.0.0.21 | 
+| pi1 | Raspberry Pi 5, 8GB | Raspberry Pi OS Lite 64-bit | aarch64 | 192.168.86.221 | 10.0.0.21 |
 | pi2 | Raspberry Pi 5, 8GB | Raspberry Pi OS Lite 64-bit | aarch64 | 192.168.86.222 | 10.0.0.22 |
 
 ### Kubernetes Network Architecture
@@ -104,6 +105,7 @@ graph TD
     API -- Controls --> CNI
     CNI -- Manages --> Pods
 ```
+
 ### Kubernetes Cluster Architecture
 
 ```mermaid
@@ -156,7 +158,7 @@ ansible-playbook 03-setup-k8s-nodes.yml --tags update-only
 
 ## References / Inspiration
 
-- ['Kubernetes the hard way'](https://github.com/kelseyhightower/kubernetes-the-hard-way/tree/master) - Kelsey Hightower
-- ['How to install Kubernetes on Raspberry PI'](https://medium.com/karlmax-berlin/how-to-install-kubernetes-on-raspberry-pi-53b4ce300b58) - Ralph Bergmann
-- [Kubernetes documentation](https://kubernetes.io/docs/setup/production-environment/)
-- [Pi Kubernetes Cluster](https://picluster.ricsanfre.com/docs/home/)
+* ['Kubernetes the hard way'](https://github.com/kelseyhightower/kubernetes-the-hard-way/tree/master) - Kelsey Hightower
+* ['How to install Kubernetes on Raspberry PI'](https://medium.com/karlmax-berlin/how-to-install-kubernetes-on-raspberry-pi-53b4ce300b58) - Ralph Bergmann
+* [Kubernetes documentation](https://kubernetes.io/docs/setup/production-environment/)
+* [Pi Kubernetes Cluster](https://picluster.ricsanfre.com/docs/home/)

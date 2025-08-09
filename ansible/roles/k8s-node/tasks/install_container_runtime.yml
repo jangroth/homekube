@@ -15,38 +15,61 @@
     mode: "0755"
 
 #
-# Container runtime
+# Container runtime (containerd)
 #
-- name: Check if containerd already downloaded
-  stat:
-    path: "{{ playbook_dir }}/../downloads/containerd-{{ containerd_version }}.tar.gz"
-  register: containerd_archive
-  run_once: true
-  delegate_to: localhost
-  become: false
+- name: Check installed containerd version
+  command: /usr/local/bin/containerd --version
+  register: installed_containerd_version_raw
+  failed_when: false
+  changed_when: false
 
-- name: Download containerd
-  get_url:
-    url: "https://github.com/containerd/containerd/releases/download/v{{ containerd_version }}/containerd-{{ containerd_version }}-{{ system_arch }}.tar.gz"
-    dest: "{{ playbook_dir }}/../downloads/containerd-{{ containerd_version }}.tar.gz"
-    mode: "0644"
-  run_once: true
-  delegate_to: localhost
-  become: false
-  when: not containerd_archive.stat.exists
+- name: Parse installed containerd version
+  set_fact:
+    installed_containerd_version: "{{ installed_containerd_version_raw.stdout.split(' ')[2] | regex_replace('^v', '') | default('none') }}"
+  when: installed_containerd_version_raw.rc == 0
 
-- name: Copy containerd to remote hosts
-  copy:
-    src: "{{ playbook_dir }}/../downloads/containerd-{{ containerd_version }}.tar.gz"
-    dest: "/tmp/containerd-{{ containerd_version }}.tar.gz"
-    mode: "0644"
+- name: Set installed version to none if containerd not found
+  set_fact:
+    installed_containerd_version: "none"
+  when: installed_containerd_version_raw.rc != 0
 
-- name: Extract containerd
-  unarchive:
-    src: "/tmp/containerd-{{ containerd_version }}.tar.gz"
-    dest: /usr/local
-    remote_src: yes
-    creates: /usr/local/bin/containerd
+- name: Display the extracted version number
+  ansible.builtin.debug:
+    var: installed_containerd_version
+
+# Only proceed with containerd installation/update if version differs
+- block:
+    - name: Check if containerd already downloaded
+      stat:
+        path: "{{ playbook_dir }}/../downloads/containerd-{{ containerd_version }}.tar.gz"
+      register: containerd_archive
+      run_once: true
+      delegate_to: localhost
+      become: false
+
+    - name: Download containerd
+      get_url:
+        url: "https://github.com/containerd/containerd/releases/download/v{{ containerd_version }}/containerd-{{ containerd_version }}-{{ system_arch }}.tar.gz"
+        dest: "{{ playbook_dir }}/../downloads/containerd-{{ containerd_version }}.tar.gz"
+        mode: "0644"
+      run_once: true
+      delegate_to: localhost
+      become: false
+      when: not containerd_archive.stat.exists
+
+    - name: Copy containerd to remote hosts
+      copy:
+        src: "{{ playbook_dir }}/../downloads/containerd-{{ containerd_version }}.tar.gz"
+        dest: "/tmp/containerd-{{ containerd_version }}.tar.gz"
+        mode: "0644"
+
+    - name: Extract containerd
+      unarchive:
+        src: "/tmp/containerd-{{ containerd_version }}.tar.gz"
+        dest: /usr/local
+        remote_src: yes
+
+  when: installed_containerd_version != containerd_version
 
 - name: Create containerd directory
   file:
@@ -75,6 +98,12 @@
 - name: Reload systemd
   systemd:
     daemon_reload: yes
+
+- name: Restart containerd if binary was updated
+  systemd:
+    name: containerd
+    state: restarted
+  when: installed_containerd_version != containerd_version
 
 - name: Enable and start containerd
   systemd:
