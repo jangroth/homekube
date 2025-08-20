@@ -21,6 +21,12 @@
     state: latest
   register: cilium_install
 
+- name: Install hubble CLI
+  community.general.homebrew:
+    name: hubble
+    state: latest
+  register: hubble_install
+
 - name: Install argocd CLI
   community.general.homebrew:
     name: argocd

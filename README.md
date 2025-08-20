@@ -42,8 +42,8 @@ Running Upstream Kubernetes on Raspberry Pi.
 
 | Component | Package | Version |
 |-|-|-|
-| Kubernetes | `k8s` | _1.32.3_ |
-| CRI | `containerd` | _2.0.4_ |
+| Kubernetes | `k8s` | _1.33.3_ |
+| CRI | `containerd` | _2.1.4_ |
 | | `runc` | _1.1.5_ |
 | CNI | `cilium` | _1.17.3_ |
 | | `containernetworking-plugins` | _1.1.1_ |
@@ -58,6 +58,11 @@ Running Upstream Kubernetes on Raspberry Pi.
 | pi2 | Raspberry Pi 5, 8GB | Raspberry Pi OS Lite 64-bit | aarch64 | 192.168.86.222 | 10.0.0.22 |
 
 ### Kubernetes Network Architecture
+
+  podSubnet: "10.244.0.0/16" # kubeadm / ClusterConfiguration
+  serviceSubnet: 10.96.0.0/12 # kubeadm / ClusterConfiguration
+  clusterDNS: 10.96.0.10 # kubeadm / KubeletConfiguration
+  clusterPoolIPv4PodCIDRList: "10.244.0.0/16" # cilium
 
 ```mermaid
 graph TD

@@ -11,11 +11,14 @@
     group: root
     mode: "0644"
 
-- name: modprobe overlay
-  command: modprobe overlay
+- name: Ensure overlay kernel module is loaded
+  community.general.modprobe:
+    name: overlay
 
-- name: modprobe br_netfilter
-  command: modprobe br_netfilter
+- name: Ensure br_netfilter kernel module is loaded
+  community.general.modprobe:
+    name: br_netfilter
+    state: present
 
 - name: Copy sysctl configuration
   copy:
@@ -25,6 +28,4 @@
     owner: root
     group: root
     mode: "0644"
-
-- name: sysctl --system
-  command: sysctl --system
+  notify: reload sysctl
