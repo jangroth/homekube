@@ -1,0 +1,95 @@
+---
+- name: Create ArgoCD namespace
+  kubernetes.core.k8s:
+    name: argocd
+    api_version: v1
+    kind: Namespace
+    state: present
+    definition:
+      metadata:
+        name: argocd
+        annotations:
+          ansible.org/managed-by: "ansible"
+          ansible.org/version: "{{ ansible_version.full }}"
+          ansible.org/module: "gitops"
+  delegate_to: localhost
+
+- name: Add ArgoCD Helm repository
+  kubernetes.core.helm_repository:
+    name: argo
+    repo_url: "https://argoproj.github.io/argo-helm"
+  delegate_to: localhost
+
+- name: Install ArgoCD using Helm
+  kubernetes.core.helm:
+    chart_ref: argo/argo-cd
+    chart_version: "{{ argocd_version }}"
+    create_namespace: false
+    release_name: argocd
+    release_namespace: argocd
+    release_state: present
+    release_values: "{{ argocd_helm_values }}"
+    update_repo_cache: true
+    wait: true
+  delegate_to: localhost
+  register: argocd_install
+
+- name: Wait for ArgoCD server to be ready
+  kubernetes.core.k8s_info:
+    api_version: apps/v1
+    kind: Deployment
+    name: argocd-server
+    namespace: argocd
+    wait: true
+    wait_condition:
+      type: Available
+      status: "True"
+    wait_timeout: 300
+  delegate_to: localhost
+
+- name: Create ArgoCD root application
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: argoproj.io/v1alpha1
+      kind: Application
+      metadata:
+        name: root-app
+        namespace: argocd
+        finalizers:
+          - resources-finalizer.argocd.argoproj.io
+        labels:
+          app.kubernetes.io/managed-by: "ansible"
+          app.kubernetes.io/part-of: "argocd"
+        annotations:
+          ansible.org/managed-by: "ansible"
+          ansible.org/version: "{{ ansible_version.full }}"
+      spec:
+        project: default
+        source:
+          repoURL: "{{ argocd_root_app_repo_url }}"
+          path: "{{ argocd_root_app_path }}"
+          targetRevision: "{{ argocd_root_app_target_revision }}"
+        destination:
+          server: https://kubernetes.default.svc
+          namespace: argocd
+        syncPolicy:
+          automated:
+            prune: true
+            selfHeal: true
+  delegate_to: localhost
+
+- name: Display ArgoCD admin password retrieval command
+  debug:
+    msg: |
+      ArgoCD has been successfully installed!
+
+      To get the admin password, run:
+      kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d
+
+      To access ArgoCD UI, you can port-forward:
+      kubectl port-forward svc/argocd-server -n argocd 8080:443
+
+      Then access: http://localhost:8080
+      Username: admin
+  tags: always

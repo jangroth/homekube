@@ -36,6 +36,7 @@
       - net-tools
       - netcat-openbsd
       - nmap
+      - tcpdump
       - traceroute
       - tree
       - vim
