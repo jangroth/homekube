@@ -1,0 +1,8 @@
+---
+- name: Setup CNI (Cilium) on Kubernetes cluster
+  hosts: pi0
+  become: false
+  gather_facts: true
+  
+  roles:
+    - cni

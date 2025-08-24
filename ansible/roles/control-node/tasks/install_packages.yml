@@ -7,7 +7,17 @@
   community.general.homebrew:
     name: helm
     state: latest
-  register: helm_install
+  delegate_to: localhost # Explicit for clarity, but not needed on localhost host
+
+- name: Check for 'diff' plugin with helm command
+  ansible.builtin.shell: helm plugin list
+  delegate_to: localhost
+  register: helm_plugins
+
+- name: Install helm diff plugin
+  ansible.builtin.shell: helm plugin install https://github.com/databus23/helm-diff
+  delegate_to: localhost
+  when: "'diff' not in helm_plugins.stdout"
 
 - name: Install k9s
   community.general.homebrew:

@@ -1,18 +1,9 @@
 ---
-- name: Create ArgoCD namespace
-  kubernetes.core.k8s:
-    name: argocd
-    api_version: v1
-    kind: Namespace
-    state: present
-    definition:
-      metadata:
-        name: argocd
-        annotations:
-          ansible.org/managed-by: "ansible"
-          ansible.org/version: "{{ ansible_version.full }}"
-          ansible.org/module: "gitops"
-  delegate_to: localhost
+- name: Check if Kubernetes cluster is ready
+  ansible.builtin.shell: kubectl get nodes {{ ansible_hostname }} --no-headers
+  register: k8s_node_status
+  failed_when: k8s_node_status.rc != 0
+  changed_when: false
 
 - name: Add ArgoCD Helm repository
   kubernetes.core.helm_repository:
@@ -20,11 +11,11 @@
     repo_url: "https://argoproj.github.io/argo-helm"
   delegate_to: localhost
 
-- name: Install ArgoCD using Helm
+- name: Install/Upgrade ArgoCD using Helm
   kubernetes.core.helm:
     chart_ref: argo/argo-cd
     chart_version: "{{ argocd_version }}"
-    create_namespace: false
+    create_namespace: true
     release_name: argocd
     release_namespace: argocd
     release_state: present
@@ -44,7 +35,6 @@
     wait_condition:
       type: Available
       status: "True"
-    wait_timeout: 300
   delegate_to: localhost
 
 - name: Create ArgoCD root application
