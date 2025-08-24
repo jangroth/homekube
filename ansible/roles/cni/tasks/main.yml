@@ -12,13 +12,15 @@
     repo_url: https://helm.cilium.io/
   delegate_to: localhost
 
-- name: Check if Cilium is already installed
-  kubernetes.core.helm_info:
-    name: cilium
-    release_namespace: kube-system
+- name: Check for differences using helm-diff
+  ansible.builtin.shell: >
+    helm diff upgrade cilium cilium/cilium
+    --version {{ cilium_version }}
+    --namespace kube-system
+    --values {{ role_path }}/files/cilium-helm-values.yaml
   delegate_to: localhost
-  register: cilium_release
-  failed_when: false
+  register: helm_diff_check
+  failed_when: false # This is crucial. We expect a non-zero exit code if there's a diff.
 
 - name: Install/Upgrade Cilium CNI
   kubernetes.core.helm:
@@ -33,7 +35,13 @@
     update_repo_cache: true
     wait: true
   delegate_to: localhost
+  when: "helm_diff_check.rc != 0"
   register: cilium_install_result
+
+- name: Display Helm output
+  ansible.builtin.debug:
+    var: cilium_install_result
+  when: cilium_install_result is defined
 
 - name: Display Cilium installation result
   ansible.builtin.debug:
@@ -50,13 +58,6 @@
   until: cilium_pods_check.stdout == ""
   retries: 18
   delay: 10
-  changed_when: false
-
-- name: Verify CNI installation
-  ansible.builtin.shell: kubectl get nodes {{ ansible_hostname }} --no-headers
-  delegate_to: localhost
-  register: node_status
-  failed_when: node_status.rc != 0
   changed_when: false
 
 - name: Confirm node is ready with CNI

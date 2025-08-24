@@ -4,6 +4,7 @@
   register: k8s_node_status
   failed_when: k8s_node_status.rc != 0
   changed_when: false
+  delegate_to: localhost
 
 - name: Add ArgoCD Helm repository
   kubernetes.core.helm_repository:
@@ -11,7 +12,15 @@
     repo_url: "https://argoproj.github.io/argo-helm"
   delegate_to: localhost
 
-- name: Install/Upgrade ArgoCD using Helm
+- name: Check if ArgoCD is already installed
+  kubernetes.core.helm_info:
+    name: argocd
+    release_namespace: argocd
+  delegate_to: localhost
+  register: argocd_release
+  failed_when: false
+
+- name: Install/Upgrade ArgoCD
   kubernetes.core.helm:
     chart_ref: argo/argo-cd
     chart_version: "{{ argocd_version }}"
@@ -20,10 +29,20 @@
     release_namespace: argocd
     release_state: present
     release_values: "{{ argocd_helm_values }}"
+    values_files:
+      - "{{ role_path }}/files/argocd-helm-values.yaml"
     update_repo_cache: true
     wait: true
   delegate_to: localhost
-  register: argocd_install
+  register: argocd_install_result
+
+- name: Display ArgoCD installation result
+  ansible.builtin.debug:
+    msg: |
+      ArgoCD {{ 'installed' if argocd_release.status is not defined else 'upgraded' }} successfully
+      Chart: {{ argocd_install_result.chart | default('argo/argo-cd') }}
+      Version: {{ argocd_version }}
+      Changed: {{ argocd_install_result.changed }}
 
 - name: Wait for ArgoCD server to be ready
   kubernetes.core.k8s_info:
