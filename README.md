@@ -6,16 +6,15 @@ Running Upstream Kubernetes on Raspberry Pi.
 
 <div style="display: flex; justify-content: space-around;">
   <img src="./doc/images/logo-kubernetes.svg.png" alt="kubernetes" style="height: 50px;">
-  <img src="./doc/images/logo-argocd.png" alt="argocd" style="height: 50px;">
   <img src="./doc/images/logo-cilium.png" alt="cilium" style="height: 50px;">
-  <img src="./doc/images/logo-metallb.png" alt="metallb" style="height: 50px;">
+  <img src="./doc/images/logo-longhorn.png" alt="longhorn" style="height: 50px;">
+  <img src="./doc/images/logo-argocd.png" alt="argocd" style="height: 50px;">
 </div>
 
 ---
 
 <div style="display: flex; justify-content: space-around;">
   <img src="./doc/images/logo-ansible.png" alt="ansible" style="height: 50px;">
-  <img src="./doc/images/logo-opentofu.png" alt="ansible" style="height: 50px;">
 </div>
 
 ---
@@ -47,7 +46,7 @@ Running Upstream Kubernetes on Raspberry Pi.
 | | `runc` | _1.1.5_ |
 | CNI | `cilium` | _1.18.1_ |
 | | `containernetworking-plugins` | _1.1.1_ |
-| CSI | `longhorn` | tbd |
+| CSI | `longhorn` | _1.9.1_ |
 
 ### Nodes
 

@@ -41,7 +41,8 @@ On control node:
 ```shell
 scp pi0:~/install_k8s.log ../downloads
 scp pi0:~/.kube/config ~/.kube/config
-vi ~/.kube/config # change ip 
+vi ~/.kube/config # change ip
+ansible-playbook 05-setup-cni.yml
 ```
 
 - pi0 node ready

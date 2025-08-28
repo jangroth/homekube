@@ -28,7 +28,6 @@
     release_name: argocd
     release_namespace: argocd
     release_state: present
-    release_values: "{{ argocd_helm_values }}"
     values_files:
       - "{{ role_path }}/files/argocd-helm-values.yaml"
     update_repo_cache: true

@@ -1,27 +1,15 @@
 ---
-cilium_version: "1.18.1"
-containerd_version: "2.1.4"
-kubernetes_version: "1.33"
-longhorn_version: "1.9.0"
-ssh_username: "homekube"
-system_arch: "linux-arm64"
-
-# ArgoCD/GitOps configuration
-argocd_version: "8.3.0"
+argocd_version: "8.3.1"
 argocd_root_app_repo_url: "https://github.com/jangroth/homekube-apps.git"
 argocd_root_app_path: "applications"
 argocd_root_app_target_revision: "HEAD"
 
-# ArgoCD Helm values
-argocd_helm_values:
-  controller:
-    replicas: 1
-  server:
-    replicas: 1
-  repoServer:
-    replicas: 1
-  applicationSet:
-    replicaCount: 1
-  configs:
-    params:
-      "server.insecure": true
+cilium_version: "1.18.1"
+
+containerd_version: "2.1.4"
+
+kubernetes_version: "1.33"
+
+ssh_username: "homekube"
+
+system_arch: "linux-arm64"
