@@ -41,7 +41,7 @@ Running Upstream Kubernetes on Raspberry Pi.
 
 | Component | Package | Version |
 |-|-|-|
-| Kubernetes | `k8s` | _1.33.3_ |
+| Kubernetes | `k8s` | _1.34.0_ |
 | CRI | `containerd` | _2.1.4_ |
 | | `runc` | _1.1.5_ |
 | CNI | `cilium` | _1.18.1_ |
@@ -55,60 +55,16 @@ Running Upstream Kubernetes on Raspberry Pi.
 | pi0 | Raspberry Pi 5, 8GB | Raspberry Pi OS Lite 64-bit | aarch64 | 192.168.86.220 | 10.0.0.20 |
 | pi1 | Raspberry Pi 5, 8GB | Raspberry Pi OS Lite 64-bit | aarch64 | 192.168.86.221 | 10.0.0.21 |
 | pi2 | Raspberry Pi 5, 8GB | Raspberry Pi OS Lite 64-bit | aarch64 | 192.168.86.222 | 10.0.0.22 |
+| pi3 | Raspberry Pi 5, 8GB | Raspberry Pi OS Lite 64-bit | aarch64 | 192.168.86.223 | 10.0.0.23 |
 
 ### Kubernetes Network Architecture
 
-  podSubnet: "10.244.0.0/16" # kubeadm / ClusterConfiguration
-  serviceSubnet: 10.96.0.0/12 # kubeadm / ClusterConfiguration
-  clusterDNS: 10.96.0.10 # kubeadm / KubeletConfiguration
-  clusterPoolIPv4PodCIDRList: "10.244.0.0/16" # cilium
-
-```mermaid
-graph TD
-    subgraph Home Network [Home Network 192.168.86.0/24]
-        Router[Home Router]
-    end
-    
-    subgraph Kubernetes Cluster
-        subgraph Node1 [pi0: Control Plane]
-            Pi0[Raspberry Pi 5 8GB]
-            Pi0_ext[192.168.86.220]
-            Pi0_int[10.0.0.20]
-        end
-        
-        subgraph Node2 [pi1: Worker]
-            Pi1[Raspberry Pi 5 8GB]
-            Pi1_ext[192.168.86.221]
-            Pi1_int[10.0.0.21]
-        end
-        
-        subgraph Node3 [pi2: Worker]
-            Pi2[Raspberry Pi 5 8GB]
-            Pi2_ext[192.168.86.222]
-            Pi2_int[10.0.0.22]
-        end
-        
-        subgraph K8s Services [Kubernetes Services]
-            API[kube-apiserver</br> Cluster Ip Network</br>10.96.0.0/12]
-            CNI[Cilum CNI]
-            Pods[Pod Network</br> 10.244.0.0/16]
-        end
-
-        InternalSwitch[Internal Network Switch 10.0.0.0/24]
-    end
-    
-    Router -- External Network --> Pi0_ext
-    Router -- External Network --> Pi1_ext
-    Router -- External Network --> Pi2_ext
-    
-    Pi0_int -- Internal Network --> InternalSwitch
-    Pi1_int -- Internal Network --> InternalSwitch
-    Pi2_int -- Internal Network --> InternalSwitch
-    
-    Pi0 -- Hosts --> API
-    API -- Controls --> CNI
-    CNI -- Manages --> Pods
-```
+| Network | CIDR | Component |
+|-|-|-|
+| Pod Network | 10.244.0.0/16 | kubeadm / ClusterConfiguration |
+| Service Network | 10.96.0.0/12 | kubeadm / ClusterConfiguration |
+| Cluster DNS | 10.96.0.10 | kubeadm / KubeletConfiguration |
+| Cilium Pod Network | 10.244.0.0/16 | cilium |
 
 ### Kubernetes Cluster Architecture
 
@@ -150,7 +106,7 @@ See [Configuration & Logs](./doc/01_conf_logs.md).
 
 1. [Node configuration](./doc/02_01_node-configuration.md) (Ansible)
 2. [Kubernetes installation](./doc/02_02_kube_installation.md) (kubeadm, semi-manual)
-3. [ArgoCD rollout & App of Apps deployment](./doc/02_03_argo_rollout.md) (OpenTofu/tf)
+3. [ArgoCD rollout & App of Apps deployment](./doc/02_03_argo_rollout.md) (Ansible & ArgoCD)
 4. [ArgoCD application notes](https://github.com/jangroth/homekube-apps)
 
 ### Quick update

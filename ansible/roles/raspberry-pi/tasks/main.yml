@@ -11,6 +11,3 @@
 - import_tasks: enable_pciex.yml
   tags: nvme
   when: "'nvme' in ansible_run_tags"
-- import_tasks: configure_nvme.yml
-  tags: nvme
-  when: "'nvme' in ansible_run_tags"
