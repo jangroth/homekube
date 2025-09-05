@@ -1,5 +1,5 @@
 ---
-argocd_version: "8.3.3"
+argocd_helm_chart_version: "8.3.4"
 argocd_root_app_repo_url: "https://github.com/jangroth/homekube-apps.git"
 argocd_root_app_path: "applications"
 argocd_root_app_target_revision: "HEAD"

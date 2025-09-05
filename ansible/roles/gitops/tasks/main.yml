@@ -23,7 +23,7 @@
 - name: Install/Upgrade ArgoCD
   kubernetes.core.helm:
     chart_ref: argo/argo-cd
-    chart_version: "{{ argocd_version }}"
+    chart_version: "{{ argocd_helm_chart_version }}"
     create_namespace: true
     release_name: argocd
     release_namespace: argocd
@@ -40,7 +40,7 @@
     msg: |
       ArgoCD {{ 'installed' if argocd_release.status is not defined else 'upgraded' }} successfully
       Chart: {{ argocd_install_result.chart | default('argo/argo-cd') }}
-      Version: {{ argocd_version }}
+      Version: {{ argocd_helm_chart_version }}
       Changed: {{ argocd_install_result.changed }}
 
 - name: Wait for ArgoCD server to be ready

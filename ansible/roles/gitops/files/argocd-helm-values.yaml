@@ -8,7 +8,16 @@ configs:
     server.insecure: true
 controller:
   replicas: 1
+  metrics:
+    enabled: true
+redis:
+  exporter:
+    enabled: true
+  metrics:
+    enabled: true
 repoServer:
   replicas: 1
 server:
   replicas: 1
+  metrics:
+    enabled: true
