@@ -4,22 +4,29 @@ Running Upstream Kubernetes on Raspberry Pi.
 
 ---
 
+![Homekube](./doc/images/homekube2.png)
+
+---
+
 <div style="display: flex; justify-content: space-around;">
   <img src="./doc/images/logo-kubernetes.svg.png" alt="kubernetes" style="height: 50px;">
   <img src="./doc/images/logo-cilium.png" alt="cilium" style="height: 50px;">
   <img src="./doc/images/logo-longhorn.png" alt="longhorn" style="height: 50px;">
-  <img src="./doc/images/logo-argocd.png" alt="argocd" style="height: 50px;">
 </div>
 
 ---
 
 <div style="display: flex; justify-content: space-around;">
-  <img src="./doc/images/logo-ansible.png" alt="ansible" style="height: 50px;">
+  <img src="./doc/images/logo-prometheus.png" alt="prometheus" style="height: 50px;">
+  <img src="./doc/images/logo-grafana.png" alt="grafana" style="height: 50px;">
+  <img src="./doc/images/logo-loki.png" alt="loki" style="height: 50px;">
 </div>
 
 ---
-
-![Homekube](./doc/images/homekube.png)
+<div style="display: flex; justify-content: space-around;">
+  <img src="./doc/images/logo-ansible.png" alt="ansible" style="height: 50px;">
+  <img src="./doc/images/logo-argocd.png" alt="argocd" style="height: 50px;">
+</div>
 
 ---
 
