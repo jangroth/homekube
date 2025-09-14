@@ -1,0 +1,31 @@
+version: "3"
+
+vars:
+  ANSIBLE_DIR: ./ansible
+
+tasks:
+  default:
+    desc: "Default task - Update both control node and Kubernetes nodes"
+    deps:
+      - update-all
+
+  setup-gitops:
+    desc: "Install and configure ArgoCD for GitOps operations"
+    dir: "{{.ANSIBLE_DIR}}"
+    cmd: ansible-playbook 06-setup-gitops.yml
+
+  update-all:
+    desc: "Update both control node and Kubernetes nodes"
+    deps:
+      - update-control-node
+      - update-k8s-nodes
+
+  update-control-node:
+    desc: "Update control node with necessary tools and configurations"
+    dir: "{{.ANSIBLE_DIR}}"
+    cmd: ansible-playbook 01-update-control-node.yml --tags update-only
+
+  update-k8s-nodes:
+    desc: "Update Kubernetes nodes with system packages and storage configuration"
+    dir: "{{.ANSIBLE_DIR}}"
+    cmd: ansible-playbook 03-setup-k8s-nodes.yml --tags update-only

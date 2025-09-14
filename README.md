@@ -125,7 +125,6 @@ ansible-playbook 03-setup-k8s-nodes.yml --tags update-only
 
 ## References / Inspiration
 
-* ['Kubernetes the hard way'](https://github.com/kelseyhightower/kubernetes-the-hard-way/tree/master) - Kelsey Hightower
-* ['How to install Kubernetes on Raspberry PI'](https://medium.com/karlmax-berlin/how-to-install-kubernetes-on-raspberry-pi-53b4ce300b58) - Ralph Bergmann
-* [Kubernetes documentation](https://kubernetes.io/docs/setup/production-environment/)
-* [Pi Kubernetes Cluster](https://picluster.ricsanfre.com/docs/home/)
+* [Kubernetes the hard way](https://github.com/kelseyhightower/kubernetes-the-hard-way/tree/master) - Kelsey Hightower
+* [Pi Kubernetes Cluster](https://picluster.ricsanfre.com/docs/home/) - Ricardo Sanchez
+* [k8s-gitops](https://github.com/xunholy/k8s-gitops) - Michael Fornaro
