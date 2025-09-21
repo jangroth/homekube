@@ -9,6 +9,11 @@ tasks:
     deps:
       - update-all
 
+  setup-cni:
+    desc: "Install and configure CNI plugins for Kubernetes"
+    dir: "{{.ANSIBLE_DIR}}"
+    cmd: ansible-playbook 05-setup-cni.yml
+
   setup-gitops:
     desc: "Install and configure ArgoCD for GitOps operations"
     dir: "{{.ANSIBLE_DIR}}"

@@ -48,10 +48,10 @@ Running Upstream Kubernetes on Raspberry Pi.
 
 | Component | Package | Version |
 |-|-|-|
-| Kubernetes | `k8s` | _1.34.0_ |
+| Kubernetes | `k8s` | _1.34.1_ |
 | CRI | `containerd` | _2.1.4_ |
 | | `runc` | _1.1.5_ |
-| CNI | `cilium` | _1.18.1_ |
+| CNI | `cilium` | _1.18.2_ |
 | | `containernetworking-plugins` | _1.1.1_ |
 | CSI | `longhorn` | _1.9.1_ |
 

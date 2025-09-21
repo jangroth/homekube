@@ -4,7 +4,7 @@ argocd_root_app_repo_url: "https://github.com/jangroth/homekube-apps.git"
 argocd_root_app_path: "applications"
 argocd_root_app_target_revision: "HEAD"
 
-cilium_version: "1.18.1"
+cilium_version: "1.18.2"
 
 containerd_version: "2.1.4"
 
