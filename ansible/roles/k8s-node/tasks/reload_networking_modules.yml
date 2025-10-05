@@ -1,0 +1,6 @@
+---
+# this works around a problem where raspberry pi unloads networking modules and CNI funcionality breaks
+- name: Run tcpdump network diagnostics on wlan0
+  shell: sudo tcpdump -i wlan0 -c2
+  register: tcpdump_output
+  ignore_errors: true

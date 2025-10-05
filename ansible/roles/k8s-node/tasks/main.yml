@@ -5,6 +5,8 @@
 - import_tasks: configure_kernel.yml
   tags: update-only
 - import_tasks: configure_networking.yml
+- import_tasks: reload_networking_modules.yml
+  tags: update-only
 - import_tasks: configure_cgroups.yml
 - import_tasks: configure_storage.yml
   tags: update-only
