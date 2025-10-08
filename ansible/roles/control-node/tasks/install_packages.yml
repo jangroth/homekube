@@ -2,12 +2,25 @@
 - name: Update Homebrew package index
   community.general.homebrew:
     update_homebrew: yes
+  delegate_to: localhost
+
+- name: Update ansible
+  community.general.homebrew:
+    name: ansible
+    state: latest
+  delegate_to: localhost
+
+- name: Install/update kubectl
+  community.general.homebrew:
+    name: kubectl
+    state: latest
+  delegate_to: localhost
 
 - name: Install helm
   community.general.homebrew:
     name: helm
     state: latest
-  delegate_to: localhost # Explicit for clarity, but not needed on localhost host
+  delegate_to: localhost
 
 - name: Check for 'diff' plugin with helm command
   ansible.builtin.shell: helm plugin list
@@ -23,28 +36,33 @@
   community.general.homebrew:
     name: k9s
     state: latest
+  delegate_to: localhost
   register: k9s_install
 
 - name: Install cilium CLI
   community.general.homebrew:
     name: cilium-cli
     state: latest
+  delegate_to: localhost
   register: cilium_install
 
 - name: Install hubble CLI
   community.general.homebrew:
     name: hubble
     state: latest
+  delegate_to: localhost
   register: hubble_install
 
 - name: Install argocd CLI
   community.general.homebrew:
     name: argocd
     state: latest
+  delegate_to: localhost
   register: argocd_install
 
 - name: Check if Longhorn CLI is already installed with correct version
   ansible.builtin.command: longhornctl version
+  delegate_to: localhost
   register: longhorn_version_check
   changed_when: false
   failed_when: false
@@ -55,6 +73,7 @@
     url: "https://github.com/longhorn/cli/releases/download/v{{ longhorn_version }}/longhornctl-darwin-arm64"
     dest: "{{ playbook_dir }}/../downloads"
     mode: "0755"
+  delegate_to: localhost
   when: longhorn_version_check.rc != 0 or longhorn_version not in longhorn_version_check.stdout
 
 - name: Install Longhorn CLI to /usr/local/bin
@@ -64,5 +83,6 @@
     mode: "0755"
     remote_src: yes
   become: true
+  delegate_to: localhost
   register: longhorn_install
   when: longhorn_version_check.rc != 0 or longhorn_version not in longhorn_version_check.stdout
