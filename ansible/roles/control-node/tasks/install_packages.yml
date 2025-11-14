@@ -4,6 +4,8 @@
     update_homebrew: yes
   delegate_to: localhost
 
+# basics
+
 - name: Update ansible
   community.general.homebrew:
     name: ansible
@@ -38,6 +40,15 @@
     state: latest
   delegate_to: localhost
   register: k9s_install
+
+# kubernetes tools
+
+- name: Install etcdctl
+  community.general.homebrew:
+    name: etcd
+    state: latest
+  delegate_to: localhost
+  register: etcd_install
 
 - name: Install cilium CLI
   community.general.homebrew:

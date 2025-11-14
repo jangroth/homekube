@@ -1,0 +1,98 @@
+---
+#
+# etcdctl installation
+#
+- name: Check installed etcdctl version
+  command: /usr/local/bin/etcdctl version
+  register: installed_etcdctl_version_raw
+  failed_when: false
+  changed_when: false
+
+- name: Parse installed etcdctl version
+  set_fact:
+    installed_etcdctl_version: "{{ installed_etcdctl_version_raw.stdout_lines[0].split(' ')[2] | regex_replace('^v', '') | default('none') }}"
+  when: installed_etcdctl_version_raw.rc == 0
+
+- name: Set installed version to none if etcdctl not found
+  set_fact:
+    installed_etcdctl_version: "none"
+  when: installed_etcdctl_version_raw.rc != 0
+
+- name: Display the extracted etcdctl version number
+  ansible.builtin.debug:
+    var: installed_etcdctl_version
+
+# Only proceed with etcdctl installation/update if version differs
+- block:
+    - name: Check if etcdctl already downloaded
+      stat:
+        path: "{{ playbook_dir }}/../downloads/etcdctl-v{{ etcdctl_version }}.tar.gz"
+      register: etcdctl_archive
+      run_once: true
+      delegate_to: localhost
+      become: false
+
+    - name: Download etcdctl
+      get_url:
+        url: "https://github.com/etcd-io/etcd/releases/download/v{{ etcdctl_version }}/etcd-v{{ etcdctl_version }}-{{ system_arch }}.tar.gz"
+        dest: "{{ playbook_dir }}/../downloads/etcdctl-v{{ etcdctl_version }}.tar.gz"
+        mode: "0644"
+      run_once: true
+      delegate_to: localhost
+      become: false
+      when: not etcdctl_archive.stat.exists
+
+    - name: Copy etcdctl archive to remote hosts
+      copy:
+        src: "{{ playbook_dir }}/../downloads/etcdctl-v{{ etcdctl_version }}.tar.gz"
+        dest: "/tmp/etcdctl-v{{ etcdctl_version }}.tar.gz"
+        mode: "0644"
+
+    - name: Create temporary extraction directory
+      file:
+        path: "/tmp/etcd-extract"
+        state: directory
+        mode: "0755"
+
+    - name: Extract etcdctl archive
+      unarchive:
+        src: "/tmp/etcdctl-v{{ etcdctl_version }}.tar.gz"
+        dest: "/tmp/etcd-extract"
+        remote_src: yes
+
+    - name: Install etcdctl binary
+      copy:
+        src: "/tmp/etcd-extract/etcd-v{{ etcdctl_version }}-{{ system_arch }}/etcdctl"
+        dest: "/usr/local/bin/etcdctl"
+        mode: "0755"
+        owner: root
+        group: root
+        remote_src: yes
+
+    - name: Install etcd binary (optional)
+      copy:
+        src: "/tmp/etcd-extract/etcd-v{{ etcdctl_version }}-{{ system_arch }}/etcd"
+        dest: "/usr/local/bin/etcd"
+        mode: "0755"
+        owner: root
+        group: root
+        remote_src: yes
+
+    - name: Clean up temporary files
+      file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - "/tmp/etcdctl-v{{ etcdctl_version }}.tar.gz"
+        - "/tmp/etcd-extract"
+
+  when: installed_etcdctl_version != etcdctl_version
+
+- name: Verify etcdctl installation
+  command: /usr/local/bin/etcdctl version
+  register: etcdctl_verification
+  changed_when: false
+
+- name: Display etcdctl verification
+  ansible.builtin.debug:
+    var: etcdctl_verification.stdout_lines

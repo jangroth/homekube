@@ -15,5 +15,7 @@
   tags: unhold-kube
   when: "'unhold-kube' in ansible_run_tags"
 - import_tasks: install_kube_packages.yml
+- import_tasks: install_etcdctl.yml
+  tags: update-only
 - import_tasks: display_dependencies.yml
   tags: update-only
