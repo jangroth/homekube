@@ -20,20 +20,25 @@
   register: argocd_release
   failed_when: false
 
-- name: Install/Upgrade ArgoCD
-  kubernetes.core.helm:
-    chart_ref: argo/argo-cd
-    chart_version: "{{ argocd_helm_chart_version }}"
-    create_namespace: true
-    release_name: argocd
-    release_namespace: argocd
-    release_state: present
-    values_files:
-      - "{{ role_path }}/files/argocd-helm-values.yaml"
-    update_repo_cache: true
-    wait: true
+- name: Debug Helm variables
+  ansible.builtin.debug:
+    msg:
+      - "Chart Version: {{ argocd_helm_chart_version }}"
+      - "Values File: {{ role_path }}/files/argocd-helm-values.yaml"
+      # You can add more variables here
+  delegate_to: localhost
+
+- name: Install/Upgrade ArgoCD via helm command
+  ansible.builtin.shell: |
+    helm upgrade --install argocd argo/argo-cd \
+      --version "{{ argocd_helm_chart_version }}" \
+      --namespace argocd \
+      --create-namespace \
+      --values "{{ role_path }}/files/argocd-helm-values.yaml" \
+      --wait
   delegate_to: localhost
   register: argocd_install_result
+  changed_when: "'has been upgraded' in argocd_install_result.stdout or 'has been installed' in argocd_install_result.stdout"
 
 - name: Display ArgoCD installation result
   ansible.builtin.debug:
