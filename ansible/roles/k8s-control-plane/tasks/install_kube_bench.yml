@@ -1,0 +1,68 @@
+---
+- name: Check if kube-bench is already installed
+  command: kube-bench version
+  register: kube_bench_version_check
+  failed_when: false
+  changed_when: false
+
+- name: Parse installed kube-bench version
+  set_fact:
+    installed_kube_bench_version: "{{ kube_bench_version_check.stdout | regex_search('([0-9.]+)', '\\1') | first }}"
+  when: kube_bench_version_check.rc == 0
+
+- name: Set installed version to none if kube-bench not found
+  set_fact:
+    installed_kube_bench_version: "none"
+  when: kube_bench_version_check.rc != 0
+
+- name: Display the extracted kube-bench version number
+  ansible.builtin.debug:
+    var: installed_kube_bench_version
+
+# Only proceed with kube-bench installation/update if version differs
+- block:
+    - name: Check if kube-bench already downloaded
+      stat:
+        path: "{{ playbook_dir }}/../downloads/kube-bench_{{ kube_bench_version }}_{{ system_arch_v2 }}.deb"
+      register: kube_bench_archive
+      run_once: true
+      delegate_to: localhost
+      become: false
+
+    - name: Download kube-bench
+      get_url:
+        # https://github.com/aquasecurity/kube-bench/releases/download/v0.13.0/kube-bench_0.13.0_linux_arm64.deb
+        url: "https://github.com/aquasecurity/kube-bench/releases/download/v{{ kube_bench_version }}/kube-bench_{{ kube_bench_version }}_{{ system_arch_v2 }}.deb"
+        dest: "{{ playbook_dir }}/../downloads/kube-bench_{{ kube_bench_version }}_{{ system_arch_v2 }}.deb"
+        mode: "0644"
+      run_once: true
+      delegate_to: localhost
+      become: false
+      when: not kube_bench_archive.stat.exists
+
+    - name: Copy kube-bench to remote hosts
+      copy:
+        src: "{{ playbook_dir }}/../downloads/kube-bench_{{ kube_bench_version }}_{{ system_arch_v2 }}.deb"
+        dest: "/tmp/kube-bench_{{ kube_bench_version }}_{{ system_arch_v2 }}.deb"
+        mode: "0644"
+
+    - name: Install kube-bench
+      apt:
+        deb: "/tmp/kube-bench_{{ kube_bench_version }}_{{ system_arch_v2 }}.deb"
+        state: present
+
+    - name: Remove temporary kube-bench file
+      file:
+        path: "/tmp/kube-bench_{{ kube_bench_version }}_{{ system_arch_v2 }}.deb"
+        state: absent
+
+  when: installed_kube_bench_version != kube_bench_version
+
+- name: Verify kube-bench installation
+  command: kube-bench version
+  register: final_kube_bench_version
+  changed_when: false
+
+- name: Display final kube-bench version
+  ansible.builtin.debug:
+    msg: "kube-bench {{ final_kube_bench_version.stdout }} is installed"
