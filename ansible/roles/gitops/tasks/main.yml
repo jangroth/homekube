@@ -20,14 +20,6 @@
   register: argocd_release
   failed_when: false
 
-- name: Debug Helm variables
-  ansible.builtin.debug:
-    msg:
-      - "Chart Version: {{ argocd_helm_chart_version }}"
-      - "Values File: {{ role_path }}/files/argocd-helm-values.yaml"
-      # You can add more variables here
-  delegate_to: localhost
-
 - name: Install/Upgrade ArgoCD via helm command
   ansible.builtin.shell: |
     helm upgrade --install argocd argo/argo-cd \
