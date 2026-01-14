@@ -1,0 +1,31 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    run: nginx
+  name: nginx
+spec:
+  containers:
+  - image: nginx
+    name: nginx
+    resources: {}
+    volumeMounts:
+    - name: secret-volume
+      mountPath: /etc/secret-volume
+      readOnly: true
+    env:
+    - name: SECRET_USERNAME
+      valueFrom:
+        secretKeyRef:
+          name: two
+          key: bar
+    envFrom:
+    - secretRef:
+        name: one
+  dnsPolicy: ClusterFirst
+  restartPolicy: Always
+  volumes:
+    - name: secret-volume
+      secret:
+        secretName: one
+status: {}

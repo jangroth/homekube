@@ -17,5 +17,7 @@
 - import_tasks: install_kube_packages.yml
 - import_tasks: install_etcdctl.yml
   tags: update-only
+- import_tasks: install_tailscale.yml
+  tags: update-only
 - import_tasks: display_dependencies.yml
   tags: update-only
