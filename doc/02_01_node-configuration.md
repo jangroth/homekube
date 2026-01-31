@@ -4,7 +4,7 @@
 
 - Create images for nodes
   - Raspberry Pi Imager -> Raspberry Pi OS Lite (64b)
-  - Hostname, username, password, ssid, password, ...
+  - Hostname pi0-p3, username - boot, password - boot, ssid, password, ...
 
 ## 1.2. Pi nodes
 
@@ -15,7 +15,7 @@
 
 - Assign static IPs, reboot
 
-## 1.4 Control node & Pi
+## 1.4 Control node & Pis
 
 - Connect nvme drive
 - Run the following playbooks in order (see [ansible/README.md](../ansible/README.md) for details):
