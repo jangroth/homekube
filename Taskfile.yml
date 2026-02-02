@@ -34,3 +34,36 @@ tasks:
     desc: "Update Kubernetes nodes with system packages and storage configuration"
     dir: "{{.ANSIBLE_DIR}}"
     cmd: ansible-playbook 03-setup-k8s-nodes.yml --tags update-only
+
+  setup-venv:
+    desc: "Create Python virtual environment and install dependencies"
+    cmds:
+      - python3 -m venv .venv
+      - .venv/bin/pip install --upgrade pip
+      - .venv/bin/pip install -r requirements.txt
+    sources:
+      - requirements.txt
+    generates:
+      - .venv/bin/activate
+
+  lint:
+    desc: "Run all linting checks (ansible-lint, syntax check, yamllint)"
+    deps:
+      - lint-ansible
+      - test-ansible
+      - lint-yaml
+
+  lint-ansible:
+    desc: "Run ansible-lint on all playbooks"
+    dir: "{{.ANSIBLE_DIR}}"
+    cmd: ../.venv/bin/ansible-lint
+
+  test-ansible:
+    desc: "Validate ansible playbooks syntax"
+    dir: "{{.ANSIBLE_DIR}}"
+    cmd: ../.venv/bin/ansible-playbook --syntax-check *.yml
+
+  lint-yaml:
+    desc: "Run yamllint on ansible directory"
+    dir: "{{.ANSIBLE_DIR}}"
+    cmd: ../.venv/bin/yamllint .
