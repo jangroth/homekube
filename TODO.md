@@ -1,8 +1,9 @@
 # TODO
 
-## In Progress
+## Done
 
-- [ ] AI workspace setup (CLAUDE.md, TODO, DECISIONS, repo structure)
+- [x] AI workspace setup (CLAUDE.md, TODO, DECISIONS, repo structure)
+- [x] Pin Python (3.12) and ansible-core (2.20.4) via uv in homekube-main
 
 ---
 

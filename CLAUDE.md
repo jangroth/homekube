@@ -69,7 +69,7 @@ After the physical step, ansible handles the rest:
 ## Working Approach
 
 - **Spec-driven**: write a spec in `docs/specs/NNN-title.md` before any significant implementation. Specs define the problem, acceptance criteria, and approach.
-- **Decision log**: record key decisions in `DECISIONS.md`
+- **Decision log**: record key decisions in `DECISIONS.md`, newest decision first
 - **Todo**: open tasks tracked in `TODO.md`
 - **Trust**: Claude proposes, human approves for destructive/irreversible operations (this policy evolves over time as trust is established)
 
