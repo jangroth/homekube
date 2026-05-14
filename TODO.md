@@ -10,18 +10,26 @@
 
 ## Phase 0 — Tailscale Prereqs (one-time)
 
-- [ ] Generate reusable ephemeral auth key in Tailscale admin console
-- [ ] Store auth key in ansible-vault
+- [x] Generate reusable ephemeral auth key in Tailscale admin console
+- [x] Store auth key in ansible-vault
 
 ---
 
 ## Phase 1 — All Pis Bootstrap (pi0–pi3, same process)
 
-For each pi:
-- [ ] Flash fresh Raspberry Pi OS Lite 64-bit SD card (current WiFi credentials, `boot`/`boot` user)
-- [ ] Boot from SD, verify internet connectivity
-- [ ] Install Tailscale + join tailnet — verify darth can reach pi over Tailscale
-- [ ] Physical NVMe attachment (Pimoroni base)
+**Proven process:** Flash with Imager (current WiFi + `boot`/`boot` + SSH enabled), boot, `ssh boot@pi0.local`, install Tailscale with auth key, then add home + hotspot WiFi via nmcli.
+
+- [x] pi0 — Tailscale joined, permanent WiFi configured
+- [x] pi1 — Tailscale joined, permanent WiFi configured
+- [x] pi2 — Tailscale joined, permanent WiFi configured
+- [ ] pi3 — waiting for a free SD card (only 3 cards available; do after pi0–pi2 boot from NVMe)
+
+Each pi steps:
+- Flash SD card via Imager (current WiFi credentials, `boot`/`boot`, SSH on)
+- Boot, SSH in: `ssh boot@pi0.local` (fall back to `arp -a` if mDNS not ready)
+- `curl -fsSL https://tailscale.com/install.sh | sh && sudo tailscale up --authkey=<key> --hostname=piN`
+- Add home WiFi (priority 100) + hotspot (priority 10) via nmcli
+- Physical NVMe attachment (Pimoroni base)
 
 ---
 
@@ -62,6 +70,17 @@ For each pi:
 - [ ] Run `06-setup-gitops.yml` — install ArgoCD
 - [ ] Verify ArgoCD is up and syncing homekube-apps
 - [ ] Verify all apps healthy: MetalLB, metrics-server, Longhorn, Prometheus, Grafana, Loki
+
+---
+
+## Documentation (update each phase as it's completed)
+
+- [x] Restructure `homekube-main/doc/` — new file naming scheme, remove stale content
+- [x] `01_bootstrap.md` — Imager + Tailscale + nmcli process
+- [x] `02_nvme.md` — rsync-based NVMe clone
+- [ ] `03_ansible.md` — fill in after Phase 3
+- [ ] `04_kubernetes.md` — fill in after Phase 4
+- [ ] `05_gitops.md` — fill in after Phase 5
 
 ---
 
