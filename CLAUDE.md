@@ -19,14 +19,19 @@ Each has its own `CLAUDE.md` with repo-specific context.
 
 ## Cluster
 
-| Node | Role | External IP | Internal IP |
-|------|------|-------------|-------------|
-| pi0  | Control Plane | 192.168.86.220 | 10.0.0.20 |
-| pi1  | Data Plane | 192.168.86.221 | 10.0.0.21 |
-| pi2  | Data Plane | 192.168.86.222 | 10.0.0.22 |
-| pi3  | Data Plane | 192.168.86.223 | 10.0.0.23 |
+| Node | Role | Tailscale | Switch (k8s) |
+|------|------|-----------|--------------|
+| pi0  | Control Plane | pi0 (MagicDNS) | 10.0.0.20 |
+| pi1  | Data Plane | pi1 (MagicDNS) | 10.0.0.21 |
+| pi2  | Data Plane | pi2 (MagicDNS) | 10.0.0.22 |
+| pi3  | Data Plane | pi3 (MagicDNS) | 10.0.0.23 |
 
 Hardware: Raspberry Pi 5 (8GB), Raspberry Pi OS Lite 64-bit (aarch64), 1TB NVMe each.
+
+**Network planes:**
+- **Tailscale (management):** darth → pis for SSH, ansible, kubectl — works from any network
+- **Physical switch (10.0.0.x):** inter-pi traffic, k8s node network, etcd — Tailscale is invisible to k8s
+- **WiFi (wlan0):** internet access only; IP is DHCP, not relied upon
 
 ---
 
@@ -46,12 +51,12 @@ Hardware: Raspberry Pi 5 (8GB), Raspberry Pi OS Lite 64-bit (aarch64), 1TB NVMe 
 
 ## SSH Access
 
-- **From this machine (darth):** `ssh homekube@pi0` (or pi1/pi2/pi3)
+- **From this machine (darth):** `ssh homekube@pi0` (or pi1/pi2/pi3) — resolves via Tailscale MagicDNS
 - **User on pis:** `homekube` — created by ansible, key-auth only
 - **Darth's key:** `homekube-main/ansible/roles/raspberry-pi/files/pub_keys/id_darth_homekube.pub` is in `authorized_keys` on all pis after provisioning
-- **Bootstrap user (fresh SD card only):** `boot` / `boot` — used by ansible to create the `homekube` user, then disabled
+- **Bootstrap user (fresh SD card only):** `boot` / `boot` — used for initial Tailscale join + ansible bootstrap, then disabled
 
-The hosts `pi0`–`pi3` should resolve after the control-node ansible role runs (updates `/etc/hosts` and `~/.ssh/config` on darth).
+All post-bootstrap access goes over Tailscale. No home network or static external IP required.
 
 ---
 
