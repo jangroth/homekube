@@ -22,7 +22,7 @@
 - [x] pi0 — Tailscale joined, permanent WiFi configured
 - [x] pi1 — Tailscale joined, permanent WiFi configured
 - [x] pi2 — Tailscale joined, permanent WiFi configured
-- [ ] pi3 — waiting for a free SD card (only 3 cards available; do after pi0–pi2 boot from NVMe)
+- [ ] pi3 — SD card now freed (pi0–pi2 booting from NVMe); ready to flash + bootstrap
 
 Each pi steps:
 - Flash SD card via Imager (current WiFi credentials, `boot`/`boot`, SSH on)
@@ -37,9 +37,9 @@ Each pi steps:
 
 - [x] Encode validated NVMe setup process into ansible (`copy_mmc_to_nvme.yml`)
 - [x] pi0 — migrated and verified booting from NVMe
-- [ ] pi1 — physical NVMe attach + run playbook
-- [ ] pi2 — physical NVMe attach + run playbook
-- [ ] Verify all migrated pis boot from NVMe and rejoin tailnet (pi3 still waiting on SD card)
+- [x] pi1 — migrated and verified booting from NVMe
+- [x] pi2 — migrated and verified booting from NVMe
+- [x] All three migrated pis (pi0, pi1, pi2) boot from NVMe and reachable over Tailscale (pi3 still waiting on a free SD card)
 
 ---
 
@@ -90,3 +90,4 @@ Each pi steps:
 - [ ] Review all component versions against latest releases
 - [ ] Set up Claude SSH autonomy (trust policy update)
 - [ ] Clean up stale links in `homekube-main/README.md` (Setup section points to non-existent files: `01_conf_logs.md`, `02_01_node-configuration.md`, `02_02_kube_installation.md`, `02_03_argo_rollout.md` — replace with current `docs/01_bootstrap.md` … `05_gitops.md` once those phases are complete)
+- [ ] Fix `enable_pciex.yml`: `file: state: touch` always reports changed; should be `state: file` (existence check) or removed (blockinfile will surface missing-file errors clearly)

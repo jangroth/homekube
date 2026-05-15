@@ -2,6 +2,18 @@
 
 ---
 
+## 008 — Pi5 NVMe boot: MBR partition table + BOOT_ORDER=0xf16 (2026-05-15)
+
+**Decision:** Partition the NVMe with MBR (msdos) label, not GPT. Set bootloader `BOOT_ORDER=0xf16` for NVMe-first SD-fallback.
+
+**Rationale:** Empirical findings during automation of `copy_mmc_to_nvme.yml`:
+- **MBR over GPT:** Pi5 firmware booted cleanly from MBR. GPT with the `esp` flag set on the boot partition did not boot — the firmware fell back to SD. MBR also matches the SD card's format, so PARTUUID handling stays consistent (msdos PARTUUIDs use the `-01`/`-02` suffix the playbook's regex targets).
+- **`BOOT_ORDER=0xf16`, not 0xf61:** `BOOT_ORDER` is read right-to-left (rightmost digit = highest priority). `0xf16` means NVMe(6) first, SD(1) fallback, restart(f). The previous manual doc had `0xf61`, which is SD-first NVMe-second — pi0 was booting from SD with that value despite the doc claiming "NVMe first". Easy to "fix" backwards if not documented.
+
+Both gotchas are now encoded in `ansible/roles/raspberry-pi/tasks/copy_mmc_to_nvme.yml` and the manual `docs/02_nvme.md` recipe.
+
+---
+
 ## 007 — Bootstrap via Imager + manual nmcli, not prepare-sd.py (2026-05-14)
 
 **Decision:** Flash SD cards using Raspberry Pi Imager with current WiFi credentials only. After first boot, add remaining networks (home, hotspot) manually via `nmcli con add`. Do not use `prepare-sd.py` to pre-bake WiFi into cloud-init.
