@@ -11,14 +11,16 @@ Workspace for running vanilla Kubernetes on 4x Raspberry Pi 5.
 
 ## Cluster
 
-| Node | Role | IP |
-|------|------|----|
-| pi0 | Control Plane | 192.168.86.220 |
-| pi1 | Data Plane | 192.168.86.221 |
-| pi2 | Data Plane | 192.168.86.222 |
-| pi3 | Data Plane | 192.168.86.223 |
+| Node | Role            | Tailscale | Boot  |
+|------|-----------------|-----------|-------|
+| pi0  | Control Plane   | pi0       | NVMe  |
+| pi1  | Data Plane      | pi1       | NVMe  |
+| pi2  | Data Plane      | pi2       | NVMe  |
+| pi3  | Data Plane      | pi3       | NVMe  |
 
-Hardware: Raspberry Pi 5 (8GB), Raspberry Pi OS Lite 64-bit, 1TB NVMe each.
+**Hardware:** Raspberry Pi 5 (8GB), Raspberry Pi OS Lite 64-bit, 1TB NVMe each.
+
+**Access:** All management via Tailscale (100.x.x.x MagicDNS). Physical switch (10.0.0.x) for inter-pi k8s traffic only.
 
 ## Stack
 

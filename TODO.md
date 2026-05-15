@@ -22,14 +22,13 @@
 - [x] pi0 — Tailscale joined, permanent WiFi configured
 - [x] pi1 — Tailscale joined, permanent WiFi configured
 - [x] pi2 — Tailscale joined, permanent WiFi configured
-- [ ] pi3 — SD card now freed (pi0–pi2 booting from NVMe); ready to flash + bootstrap
+- [x] pi3 — Tailscale joined, permanent WiFi configured
 
 Each pi steps:
 - Flash SD card via Imager (current WiFi credentials, `boot`/`boot`, SSH on)
 - Boot, SSH in: `ssh boot@pi0.local` (fall back to `arp -a` if mDNS not ready)
 - `curl -fsSL https://tailscale.com/install.sh | sh && sudo tailscale up --authkey=<key> --hostname=piN`
-- Add home WiFi (priority 100) + hotspot (priority 10) via nmcli
-- Physical NVMe attachment (Pimoroni base)
+- Add permanent WiFi networks via nmcli (home, hotspot)
 
 ---
 
@@ -39,7 +38,8 @@ Each pi steps:
 - [x] pi0 — migrated and verified booting from NVMe
 - [x] pi1 — migrated and verified booting from NVMe
 - [x] pi2 — migrated and verified booting from NVMe
-- [x] All three migrated pis (pi0, pi1, pi2) boot from NVMe and reachable over Tailscale (pi3 still waiting on a free SD card)
+- [x] pi3 — migrated and verified booting from NVMe
+- [x] All four pis (pi0–pi3) boot from NVMe and reachable over Tailscale
 
 ---
 
