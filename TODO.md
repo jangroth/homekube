@@ -35,11 +35,11 @@ Each pi steps:
 
 ## Phase 2 — NVMe Automation (via Tailscale)
 
-- [ ] Encode validated NVMe setup process into ansible (`copy_mmc_to_nvme.yml`)
-  - Replace commented-out dd approach with rsync-based approach
-  - Steps: wipefs, parted, mkfs, rsync, UUID fix, boot order
-- [ ] Run ansible NVMe setup for all 4 pis over Tailscale
-- [ ] Verify all 4 pis boot from NVMe and rejoin tailnet
+- [x] Encode validated NVMe setup process into ansible (`copy_mmc_to_nvme.yml`)
+- [x] pi0 — migrated and verified booting from NVMe
+- [ ] pi1 — physical NVMe attach + run playbook
+- [ ] pi2 — physical NVMe attach + run playbook
+- [ ] Verify all migrated pis boot from NVMe and rejoin tailnet (pi3 still waiting on SD card)
 
 ---
 
@@ -75,7 +75,7 @@ Each pi steps:
 
 ## Documentation (update each phase as it's completed)
 
-- [x] Restructure `homekube-main/doc/` — new file naming scheme, remove stale content
+- [x] Restructure `homekube-main/docs/` — new file naming scheme, remove stale content
 - [x] `01_bootstrap.md` — Imager + Tailscale + nmcli process
 - [x] `02_nvme.md` — rsync-based NVMe clone
 - [ ] `03_ansible.md` — fill in after Phase 3
@@ -89,3 +89,4 @@ Each pi steps:
 - [ ] Investigate OOM root cause from previous run (kernel logs, events)
 - [ ] Review all component versions against latest releases
 - [ ] Set up Claude SSH autonomy (trust policy update)
+- [ ] Clean up stale links in `homekube-main/README.md` (Setup section points to non-existent files: `01_conf_logs.md`, `02_01_node-configuration.md`, `02_02_kube_installation.md`, `02_03_argo_rollout.md` — replace with current `docs/01_bootstrap.md` … `05_gitops.md` once those phases are complete)
