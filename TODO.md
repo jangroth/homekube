@@ -56,7 +56,7 @@ Each pi steps:
 - [x] Run `20-configure-darth.yml` — configures darth (SSH config, known_hosts, tooling)
 - [x] Run `21-provision-pis.yml --tags init` — creates `homekube` user, deploys keys, configures OS, swap
 - [x] Run `21-provision-pis.yml` — idempotency check (zero changes)
-- [ ] Run `22-k8s-nodes.yml` — k8s prerequisites on all nodes
+- [x] Run `22-k8s-nodes.yml` — k8s prerequisites on all nodes
 - [ ] Verify `ssh homekube@pi0` works from darth and kylo over Tailscale
 
 ---
@@ -90,6 +90,8 @@ Each pi steps:
 ---
 
 ## Backlog
+
+- [ ] Revisit `display_dependencies` task in k8s-node role — current approach may have a better solution
 
 - [ ] Investigate OOM root cause from previous run (kernel logs, events)
 - [ ] Review all component versions against latest releases
