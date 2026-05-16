@@ -2,10 +2,29 @@
 
 Workspace for running vanilla Kubernetes on 4x Raspberry Pi 5.
 
+## Getting Started
+
+Clone this repo first, then the two sub-repos into it:
+
+```bash
+# Using gh (recommended)
+gh repo clone jangroth/homekube
+cd homekube
+gh repo clone jangroth/homekube-main
+gh repo clone jangroth/homekube-apps
+
+# Using git
+git clone https://github.com/jangroth/homekube.git
+cd homekube
+git clone https://github.com/jangroth/homekube-main.git
+git clone https://github.com/jangroth/homekube-apps.git
+```
+
 ## Repos
 
 | Repo | Purpose |
 |------|---------|
+| [homekube](https://github.com/jangroth/homekube) | This repo — workspace root, decisions, specs, todos |
 | [homekube-main](https://github.com/jangroth/homekube-main) | Ansible provisioning, k8s install, ArgoCD bootstrap |
 | [homekube-apps](https://github.com/jangroth/homekube-apps) | ArgoCD applications (App-of-Apps) |
 
