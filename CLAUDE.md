@@ -51,10 +51,12 @@ Hardware: Raspberry Pi 5 (8GB), Raspberry Pi OS Lite 64-bit (aarch64), 1TB NVMe 
 
 ## SSH Access
 
-- **From this machine (darth):** `ssh homekube@pi0` (or pi1/pi2/pi3) — resolves via Tailscale MagicDNS
-- **User on pis:** `homekube` — created by ansible, key-auth only
-- **Darth's key:** `homekube-main/ansible/roles/raspberry-pi/files/pub_keys/id_darth_homekube.pub` is in `authorized_keys` on all pis after provisioning
-- **Bootstrap user (fresh SD card only):** `boot` / `boot` — used for initial Tailscale join + ansible bootstrap, then disabled
+State depends on phase. After phase 2 (current state), only the `boot` user exists; the `homekube` user is created during phase 3.
+
+- **Bootstrap user:** `boot` / `boot` — password auth. Created at image-build time, used for Tailscale join (phase 1) and ansible bootstrap. Active through phases 1–2; **disabled during phase 3** (`disable_password_auth.yml` + sshd lockdown) once `homekube` is in place.
+- **Operational user (post phase 3):** `homekube` — created by ansible, key-auth only, sudoer.
+- **From darth:** `ssh homekube@pi0` (or pi1/pi2/pi3) — resolves via Tailscale MagicDNS. Works after phase 3.
+- **Darth's key:** `homekube-main/ansible/roles/raspberry-pi/files/pub_keys/id_darth_homekube.pub` is deployed to `authorized_keys` on every pi by `create_user_account.yml`.
 
 All post-bootstrap access goes over Tailscale. No home network or static external IP required.
 
