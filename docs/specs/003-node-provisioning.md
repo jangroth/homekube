@@ -72,7 +72,7 @@ Manual steps that must complete before Phase 3 begins. These cannot be automated
 
 ### 1. Refactor: Remove `ip_addresses_external`, lean on Tailscale MagicDNS
 
-`group_vars/raspberry_pis.yml` has `ip_addresses_external` (192.168.86.x) — DHCP, unreliable — and a vaulted `tailscale_auth_key` no longer needed. Delete both. Keep `ip_addresses_internal` (10.0.0.x): static switch IPs used by k8s itself (node IPs, etcd peers).
+`group_vars/raspberry_pis.yml` has `ip_addresses_external` (192.168.86.x) — DHCP, unreliable — delete it. Keep `ip_addresses_internal` (10.0.0.x): static switch IPs used by k8s itself (node IPs, etcd peers). Keep `tailscale_auth_key` (vaulted): retained for potential future re-provisioning.
 
 Inter-node `/etc/hosts` resolution belongs **on the pis** (k8s plane), not on darth. Darth uses MagicDNS exclusively.
 
@@ -80,7 +80,7 @@ Inter-node `/etc/hosts` resolution belongs **on the pis** (k8s plane), not on da
 
 | File | Action | Notes |
 |------|--------|-------|
-| `ansible/group_vars/raspberry_pis.yml` | edit | Remove `ip_addresses_external` and `tailscale_auth_key` blocks |
+| `ansible/group_vars/raspberry_pis.yml` | edit | Remove `ip_addresses_external`; keep `tailscale_auth_key` |
 | `ansible/group_vars/all_nodes.yml` | **new** | `ansible_user: homekube`, `ansible_ssh_private_key_file: ~/.ssh/id_darth_homekube` |
 | `ansible/roles/control-node/tasks/update_etc_hosts.yml` | **delete** | Darth isn't on 10.0.0.x; MagicDNS handles darth → pi resolution |
 | `ansible/roles/control-node/tasks/main.yml` | edit | Drop the `update_etc_hosts.yml` import |
