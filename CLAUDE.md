@@ -39,8 +39,8 @@ Hardware: Raspberry Pi 5 (8GB), Raspberry Pi OS Lite 64-bit (aarch64), 1TB NVMe 
 
 | Layer | Component |
 |-------|-----------|
-| Kubernetes | kubeadm (vanilla), v1.35 |
-| CNI | Cilium 1.18 |
+| Kubernetes | kubeadm (vanilla), v1.36.1 |
+| CNI | Cilium 1.19.4 |
 | CSI | Longhorn 1.9 |
 | GitOps | ArgoCD (App-of-Apps) |
 | Monitoring | Prometheus + Grafana + Loki |

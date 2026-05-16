@@ -2,6 +2,14 @@
 
 ---
 
+## 011 — kubeadm-config.yaml is the single source of truth for kubelet config (2026-05-17)
+
+**Decision:** All kubelet configuration on the cluster originates from `roles/k8s-control-plane/files/kubeadm-config.yaml` (control plane) and `roles/k8s-worker/templates/join-config.yaml.j2` (workers). Re-running the Phase 4 playbooks re-renders `/var/lib/kubelet/config.yaml` on each node. Operators must **not** hand-edit `/var/lib/kubelet/config.yaml` — drift will be silently overwritten on the next playbook run, and reasoning about node behaviour becomes impossible if the live config diverges from the templates.
+
+**Rationale:** Phase 3 deliberately deferred kubelet swap config (`failSwapOn`, `memorySwap.swapBehavior`) to Phase 4 (DECISION-009) precisely to avoid two competing sources. Spreading kubelet config across Phase 3 (kubelet package config) and Phase 4 (kubeadm) re-introduces the problem. Keeping the `KubeletConfiguration` block inside the kubeadm configs makes init/join the single point of authorship; kubeadm fills in unspecified defaults (`clusterDNS`, `clusterDomain`, `staticPodPath`, auth) automatically, so the file only needs to carry the deliberate overrides (cgroupDriver, swap).
+
+---
+
 ## 010 — ansible managed by uv, not Homebrew (2026-05-16)
 
 **Decision:** Remove the `Update ansible` task from `control-node/tasks/install_packages.yml`. Ansible is managed via `uv` in `homekube-main/pyproject.toml` (pinned `ansible-core>=2.18`); the Homebrew-installed `ansible` package is a separate, unversioned install that is never actually invoked (`uv run ansible-playbook` uses the venv).
