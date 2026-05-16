@@ -57,7 +57,7 @@ Each pi steps:
 - [x] Run `21-provision-pis.yml --tags init` — creates `homekube` user, deploys keys, configures OS, swap
 - [x] Run `21-provision-pis.yml` — idempotency check (zero changes)
 - [x] Run `22-k8s-nodes.yml` — k8s prerequisites on all nodes
-- [ ] Verify `ssh homekube@pi0` works from darth and kylo over Tailscale
+- [x] Verify `ssh homekube@pi0` works from darth and kylo over Tailscale
 
 ---
 
