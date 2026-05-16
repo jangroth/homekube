@@ -52,8 +52,8 @@ Each pi steps:
   - Added `sync_authorized_keys` + `verify_sshd_config` for idempotent no-tag re-runs
   - `disable_swap.yml` → `configure_swap.yml`: 4 GiB swapfile instead of disabling swap
   - Removed `install_tailscale` from k8s-node role; added `configure_etc_hosts` for inter-node /etc/hosts
-- [ ] Add darth + kylo public keys to `pub_keys/` (human checkpoint — see spec 003)
-- [ ] Run `20-configure-darth.yml` — configures darth (SSH config, known_hosts, tooling)
+- [x] Add darth + kylo public keys to `pub_keys/` (human checkpoint — see spec 003)
+- [x] Run `20-configure-darth.yml` — configures darth (SSH config, known_hosts, tooling)
 - [ ] Run `21-provision-pis.yml --tags init` — creates `homekube` user, deploys keys, configures OS, swap
 - [ ] Run `21-provision-pis.yml` — idempotency check (zero changes)
 - [ ] Run `22-k8s-nodes.yml` — k8s prerequisites on all nodes

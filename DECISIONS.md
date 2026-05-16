@@ -2,6 +2,14 @@
 
 ---
 
+## 010 — ansible managed by uv, not Homebrew (2026-05-16)
+
+**Decision:** Remove the `Update ansible` task from `control-node/tasks/install_packages.yml`. Ansible is managed via `uv` in `homekube-main/pyproject.toml` (pinned `ansible-core>=2.18`); the Homebrew-installed `ansible` package is a separate, unversioned install that is never actually invoked (`uv run ansible-playbook` uses the venv).
+
+**Rationale:** Two ansible installs with different version governance creates confusion. The Homebrew one is not what gets called — `uv run` uses `.venv/bin/ansible-playbook`. Homebrew's `state: latest` would silently update ansible outside the pinned version constraint.
+
+---
+
 ## 009 — Enable and configure swap on pis, not disable it (2026-05-16)
 
 **Decision:** Configure a 4 GiB swapfile (`/var/swap.img`) on each pi instead of disabling swap. Remove `dphys-swapfile`; create a fixed swapfile via `fallocate`; persist in `/etc/fstab`. Kubelet swap config (`failSwapOn: false`, `memorySwap.swapBehavior: LimitedSwap`) is deferred to Phase 4 via `kubeadm-config.yaml`.
