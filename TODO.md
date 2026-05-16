@@ -45,29 +45,34 @@ Each pi steps:
 
 ## Phase 3 — Bootstrap Provisioning (Ansible)
 
-- [ ] Update ansible inventory to use Tailscale hostnames
-- [ ] Add Tailscale role to `02-prepare-pis.yml`
-- [ ] Verify darth's SSH key is in `homekube-main/ansible/roles/raspberry-pi/files/pub_keys/id_darth_homekube.pub`
-- [ ] Run `01-update-control-node.yml` — configures darth (SSH config, /etc/hosts, tooling)
-- [ ] Run `02-prepare-pis.yml` — creates `homekube` user, configures base OS
-- [ ] Verify `ssh homekube@pi0` (and pi1–pi3) works from darth over Tailscale
+- [x] Implement spec 003: inventory refactor + node provisioning automation (see commit 63bf9c8)
+  - Removed `ip_addresses_external`; `group_vars/all_nodes.yml` sets `homekube` as default user
+  - Rewrote SSH config + known_hosts tasks to use `groups['all_nodes']` (MagicDNS, no IPs)
+  - Fixed `create_user_account.yml`: probe before falling back to `boot` creds; lock boot user
+  - Added `sync_authorized_keys` + `verify_sshd_config` for idempotent no-tag re-runs
+  - `disable_swap.yml` → `configure_swap.yml`: 4 GiB swapfile instead of disabling swap
+  - Removed `install_tailscale` from k8s-node role; added `configure_etc_hosts` for inter-node /etc/hosts
+- [ ] Add darth + kylo public keys to `pub_keys/` (human checkpoint — see spec 003)
+- [ ] Run `20-configure-darth.yml` — configures darth (SSH config, known_hosts, tooling)
+- [ ] Run `21-provision-pis.yml --tags init` — creates `homekube` user, deploys keys, configures OS, swap
+- [ ] Run `21-provision-pis.yml` — idempotency check (zero changes)
+- [ ] Run `22-k8s-nodes.yml` — k8s prerequisites on all nodes
+- [ ] Verify `ssh homekube@pi0` works from darth and kylo over Tailscale
 
 ---
 
 ## Phase 4 — Kubernetes Install
 
-- [ ] Spec: OOM / swap strategy — write spec before implementing
-- [ ] Run `03-setup-k8s-nodes.yml` — configures all nodes (cgroups, kernel, containerd, k8s packages)
-- [ ] Run `04-setup-k8s-control-plane.yml` — kubeadm init on pi0
-- [ ] Join worker nodes (pi1, pi2, pi3)
-- [ ] Run `05-setup-cni.yml` — install Cilium
+- [ ] Run `30-k8s-control-plane.yml` — kubeadm init on pi0
+- [ ] Run `31-k8s-workers.yml` — join worker nodes (pi1, pi2, pi3)
+- [ ] Run `40-cni.yml` — install Cilium
 - [ ] Verify cluster health: all nodes Ready, system pods running
 
 ---
 
 ## Phase 5 — GitOps & Apps
 
-- [ ] Run `06-setup-gitops.yml` — install ArgoCD
+- [ ] Run `50-gitops.yml` — install ArgoCD
 - [ ] Verify ArgoCD is up and syncing homekube-apps
 - [ ] Verify all apps healthy: MetalLB, metrics-server, Longhorn, Prometheus, Grafana, Loki
 
@@ -77,8 +82,8 @@ Each pi steps:
 
 - [x] Restructure `homekube-main/docs/` — new file naming scheme, remove stale content
 - [x] `01_bootstrap.md` — Imager + Tailscale + nmcli process
-- [x] `02_nvme.md` — rsync-based NVMe clone
-- [ ] `03_ansible.md` — fill in after Phase 3
+- [x] `02_nvme.md` — rewritten to show Ansible steps vs manual checkpoints
+- [x] `03_ansible.md` — preconditions, playbook sequence, kylo SSH stanza, verification
 - [ ] `04_kubernetes.md` — fill in after Phase 4
 - [ ] `05_gitops.md` — fill in after Phase 5
 
@@ -89,5 +94,5 @@ Each pi steps:
 - [ ] Investigate OOM root cause from previous run (kernel logs, events)
 - [ ] Review all component versions against latest releases
 - [ ] Set up Claude SSH autonomy (trust policy update)
-- [ ] Clean up stale links in `homekube-main/README.md` (Setup section points to non-existent files: `01_conf_logs.md`, `02_01_node-configuration.md`, `02_02_kube_installation.md`, `02_03_argo_rollout.md` — replace with current `docs/01_bootstrap.md` … `05_gitops.md` once those phases are complete)
+- [x] Clean up stale links in `homekube-main/README.md` (resolved in earlier session)
 - [ ] Fix `enable_pciex.yml`: `file: state: touch` always reports changed; should be `state: file` (existence check) or removed (blockinfile will surface missing-file errors clearly)

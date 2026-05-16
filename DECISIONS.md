@@ -2,6 +2,14 @@
 
 ---
 
+## 009 — Enable and configure swap on pis, not disable it (2026-05-16)
+
+**Decision:** Configure a 4 GiB swapfile (`/var/swap.img`) on each pi instead of disabling swap. Remove `dphys-swapfile`; create a fixed swapfile via `fallocate`; persist in `/etc/fstab`. Kubelet swap config (`failSwapOn: false`, `memorySwap.swapBehavior: LimitedSwap`) is deferred to Phase 4 via `kubeadm-config.yaml`.
+
+**Rationale:** Kubernetes supports swap on Linux (NodeSwap feature, GA in 1.30+). OOM was observed on pi0 (control plane) during `kubeadm init` when image pulls exhausted 8 GB RAM. With 1 TB NVMe available, swap is cheap insurance. Disabling it entirely (`disable_swap.yml`) was the old k8s guidance, now superseded. Phase 3 deliberately leaves `failSwapOn` at its default (true) and passes `--ignore-preflight-errors=Swap` to the dry-run; the kubelet config is a Phase 4 deliverable so it has a single source of truth.
+
+---
+
 ## 008 — Pi5 NVMe boot: MBR partition table + BOOT_ORDER=0xf16 (2026-05-15)
 
 **Decision:** Partition the NVMe with MBR (msdos) label, not GPT. Set bootloader `BOOT_ORDER=0xf16` for NVMe-first SD-fallback.
