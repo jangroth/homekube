@@ -63,6 +63,12 @@ Each pi steps:
 
 ## Phase 4 — Kubernetes Install
 
+- [x] Implement spec 004: Phase 4 playbooks (`30-k8s-control-plane.yml`, `31-k8s-workers.yml`, `40-cni.yml`)
+  - `kubeadm-config.yaml`: fixed swap config, added node-ip/controlPlaneEndpoint/resolvConf, removed stray JoinConfiguration
+  - `k8s-control-plane` role: added `init_control_plane.yml` (idempotent kubeadm init) and `setup_kubeconfig.yml` (fetch + rewrite to darth)
+  - New `k8s-worker` role: token/CA-hash query from pi0, join, verify
+  - `cilium-helm-values.yaml`: explicit API server IP, `devices: eth0`, vxlan routing
+  - `host_vars/pi*.yml` and `group_vars` additions for switch IPs and network CIDRs
 - [ ] Run `30-k8s-control-plane.yml` — kubeadm init on pi0
 - [ ] Run `31-k8s-workers.yml` — join worker nodes (pi1, pi2, pi3)
 - [ ] Run `40-cni.yml` — install Cilium
