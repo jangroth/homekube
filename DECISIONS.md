@@ -2,6 +2,14 @@
 
 ---
 
+## 014 — configure_cgroups.yml must reboot after modifying cmdline.txt (2026-05-19)
+
+**Decision:** Add a conditional `ansible.builtin.reboot` task to `configure_cgroups.yml` that fires only when the `lineinfile` task reports `changed`.
+
+**Rationale:** The Pi 5 bootloader (EEPROM-based) prepends its own parameters — including `cgroup_disable=memory` — to the content of `/boot/firmware/cmdline.txt` before passing the full string to the kernel. Ansible's `lineinfile` appends `cgroup_enable=memory cgroup_memory=1` to cmdline.txt, but without a reboot these params never reach `/proc/cmdline`. The active cmdline therefore contains `cgroup_disable=memory` with no override, so `cgroup.controllers` at runtime omits `memory` and `kubeadm join` fails with `[ERROR SystemVerification]: missing required cgroups: memory`. The fix must live in `configure_cgroups.yml` (not in the 22 playbook) so it applies on any future run that actually changes the file.
+
+---
+
 ## 013 — Pod DNS via public resolvers, not Tailscale (2026-05-19)
 
 **Decision:** Deploy `/etc/kubernetes/resolv.conf` on all nodes (via `k8s-node` role) containing `1.1.1.1` and `8.8.8.8`. Reference this path in `kubeadm-config.yaml` and `join-config.yaml.j2` as `resolvConf`.

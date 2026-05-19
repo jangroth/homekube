@@ -70,7 +70,7 @@ Each pi steps:
   - `cilium-helm-values.yaml`: explicit API server IP, `devices: eth0`, vxlan routing
   - `host_vars/pi*.yml` and `group_vars` additions for switch IPs and network CIDRs
 - [x] Run `30-k8s-control-plane.yml` — kubeadm init on pi0 (pi0 NotReady, awaiting CNI)
-- [ ] Run `31-k8s-workers.yml` — join worker nodes (pi1, pi2, pi3)
+- [x] Run `31-k8s-workers.yml` — join worker nodes (pi1, pi2, pi3); all 4 nodes present, NotReady awaiting CNI
 - [ ] Run `40-cni.yml` — install Cilium
 - [ ] Verify cluster health: all nodes Ready, system pods running
 
