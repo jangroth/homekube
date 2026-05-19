@@ -69,7 +69,7 @@ Each pi steps:
   - New `k8s-worker` role: token/CA-hash query from pi0, join, verify
   - `cilium-helm-values.yaml`: explicit API server IP, `devices: eth0`, vxlan routing
   - `host_vars/pi*.yml` and `group_vars` additions for switch IPs and network CIDRs
-- [ ] Run `30-k8s-control-plane.yml` — kubeadm init on pi0
+- [x] Run `30-k8s-control-plane.yml` — kubeadm init on pi0 (pi0 NotReady, awaiting CNI)
 - [ ] Run `31-k8s-workers.yml` — join worker nodes (pi1, pi2, pi3)
 - [ ] Run `40-cni.yml` — install Cilium
 - [ ] Verify cluster health: all nodes Ready, system pods running
@@ -104,3 +104,4 @@ Each pi steps:
 - [ ] Set up Claude SSH autonomy (trust policy update)
 - [x] Clean up stale links in `homekube-main/README.md` (resolved in earlier session)
 - [ ] Fix `enable_pciex.yml`: `file: state: touch` always reports changed; should be `state: file` (existence check) or removed (blockinfile will surface missing-file errors clearly)
+- [ ] Review need for kube-bench: assess whether it's worth keeping in the `k8s-control-plane` role and what to do with its output

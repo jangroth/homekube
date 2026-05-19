@@ -2,6 +2,22 @@
 
 ---
 
+## 013 — Pod DNS via public resolvers, not Tailscale (2026-05-19)
+
+**Decision:** Deploy `/etc/kubernetes/resolv.conf` on all nodes (via `k8s-node` role) containing `1.1.1.1` and `8.8.8.8`. Reference this path in `kubeadm-config.yaml` and `join-config.yaml.j2` as `resolvConf`.
+
+**Rationale:** The original config pointed to `/run/systemd/resolve/resolv.conf` (non-existent; systemd-resolved is inactive on Raspberry Pi OS) — this caused all control plane static pod sandboxes to fail at creation, blocking kubeadm init entirely. The fallback `/etc/resolv.conf` is managed by Tailscale and resolves via `100.100.100.100`, which is only reachable via the Tailscale virtual interface — not from pod network namespaces that route through eth0. Public DNS (1.1.1.1/8.8.8.8) is reachable via the physical switch → home router → internet, which is the correct data path for pods.
+
+---
+
+## 012 — cgroup regex must tolerate extra cmdline.txt tokens (2026-05-19)
+
+**Decision:** Replace the fixed-pattern regex in `configure_cgroups.yml` with `^(console=serial0(?!.*cgroup_enable=memory).*)$` so the `lineinfile` task matches any line starting with `console=serial0` that doesn't already have the cgroup params.
+
+**Rationale:** The original regex hard-coded the exact expected cmdline.txt content and failed silently (backrefs + no-match = no-op) when Pi Imager injected `ds=nocloud;i=rpi-imager-<timestamp>` between `rootwait` and `cfg80211.ieee80211_regdom=AU`. The memory cgroup was therefore never enabled, causing kubeadm preflight to fail with `missing required cgroups: memory`.
+
+---
+
 ## 011 — kubeadm-config.yaml is the single source of truth for kubelet config (2026-05-17)
 
 **Decision:** All kubelet configuration on the cluster originates from `roles/k8s-control-plane/files/kubeadm-config.yaml` (control plane) and `roles/k8s-worker/templates/join-config.yaml.j2` (workers). Re-running the Phase 4 playbooks re-renders `/var/lib/kubelet/config.yaml` on each node. Operators must **not** hand-edit `/var/lib/kubelet/config.yaml` — drift will be silently overwritten on the next playbook run, and reasoning about node behaviour becomes impossible if the live config diverges from the templates.
