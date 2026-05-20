@@ -78,8 +78,10 @@ Each pi steps:
 
 ## Phase 5 — GitOps & Apps
 
-- [ ] Run `50-gitops.yml` — install ArgoCD
-- [ ] Verify ArgoCD is up and syncing homekube-apps
+- [x] Run `50-gitops.yml` — ArgoCD 9.5.14 installed, root-app created
+- [ ] Verify ArgoCD is up and syncing homekube-apps (metrics-server + argocd-config active)
+- [ ] Verify metrics-server healthy (`kubectl top nodes`)
+- [ ] Incrementally re-enable apps in kustomization.yaml (Longhorn, MetalLB, then observability stack)
 - [ ] Verify all apps healthy: MetalLB, metrics-server, Longhorn, Prometheus, Grafana, Loki
 
 ---

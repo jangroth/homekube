@@ -2,6 +2,14 @@
 
 ---
 
+## 016 — kubernetes Python package required for kubernetes.core on control node (2026-05-20)
+
+**Decision:** Add `kubernetes>=31.0.0` to `homekube-main/pyproject.toml`. Convert all remaining raw shell commands in the `gitops` role (`kubectl get nodes`, `helm upgrade --install`) to `kubernetes.core` modules (`k8s_info`, `helm`), consistent with the rest of the role.
+
+**Rationale:** `kubernetes.core` Ansible modules delegate to localhost (darth) and call the Kubernetes Python client directly — they do not shell out to `kubectl`. Without the `kubernetes` package in the venv, every `kubernetes.core.*` module fails with "Failed to import the required Python library (kubernetes)". Adding it to `pyproject.toml` keeps the dependency explicit and reproducible via `uv sync`. The shell-command inconsistency in the role (`helm upgrade --install` alongside `kubernetes.core.helm_*` tasks) was a leftover from an earlier draft; keeping all tasks as structured module calls means consistent return values and idiomatic Ansible (see DECISION-015 for the broader rationale).
+
+---
+
 ## 015 — kubernetes.core collection must be >=6.4.0 for Helm 4 compatibility (2026-05-20)
 
 **Decision:** Pin `kubernetes.core` to `>=6.4.0` in `ansible/requirements.yml`. Upgrade any existing install before running Helm-related playbooks (`40-cni.yml`, `50-gitops.yml`).
