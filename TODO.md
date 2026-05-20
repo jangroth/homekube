@@ -71,8 +71,8 @@ Each pi steps:
   - `host_vars/pi*.yml` and `group_vars` additions for switch IPs and network CIDRs
 - [x] Run `30-k8s-control-plane.yml` — kubeadm init on pi0 (pi0 NotReady, awaiting CNI)
 - [x] Run `31-k8s-workers.yml` — join worker nodes (pi1, pi2, pi3); all 4 nodes present, NotReady awaiting CNI
-- [ ] Run `40-cni.yml` — install Cilium
-- [ ] Verify cluster health: all nodes Ready, system pods running
+- [x] Run `40-cni.yml` — Cilium 1.19.4 installed; pi0 confirmed Ready
+- [x] Verify cluster health: all 4 nodes Ready (pi0–pi3), system pods running
 
 ---
 

@@ -2,6 +2,14 @@
 
 ---
 
+## 015 — kubernetes.core collection must be >=6.4.0 for Helm 4 compatibility (2026-05-20)
+
+**Decision:** Pin `kubernetes.core` to `>=6.4.0` in `ansible/requirements.yml`. Upgrade any existing install before running Helm-related playbooks (`40-cni.yml`, `50-gitops.yml`).
+
+**Rationale:** `kubernetes.core` 6.3.0 hard-codes a version guard requiring Helm `>=3.0.0,<4.0.0`. Helm 4.2.0 (current Homebrew install on darth) is rejected at the `helm_repository` task with "Helm version must be >=3.0.0,<4.0.0". Version 6.4.0 explicitly added full Helm 4 compatibility across all helm modules. Replacing the modules with raw `helm` shell calls was considered but rejected — the structured return values from the modules (status, chart, revision) are more useful than parsing stdout, and keeping idiomatic Ansible is preferable.
+
+---
+
 ## 014 — configure_cgroups.yml must reboot after modifying cmdline.txt (2026-05-19)
 
 **Decision:** Add a conditional `ansible.builtin.reboot` task to `configure_cgroups.yml` that fires only when the `lineinfile` task reports `changed`.
