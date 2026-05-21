@@ -79,10 +79,9 @@ Each pi steps:
 ## Phase 5 — GitOps & Apps
 
 - [x] Run `50-gitops.yml` — ArgoCD 9.5.14 installed, root-app created
-- [ ] Verify ArgoCD is up and syncing homekube-apps (metrics-server + argocd-config active)
-- [ ] Verify metrics-server healthy (`kubectl top nodes`)
-- [ ] Incrementally re-enable apps in kustomization.yaml (Longhorn, MetalLB, then observability stack)
-- [ ] Verify all apps healthy: MetalLB, metrics-server, Longhorn, Prometheus, Grafana, Loki
+- [x] Verify ArgoCD is up and syncing homekube-apps (metrics-server + argocd-config active)
+- [x] Verify metrics-server healthy (`kubectl top nodes` — all 4 nodes reporting)
+- [ ] Phase 5 production setup — see spec 005
 
 ---
 
@@ -103,6 +102,7 @@ Each pi steps:
 
 - [ ] Investigate OOM root cause from previous run (kernel logs, events)
 - [ ] Review all component versions against latest releases
+- [ ] Custom solution to track releases and updates of cluster components and workloads (Kubernetes, Cilium, Longhorn, ArgoCD, Helm charts, etc.) — notify when new versions are available
 - [ ] Set up Claude SSH autonomy (trust policy update)
 - [x] Clean up stale links in `homekube-main/README.md` (resolved in earlier session)
 - [ ] Fix `enable_pciex.yml`: `file: state: touch` always reports changed; should be `state: file` (existence check) or removed (blockinfile will surface missing-file errors clearly)
