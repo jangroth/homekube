@@ -117,3 +117,4 @@ Each pi steps:
 - [x] Clean up stale links in `homekube-main/README.md` (resolved in earlier session)
 - [ ] Fix `enable_pciex.yml`: `file: state: touch` always reports changed; should be `state: file` (existence check) or removed (blockinfile will surface missing-file errors clearly)
 - [ ] Review need for kube-bench: assess whether it's worth keeping in the `k8s-control-plane` role and what to do with its output
+- [ ] Build a Claude Code skill for tracking component version updates (surfaces new chart/image releases against pinned versions)
