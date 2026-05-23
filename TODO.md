@@ -82,6 +82,16 @@ Each pi steps:
 - [x] Verify ArgoCD is up and syncing homekube-apps (metrics-server + argocd-config active)
 - [x] Verify metrics-server healthy (`kubectl top nodes` — all 4 nodes reporting)
 - [ ] Phase 5 production setup — see spec 005
+  - [ ] Bump existing ArgoCD chart 9.5.14 → 9.5.15 (Version Policy alignment)
+  - [ ] Ansible prerequisites: `/storage` dir, `open-iscsi` package + iscsid, etcd snapshot systemd timer on pi0 (daily → S3, 14-day retention)
+  - [ ] Wave -1: sealed-secrets 0.37.0, cert-manager 1.20.2 (+ `homekube-ca` ClusterIssuer), kubelet-csr-approver 1.2.14, metallb 0.16.0 (bump from 0.14.9), longhorn 1.11.2 (bump from 1.9.1)
+  - [ ] Validate wave -1 (capabilities 1–5 acceptance criteria)
+  - [ ] Wave 1: MinIO upstream chart (drop Bitnami), longhorn-extras, kube-prometheus-stack 85.3.0 (bump from 79.50.0), Loki chart 7.1.0 (v6 → v7 values-schema rewrite), Alloy DaemonSet (new manifest, replaces Promtail)
+  - [ ] Validate wave 1 (capabilities 6–8); confirm Telegram alert receiver delivers a test alert
+  - [ ] Wave 2: Google OAuth client → sealed-secret → Dex 2.45.1 → ArgoCD + Grafana OIDC config
+  - [ ] Validate wave 2 (capability 9)
+  - [ ] Wave 3: verify Cilium `kubeProxyReplacement` (separate scheduled change if flip needed) → Istio 1.30.0 + Kiali (opt-in namespaces only) → external S3 + sealed AWS creds → Velero 1.18.1 (CSI plugin) + Longhorn backup target
+  - [ ] Validate wave 3 (capabilities 10–11); document etcd restore drill in `homekube-main/docs/restore-etcd.md`
 
 ---
 
@@ -101,8 +111,8 @@ Each pi steps:
 - [ ] Revisit `display_dependencies` task in k8s-node role — current approach may have a better solution
 
 - [ ] Investigate OOM root cause from previous run (kernel logs, events)
-- [ ] Review all component versions against latest releases
-- [ ] Custom solution to track releases and updates of cluster components and workloads (Kubernetes, Cilium, Longhorn, ArgoCD, Helm charts, etc.) — notify when new versions are available
+- [x] Review all component versions against latest releases (done 2026-05-23 — Version Policy + Pinned Versions table in spec 005)
+- [ ] Set up Renovate (or equivalent) against `homekube-apps` to surface chart-version PRs automatically — operationalises the Version Policy (DECISION-017)
 - [ ] Set up Claude SSH autonomy (trust policy update)
 - [x] Clean up stale links in `homekube-main/README.md` (resolved in earlier session)
 - [ ] Fix `enable_pciex.yml`: `file: state: touch` always reports changed; should be `state: file` (existence check) or removed (blockinfile will surface missing-file errors clearly)

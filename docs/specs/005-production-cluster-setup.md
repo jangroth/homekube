@@ -1,14 +1,14 @@
 # Spec 005 — Production-Like Cluster Setup (Phase 5)
 
-**Status:** Draft  
-**Phase:** 5  
-**Playbooks / Repos:** `homekube-main` (Ansible prerequisites), `homekube-apps` (ArgoCD app manifests)
+**Status:** Draft
+**Phase:** 5
+**Repos:** `homekube-main` (Ansible prerequisites), `homekube-apps` (ArgoCD app manifests)
 
 ---
 
 ## Problem
 
-ArgoCD is running and `metrics-server` is healthy. The cluster has no persistent storage, no observability, and no identity management. The goal of Phase 5 is to bring the cluster to a "production-like" state: everything GitOps-managed, metrics and logs aggregated, dashboards available, and a single sign-on layer protecting cluster services.
+ArgoCD and `metrics-server` are running. The cluster has no persistent storage, no service exposure beyond NodePorts, no observability, no identity layer, and no backups. The goal of Phase 5 is to bring the cluster to a "production-like" state organised around the capabilities it exposes to its users — not around individual Helm charts.
 
 ---
 
@@ -16,50 +16,437 @@ ArgoCD is running and `metrics-server` is healthy. The cluster has no persistent
 
 | Component | Status |
 |-----------|--------|
-| Kubernetes 1.36.1 | Running, 4 nodes Ready |
+| Kubernetes 1.36.1 | Running, 4 nodes Ready (single control plane on pi0) |
 | Cilium 1.19.4 | Healthy |
-| ArgoCD 9.5.14 | Running, root-app synced |
+| ArgoCD 9.5.15 | Running, root-app synced |
 | metrics-server | Running, healthy |
 | argocd-config | Synced (NodePort :30000) |
 | kubelet CSR auto-approval | Manual bulk-approve only — breaks on cert rotation |
+| Secrets management | None — credentials would be plaintext in git |
+| Internal TLS | None — no CA, no cert automation |
 | Persistent storage | None |
 | Load balancer | Not deployed |
 | Metrics / Alerting | None |
 | Log aggregation | None |
 | Identity / SSO | None |
+| Backups | None — pi0 control plane is a single point of failure |
 
 ---
 
-## Scope
+## Architectural Notes
 
-### In scope
+A few decisions that cut across multiple capabilities, called out here so they aren't repeated below.
 
-1. **kubelet-csr-approver** — auto-approve `kubernetes.io/kubelet-serving` CSRs
-2. **Longhorn** — block storage CSI; NVMe-backed, 2 replicas
-3. **MetalLB** — L2 load balancer for home network service exposure
-4. **MinIO** — S3-compatible object store; backing store for Loki
-5. **kube-prometheus-stack** — Prometheus, Alertmanager, Grafana, node-exporter, kube-state-metrics
-6. **Loki** — log aggregation backend (S3 via MinIO)
-7. **Promtail** — DaemonSet log shipper to Loki
-8. **Identity/SSO** — Dex as OIDC federation proxy; Google OAuth2 as upstream identity provider. ArgoCD and Grafana authenticate via Dex. No local user database — Google handles credentials and MFA.
-9. **Service mesh** — Istio (sidecar mode); mTLS, L7 traffic management, observability. Deployed via `istioctl` or Helm; Kiali dashboard as ArgoCD app. Cilium CNI runs alongside in `veth` mode (no kube-proxy replacement conflict with Istio's iptables interception).
-10. **Backups** — cluster state and persistent data backed up to external S3. Three targets: etcd snapshot (via Ansible CronJob on pi0), Longhorn volume backups (built-in Longhorn → S3), Kubernetes resource manifests (Velero → S3). External S3 bucket required (not MinIO — MinIO is on-cluster and goes down with the cluster).
+- **Single control plane (pi0) accepted as SPOF.** No stacked-etcd HA in this phase. Mitigation is an etcd-snapshot job running on pi0 from day one (see Infrastructure Prerequisites), uploading to external S3. Restore is manual and documented.
+- **MetalLB LB traffic rides Wi-Fi.** The L2 pool sits on the home Wi-Fi subnet (`192.168.86.0/24`), so LB ARP responses egress on `wlan0`. Inter-node and etcd traffic stays on the wired switch (`10.0.0.0/24`). Documented explicitly so it doesn't read as a misconfig.
+- **Secrets in git use `sealed-secrets`.** No plaintext credentials in any repo. `kubeseal` is the only path to commit a Secret.
+- **Internal TLS via cert-manager** with a self-signed cluster issuer. Lets ArgoCD, Grafana, and Dex serve OIDC over HTTPS before public DNS lands.
+- **ARM64 image pre-flight.** Before enabling any wave, verify each Helm chart's images resolve for `linux/arm64`:
+  ```sh
+  crane manifest --platform linux/arm64 <image:tag>
+  ```
+  This catches Bitnami licensing surprises and any chart that ships AMD64-only init containers.
 
-### Out of scope (deferred to later phase)
+---
 
-- **Gateway API + Istio ingress** — Kubernetes Gateway API (`HTTPRoute`, `GatewayClass`) as the ingress layer via Istio. Preferred over traditional Ingress; deferred until Istio (wave 3) is stable.
-- **DNS (Tailscale split DNS)** — in-cluster DNS server (k8s_gateway or CoreDNS) exposed via MetalLB; Tailscale split DNS routes `*.homekube.internal` to it; ExternalDNS writes records automatically. No public domain or home network exposure required. Depends on Gateway API being in place first.
-- Network policies
-- OPA/admission control
-- Multi-tenancy
+## Version Policy
+
+**Track the latest upstream GA release for every component.** No release candidates, betas, alphas, or `*-pre.*` builds in any wave. Patch and minor bumps applied as they ship; major bumps reviewed for breaking changes against current Helm values, then applied promptly — running on N-2 is not a goal of this lab. Renovate (or equivalent) runs against `homekube-apps` to surface chart-version PRs; merges flow through ArgoCD like any other change.
+
+The table below is the source of truth for what is pinned at spec time. Inline mentions in capability sections must match this table; if they drift, this table wins. Re-verify before each implementation session — versions older than ~30 days are stale by definition.
+
+### Pinned Versions (verified 2026-05-23)
+
+| Component | Pinned | Notes |
+|---|---|---|
+| Kubernetes | 1.36.1 | already installed via kubeadm |
+| Cilium | 1.19.4 | already installed; 1.20 still pre-release |
+| ArgoCD (Helm chart) | 9.5.15 | argo Helm repo |
+| sealed-secrets | 0.37.0 | `bitnami-labs/sealed-secrets` |
+| cert-manager | 1.20.2 | jetstack |
+| kubelet-csr-approver | 1.2.14 | postfinance |
+| MetalLB (Helm chart) | 0.16.0 | confirm exact chart tag at install |
+| Longhorn | 1.11.2 | two minors ahead of prior spec draft |
+| MinIO | `RELEASE.2025-10-15T17-29-55Z` | upstream chart, not Bitnami |
+| Loki (Helm chart) | 7.1.0 | **chart v7 is a major bump**: values schema differs from v6; fresh install only |
+| kube-prometheus-stack (Helm chart) | 85.3.0 | six minors ahead of prior spec draft |
+| Grafana Alloy (Helm chart) | 1.8.x (latest at install) | replaces Promtail |
+| Dex | 2.45.1 | dexidp |
+| Istio | 1.30.0 | istioctl install + helm |
+| Velero | 1.18.1 | with CSI snapshot plugin + `velero-plugin-for-aws` |
+
+---
+
+## Capabilities
+
+Phase 5 introduces eleven capabilities. Each maps to a sync-wave for ArgoCD execution, but the spec is organised by capability so dependencies and intent are explicit. Wave numbers are an execution detail, not a structural one.
+
+| # | Capability | Wave |
+|---|------------|------|
+| 1 | Secrets Management (sealed-secrets) | `-1` |
+| 2 | Internal TLS (cert-manager) | `-1` |
+| 3 | Node Hygiene (CSR auto-approval) | `-1` |
+| 4 | Service Exposure (L4 LB) | `-1` |
+| 5 | Block Storage | `-1` |
+| 6 | Metrics | `01` |
+| 7 | Logs (incl. internal Object Storage) | `01` |
+| 8 | Dashboards & Alerting | `01` |
+| 9 | Identity & SSO | `02` |
+| 10 | Service Mesh | `03` |
+| 11 | Backups & DR | `03` |
+
+---
+
+### 1. Secrets Management — sealed-secrets
+
+**Purpose:** Allow Kubernetes Secrets to be committed to git as ciphertext. Lands first because every subsequent capability that touches credentials (MinIO, OIDC, Alertmanager Telegram, S3 backups) depends on it.
+
+**Wave:** `-1`
+
+**Components:**
+- Helm chart `bitnami-labs/sealed-secrets` — app `0.37.0` (upstream maintainer repo, not the deprecated Bitnami catalog)
+- `kubeseal` CLI on darth, matched to the controller version
+
+**Depends on:** nothing.
+
+**Constraints & decisions:**
+- Controller key is generated on first install and **backed up out-of-band** (kubeseal `--fetch-cert` saved to a password manager) so re-installs can decrypt existing sealed secrets.
+- Cluster-wide scope (`--scope cluster-wide`) is *not* used — secrets are sealed per namespace.
+
+**Acceptance:**
+- [ ] `sealed-secrets-controller` pod Running in `kube-system`
+- [ ] `kubeseal --fetch-cert` returns the public cert; cert saved to password manager
+- [ ] Round-trip test: create a Secret → `kubeseal` → apply → controller materialises the original Secret
+
+---
+
+### 2. Internal TLS — cert-manager
+
+**Purpose:** Provide certificates for in-cluster services (ArgoCD, Grafana, Dex) so OIDC and any HTTPS-only client behaves correctly before public DNS exists. Lays the groundwork for ACME issuance later (out of scope this phase).
+
+**Wave:** `-1`
+
+**Components:**
+- Helm chart `jetstack/cert-manager` — app `1.20.2`
+- A `ClusterIssuer` named `homekube-ca` backed by a self-signed root, with `Certificate` resources for each consuming service
+
+**Depends on:** nothing.
+
+**Constraints & decisions:**
+- Self-signed root CA — public ACME is deferred with DNS. The root CA cert is exported and trusted on darth so browsers don't warn.
+- One `ClusterIssuer` for the whole cluster; no per-namespace issuers in this phase.
+
+**Acceptance:**
+- [ ] `cert-manager`, `cainjector`, `webhook` pods Running
+- [ ] `ClusterIssuer/homekube-ca` reports `Ready=True`
+- [ ] A test `Certificate` issues and the secret is populated
+- [ ] Root CA exported and trusted on darth
+
+---
+
+### 3. Node Hygiene — CSR auto-approval
+
+**Purpose:** Automatically approve `kubernetes.io/kubelet-serving` CSRs so kubelet certificate rotation does not require manual `kubectl certificate approve` runs. Today CSRs are bulk-approved by hand; this breaks silently when certificates rotate (default 1 year).
+
+**Wave:** `-1`
+
+**Components:**
+- Helm chart `postfinance/kubelet-csr-approver` — app `1.2.14` (re-verify against upstream at install time per Version Policy)
+- Repo: `https://postfinance.github.io/kubelet-csr-approver`
+
+**Depends on:** nothing.
+
+**Constraints & decisions:**
+- Approve only the `kubernetes.io/kubelet-serving` signer.
+- Restrict to node IP ranges: `10.0.0.0/24` (switch) and the cluster pod CIDR.
+- **Verify pod CIDR before pinning** — confirm against the live Cilium config:
+  ```sh
+  kubectl -n kube-system get cm cilium-config -o jsonpath='{.data.cluster-pool-ipv4-cidr}'
+  ```
+  Do not assume the kubeadm default `10.244.0.0/16`.
+
+**Acceptance:**
+- [ ] `kubectl get csr` shows no `Pending` entries for `kubernetes.io/kubelet-serving` within 60s of any node start
+- [ ] CSRs from outside the allowed CIDRs are not approved
+
+---
+
+### 4. Service Exposure — L4 Load Balancer
+
+**Purpose:** Allocate routable IPs to `type: LoadBalancer` services. Removes the NodePort-only constraint and is a prerequisite for any sensible ingress story later (Gateway API in a future phase).
+
+**Wave:** `-1`
+
+**Components:**
+- Helm chart `metallb/metallb 0.16.0` (manifest already exists — bump from 0.14.9 per Version Policy)
+- `IPAddressPool` and `L2Advertisement` CRDs
+
+**Depends on:** nothing.
+
+**Constraints & decisions:**
+- L2 mode, IP pool `192.168.86.241–192.168.86.251` (home Wi-Fi subnet). LB ARP responses egress on `wlan0` — documented and accepted; inter-node and etcd traffic remain on the wired switch.
+- `L2Advertisement` pinned to a subset of nodes (e.g. pi1/pi2/pi3) to keep failover deterministic and avoid GARP storms across all four interfaces.
+- Tailscale clients (e.g. `darth` away from home) still need NodePort or Tailscale subnet routing on `pi0` to reach LB IPs. Subnet routing is out of scope; flagged as a follow-up.
+- Standard going forward: new user-facing services use `type: LoadBalancer`; NodePorts kept only for existing services until they're migrated.
+
+**Acceptance:**
+- [ ] `kubectl get pods -n metallb-system` — all pods Running
+- [ ] A test `type: LoadBalancer` service receives an IP from `192.168.86.241/251`
+- [ ] LB IP is reachable from a host on the home Wi-Fi network
+- [ ] `L2Advertisement` only advertises from the configured node set
+
+---
+
+### 5. Block Storage
+
+**Purpose:** Provide a CSI-backed `StorageClass` so workloads can request PersistentVolumeClaims. Required by Metrics (Prometheus PVC) and Logs (MinIO PVC).
+
+**Wave:** `-1`
+
+**Components:**
+- Helm chart `longhorn/longhorn v1.11.2` (manifest already exists — bump from 1.9.1 per Version Policy)
+- `longhorn-extras` (NodePort UI) — wave `01`
+
+**Depends on:** Ansible prerequisites — `/storage` directory and `open-iscsi` userspace tooling on every node (see Infrastructure Prerequisites below).
+
+**Constraints & decisions:**
+- `defaultDataPath: /storage` (NVMe-backed).
+- 2 replicas; pre-upgrade checker disabled.
+- UI exposed via NodePort by `longhorn-extras` — useful for replica-health monitoring.
+- `PodDisruptionBudget` for `longhorn-manager` (minAvailable: 3 of 4) so drains don't take the CSI driver offline.
+
+**Acceptance:**
+- [ ] `kubectl get pods -n longhorn-system` — all pods Running
+- [ ] Longhorn UI lists all 4 nodes as schedulable; no disk warnings
+- [ ] A PVC with `storageClass: longhorn` binds and is writable from a test pod (2-replica volume)
+- [ ] `iscsid` running on all nodes (Ansible verifies)
+
+---
+
+### 6. Metrics
+
+**Purpose:** Time-series metrics collection, storage, and alerting backbone for the cluster. Provides the data plane that Dashboards & Alerting consume.
+
+**Wave:** `01`
+
+**Components (from `kube-prometheus-stack 85.3.0`):**
+- Prometheus (PVC: 50 Gi on Longhorn)
+- Alertmanager
+- node-exporter (DaemonSet, one per node)
+- kube-state-metrics
+
+> Note: Grafana ships in the same Helm chart but is treated as part of **Dashboards & Alerting** (capability 8) so it can be reasoned about independently.
+
+**Depends on:** Block Storage (Prometheus PVC); sealed-secrets (for the Alertmanager Telegram token, configured in capability 8).
+
+**Constraints & decisions:**
+- Tracks latest GA per Version Policy; pin is `85.3.0` at spec time. Major bumps (e.g. CRD changes) get a brief review against current Helm values, then ship.
+- Prometheus retention: `retention: 15d`, `retentionSize: 40GiB` (gives headroom under the 50 Gi PVC; prevents WAL-fills).
+- `nodeAffinity` keeps Prometheus and Alertmanager off `pi0` so the control plane isn't competing with metrics ingest.
+- `PodDisruptionBudget` for Prometheus and Alertmanager (`maxUnavailable: 0` — single-replica services).
+- Resource requests/limits set explicitly (see Resource Budget table below).
+- Manifest already exists; needs `additionalDataSources` (Loki) added and uncommenting in `kustomization.yaml`.
+
+**Acceptance:**
+- [ ] `kubectl get pods -n observability` — Prometheus, Alertmanager, node-exporter (×4), kube-state-metrics all Running
+- [ ] Prometheus port-forward → Targets page shows all targets Up
+- [ ] Alertmanager UI reachable on NodePort `:30004`
+- [ ] Prometheus NodePort `:30002` returns query results for a basic cluster metric (e.g. `up`)
+- [ ] Retention settings visible in Prometheus `/status/runtimeinfo`
+
+---
+
+### 7. Logs
+
+**Purpose:** Aggregate pod and node logs into a searchable backend so Grafana can run queries across the cluster.
+
+**Wave:** `01`
+
+**Components:**
+- Helm chart `grafana/loki 7.1.0` (Loki backend) — manifest needs refresh; **single-binary mode** (`deploymentMode: SingleBinary`) — lowest memory ceiling, sufficient for home-lab cardinality. **Chart v7 is a major bump from v6** — values schema changed; do not lift v6 values blindly.
+- Helm chart `grafana/alloy` (DaemonSet log shipper) — **new manifest** under `wave-01-apps/`; chart `1.8.x` (latest at install per Version Policy). Replaces Promtail, which is in feature-frozen maintenance.
+
+#### Sub-capability: Object Storage (MinIO)
+
+Loki needs S3-compatible object storage. MinIO runs in-cluster and exists solely to back Loki — it is not a user-facing capability, but rolls out as part of this wave because Logs cannot function without it.
+
+- Helm chart: `minio/minio` upstream operator-less chart (vanilla deployment). **Bitnami's catalog is not used** — most Bitnami images moved to a paid registry in 2025; the upstream chart is multi-arch and unaffected.
+- Image: `quay.io/minio/minio:RELEASE.2025-10-15T17-29-55Z` (latest GA per Version Policy; security release).
+- Pre-flight: `crane manifest --platform linux/arm64 quay.io/minio/minio:RELEASE.2025-10-15T17-29-55Z` before enabling.
+- Wave `01` (deploys before Loki)
+- Buckets: `loki-logs`, `loki-ruler`, `loki-admin`
+- Credentials: generated locally, stored as a **sealed-secret** committed to git (`minio-root-credentials`). No plaintext credentials in any manifest.
+
+**Depends on:** Block Storage (MinIO PVC); Secrets Management (sealed-secret for MinIO root creds). Loki has persistence disabled and uses S3 only — no PVC for Loki itself.
+
+**Constraints & decisions:**
+- Loki S3 endpoint: `minio.minio.svc.cluster.local:9000`
+- Retention: 90 days
+- Alloy target: `loki.observability.svc.cluster.local`
+- Loki single-binary mode chosen explicitly over SimpleScalable (3-component) — fewer pods, lower RAM, fine for projected cardinality.
+
+**Acceptance:**
+- [ ] MinIO pods Running; console reachable; three Loki buckets exist
+- [ ] Loki pod Running; ready endpoint healthy
+- [ ] Alloy DaemonSet — one pod per node, all Running
+- [ ] LogQL query via Grafana Explore returns entries for `{namespace="kube-system"}`
+- [ ] No plaintext credentials in any committed manifest (grep check)
+
+---
+
+### 8. Dashboards & Alerting
+
+**Purpose:** Human-facing window onto the metrics and logs. Pre-built dashboards for nodes, cluster, and Longhorn; Alertmanager UI for active alerts; alert delivery to Telegram.
+
+**Wave:** `01`
+
+**Components:**
+- Grafana (bundled with `kube-prometheus-stack`)
+- Alertmanager UI (already counted in Metrics; included here as the alert frontend)
+- **Telegram receiver** wired into Alertmanager configuration
+
+**Depends on:** Metrics (Prometheus datasource), Logs (Loki datasource), Secrets Management (Telegram bot token as sealed-secret), Internal TLS (Grafana serving over HTTPS via cert-manager).
+
+**Constraints & decisions:**
+- Datasources: Prometheus auto-wired by the chart; Loki added via `additionalDataSources` in Helm values.
+- Timezone: `Australia/Sydney` (already set in current Helm values).
+- OIDC config (SSO) is added in wave `02` once Dex is up — not in this capability's scope.
+- NodePort `:30003` retained; LB IP added once MetalLB is validated.
+- Telegram bot created out-of-band; bot token + target chat ID stored as a sealed-secret (`alertmanager-telegram`). Alertmanager `receivers:` config references it via `bot_token_file`.
+- Default route: all alerts → Telegram. Severity-based routing can be added later.
+
+**Acceptance:**
+- [ ] Grafana reachable on `:30003` (and via MetalLB LB IP); Prometheus and Loki datasources both green
+- [ ] Pre-built node-exporter dashboard (1860 or similar) renders for all 4 nodes
+- [ ] Longhorn dashboard renders; volume metrics populated
+- [ ] Alertmanager UI reachable; default cluster alerts visible (firing or pending)
+- [ ] Test alert (silenced rule + manual fire) reaches the Telegram chat
+- [ ] Grafana serves a valid cert from `homekube-ca`
+
+---
+
+### 9. Identity & SSO
+
+**Purpose:** Single sign-on for cluster web UIs (ArgoCD, Grafana). Removes per-app local credentials; centralises authentication on Google accounts (with MFA already enforced upstream).
+
+**Wave:** `02`
+
+**Components:**
+- Helm chart `dex/dex` (`https://charts.dexidp.io`) — app `2.45.1`
+- ArgoCD OIDC client config (update to `argocd-config`)
+- Grafana OIDC config (update to `kube-prometheus-stack` Helm values)
+
+**Depends on:** human checkpoint — Google OAuth2 client ID + secret created in Google Cloud Console (Credentials → OAuth 2.0 Client ID, type Web). Stored as a **sealed-secret** (`dex-google-oauth`); never plaintext. Also depends on Internal TLS (Dex must be HTTPS for OIDC clients to behave).
+
+**Constraints & decisions:**
+- Federation only — no local user database. Everyone needs a Google account.
+- Group-based RBAC requires Google Workspace; free Google accounts only expose email/profile.
+- Dex has no admin UI; configured entirely via Helm values.
+- **OIDC redirect URIs need stable hostnames.** DNS + Gateway API are deferred (see Deferred section below). For this phase, redirect URIs use `https://piN:PORT` (TLS via `homekube-ca`) — this means OIDC config will need re-writing once DNS lands. Acknowledged churn cost.
+- Tailscale subnet routing on `pi0` is the interim bridge for `darth` to reach `:30000`/`:30003` from outside the home network.
+
+**Acceptance:**
+- [ ] Dex pod(s) Running; reachable on its NodePort over HTTPS
+- [ ] Dex cert issued by `homekube-ca`; clients accept it
+- [ ] ArgoCD login via Google OIDC completes end-to-end (logout → re-login → roles applied)
+- [ ] Grafana login via Google OIDC completes end-to-end
+- [ ] (Optional) Kubernetes API accessible via OIDC token — deferred unless trivially configurable
+
+---
+
+### 10. Service Mesh
+
+**Purpose:** mTLS between workloads, L7 traffic management, and a service-graph view of cluster traffic. Lays the foundation for Gateway API ingress (deferred).
+
+**Wave:** `03`
+
+**Components:**
+- Istio control plane (`istiod`) and ingress gateway via `istioctl` or `base`/`istiod`/`gateway` Helm charts — app `1.30.0`
+- Kiali dashboard (ArgoCD app — latest GA at install per Version Policy)
+
+**Depends on:** all wave-`01` apps stable; Cilium running **without** kube-proxy replacement (`kubeProxyReplacement: false`) to avoid iptables conflict with Istio's sidecar interception.
+
+**Constraints & decisions:**
+- **The Cilium `kubeProxyReplacement` flip is a separate, scheduled change with its own rollback plan** — not folded into the mesh install. Verify current setting first; if `true`, plan a maintenance window, change, reconcile, and validate before any Istio work begins. Capture as a DECISIONS.md entry.
+- **Sidecar injection is opt-in per namespace only** — `istio-injection: enabled` label on a small set of test namespaces first. No global enablement. Cluster-wide injection would consume ~80–120 MiB per pod in sidecar overhead, which is not affordable on 4×8 GiB.
+- Sidecar mode (not ambient) — well-trodden path; ambient still maturing on ARM.
+- Verify all Istio images are multi-arch for `linux/arm64` before install.
+
+**Acceptance:**
+- [ ] `kubectl get pods -n istio-system` — istiod and ingress gateway Running
+- [ ] Kiali UI reachable; service graph renders cluster traffic
+- [ ] mTLS enforced in at least one test namespace (PeerAuthentication `STRICT`)
+- [ ] All wave-`01` apps still healthy post-mesh activation (regression check)
+- [ ] No namespace outside the opt-in set has sidecars injected
+
+---
+
+### 11. Backups & DR
+
+**Purpose:** Survive cluster loss. Three orthogonal targets: cluster state (etcd), persistent data (Longhorn volumes), Kubernetes resource manifests (Velero). External S3 only — MinIO is on-cluster and goes down with the cluster.
+
+**Wave:** `03`
+
+> **Note:** The etcd snapshot job is *not* in wave 3 — it lands in wave `-1` via Ansible because pi0 is a single point of failure and backup must exist before any stateful workload runs. See Infrastructure Prerequisites.
+
+**Components (wave 3):**
+- Longhorn → S3 backup target (built-in Longhorn backups)
+- Helm chart `vmware-tanzu/velero` — app `1.18.1` — with the **CSI snapshot plugin** + `velero-plugin-for-aws` → S3
+- AWS credentials stored as a **sealed-secret** (`velero-aws-credentials`)
+
+**Depends on:** human checkpoint — AWS S3 bucket provisioned, IAM user/policy created, credentials sealed. Plus Secrets Management (capability 1) and Block Storage (capability 5).
+
+**Constraints & decisions:**
+- Backend: AWS S3 (first-class in Velero and Longhorn).
+- AWS credentials sealed into git; never plaintext.
+- Velero uses the **CSI snapshotter** (Longhorn supports CSI snapshots) for volume backups, not Restic/Kopia file-walking — faster and consistent at the volume level.
+- Pre-flight: confirm `velero-plugin-for-aws` ships an `arm64` image; same for Kopia/Restic init containers if enabled as fallback.
+
+**Acceptance:**
+- [ ] External S3 bucket provisioned; credentials sealed and applied as a Secret
+- [ ] Longhorn backup target configured; one volume backup completes successfully
+- [ ] Velero installed with CSI plugin; `velero backup create smoke-test --include-namespaces test` completes successfully and includes PV data
+- [ ] etcd snapshot job (from Ansible) is producing daily uploads to S3 (already running since wave `-1`)
+- [ ] Restore drill: documented procedure for `etcdctl snapshot restore` on a rebuilt pi0
+- [ ] Longhorn scheduled backups enabled (daily, retain 7)
+
+---
+
+## Resource Budget
+
+Rough RAM allocation, sized for 4×8 GiB = 32 GiB total. Numbers are `requests`; `limits` set 1.5–2× for burst headroom. System reserved (kubelet/containerd/Cilium/CoreDNS/sealed-secrets/cert-manager) ≈ 1 GiB/node = 4 GiB. Anything above is workload budget.
+
+| Capability | Component | RAM request | Notes |
+|---|---|---|---|
+| 1 | sealed-secrets controller | 64 MiB | |
+| 2 | cert-manager (3 pods) | 256 MiB | |
+| 3 | kubelet-csr-approver | 64 MiB | |
+| 4 | MetalLB (controller + speakers ×4) | 256 MiB | |
+| 5 | Longhorn (manager+driver+engines, all nodes) | 1.5 GiB | grows with attached volumes |
+| 6 | Prometheus | 2 GiB | retention 15d / 40 GiB |
+| 6 | Alertmanager | 128 MiB | |
+| 6 | kube-state-metrics | 128 MiB | |
+| 6 | node-exporter ×4 | 256 MiB | |
+| 7 | MinIO | 512 MiB | single replica |
+| 7 | Loki (single-binary) | 1 GiB | |
+| 7 | Alloy ×4 | 512 MiB | |
+| 8 | Grafana | 256 MiB | |
+| 9 | Dex | 128 MiB | |
+| 10 | Istio (istiod + gateway, no sidecars) | 1 GiB | sidecars budgeted per opt-in namespace |
+| 11 | Velero | 256 MiB | |
+| — | **Subtotal (workload)** | **~8.4 GiB** | |
+| — | System reserved (4 nodes) | ~4 GiB | |
+| — | Headroom / app workloads | ~19 GiB | comfortable |
+
+Sidecar overhead is *not* in the subtotal — each opted-in namespace adds ~80–120 MiB per pod. Audit before enabling injection in a busy namespace.
 
 ---
 
 ## Infrastructure Prerequisites (Ansible)
 
-Before enabling apps in ArgoCD, one Ansible task must be added to `k8s-node`:
+Before enabling wave `-1` apps, extend the `k8s-node` role:
 
-**Create `/storage` directory on every node** — Longhorn's `defaultDataPath: /storage` requires this directory to exist on the NVMe filesystem. Add to `configure_storage.yml`:
+**1. Create `/storage` directory on every node** — Longhorn's `defaultDataPath: /storage` requires this directory to exist on the NVMe filesystem. Add to `configure_storage.yml`:
 
 ```yaml
 - name: Create Longhorn storage directory
@@ -71,197 +458,78 @@ Before enabling apps in ArgoCD, one Ansible task must be added to `k8s-node`:
     mode: "0755"
 ```
 
-Re-run `task 22-k8s-nodes` to apply before enabling Longhorn in ArgoCD.
+**2. Install and enable `open-iscsi`** — Longhorn requires the iSCSI initiator userspace and a running `iscsid`. Add to `configure_storage.yml`:
 
----
+```yaml
+- name: Install open-iscsi
+  ansible.builtin.apt:
+    name: open-iscsi
+    state: present
 
-## Component Details
-
-### 1. kubelet-csr-approver
-
-- **Helm chart:** `postfinance/kubelet-csr-approver`
-- **Repo:** `https://postfinance.github.io/kubelet-csr-approver`
-- **Version:** latest (check at implementation time)
-- **Wave:** `-1` (wave-00-init, same as other foundation apps)
-- **Config:** Approve only `kubernetes.io/kubelet-serving` signerName; restrict to cluster node IP ranges (`10.0.0.0/24`, pod CIDR `10.244.0.0/16`)
-- **No storage dependency**
-
-### 2. MetalLB
-
-- **Helm chart:** `metallb/metallb 0.14.9` (already configured)
-- **Wave:** `-1`
-- **Config:** L2 mode, IP pool `192.168.86.241–192.168.86.251` (home router subnet)
-- **Note:** LB IPs are on the home WiFi subnet — reachable from local network. Tailscale access still uses NodePorts or port-forward unless Tailscale subnet routing is configured (out of scope for this phase).
-- **Already has ArgoCD manifest** — just needs uncommenting in kustomization.yaml
-
-### 3. Longhorn
-
-- **Helm chart:** `longhorn/longhorn v1.9.1` (already configured)
-- **Wave:** `-1`
-- **Config:** `defaultDataPath: /storage`, 2 replicas, pre-upgrade checker disabled
-- **Prerequisite:** `/storage` dir must exist on all nodes (Ansible task above)
-- **UI:** NodePort via longhorn-extras (wave-01); useful for monitoring replica health
-- **Already has ArgoCD manifest** — needs Ansible prereq + uncommenting
-
-### 4. MinIO
-
-- **Helm chart:** `bitnami/minio 17.0.21` (already configured)
-- **Wave:** `01`
-- **Depends on:** Longhorn (PVC for MinIO data)
-- **Config:** values in `wave-01-apps/minio/minio-values.yaml`
-- **Buckets needed:** `loki-logs`, `loki-ruler`, `loki-admin`
-- **Credentials:** currently `admin`/`admin1234` hardcoded — acceptable for home lab, document the risk
-- **Already has ArgoCD manifest** — needs uncommenting
-
-### 5. kube-prometheus-stack
-
-- **Helm chart:** `prometheus-community/kube-prometheus-stack` (currently pinned at `79.50.0`)
-- **Wave:** `01`
-- **Depends on:** Longhorn (Prometheus PVC, 50Gi)
-- **Exposes:** Prometheus NodePort `30002`, Grafana NodePort `30003`, Alertmanager NodePort `30004`
-- **Includes:** Prometheus, Alertmanager, Grafana, node-exporter (DaemonSet), kube-state-metrics
-- **Grafana datasources:** Prometheus auto-wired; Loki datasource must be added (via `additionalDataSources` in Helm values)
-- **SSO integration:** Grafana OIDC config points to Dex; added to Helm values in wave 2
-- **Already has ArgoCD manifest** — needs Loki datasource addition + uncommenting
-
-### 6. Loki
-
-- **Helm chart:** `grafana/loki 6.41.1` (already configured)
-- **Wave:** `01`
-- **Depends on:** MinIO (S3 backend)
-- **Config:** S3 via `minio.minio.svc.cluster.local:9000`, 3 buckets, 90-day retention
-- **Note:** persistence disabled (uses S3 only) — no Longhorn PVC needed for Loki itself
-- **Credentials:** currently hardcoded in Application manifest — acceptable for home lab
-- **Already has ArgoCD manifest** — needs uncommenting
-
-### 7. Promtail
-
-- **Helm chart:** `grafana/promtail` (new — not yet in homekube-apps)
-- **Wave:** `01` (after Loki)
-- **Depends on:** Loki
-- **Config:** DaemonSet; ship all pod logs to Loki; use `loki.observability.svc.cluster.local`
-- **No storage dependency**
-- **Needs new ArgoCD manifest** in `wave-01-apps/`
-
-### 8. Dex (Identity / SSO)
-
-- **Helm chart:** `dex/dex` (from `https://charts.dexidp.io`)
-- **Wave:** `02` (after all wave-01 apps are stable)
-- **Depends on:** nothing (stateless; no PVC needed)
-- **Exposes:** NodePort (port TBD) — redirect URI registered in Google Console
-- **Config:** Google connector with client ID/secret from Kubernetes Secret; ArgoCD and Grafana registered as static OIDC clients
-- **Credentials:** Google OAuth2 client ID + secret stored as a Secret (not in git); created manually as a human checkpoint before wave 2
-- **Needs new ArgoCD manifest** in `wave-02-custom/` (or a new `wave-02-identity/`)
-
----
-
-## Wave Structure
-
-```
-wave -1 (sync-wave: "-1")   kubelet-csr-approver  MetalLB  Longhorn  metrics-server  argocd-config
-wave  1 (sync-wave: "01")   MinIO  kube-prometheus-stack  Loki  Promtail  longhorn-extras
-wave  2 (sync-wave: "02")   Identity/SSO  ArgoCD OIDC config  Grafana OIDC config
-wave  3 (sync-wave: "03")   Istio (istiod + ingress gateway)  Kiali dashboard  Velero
+- name: Enable and start iscsid
+  ansible.builtin.systemd:
+    name: iscsid
+    enabled: true
+    state: started
 ```
 
-**Note on Istio:** Istio is installed via `istioctl` or the `base`/`istiod`/`gateway` Helm charts. The control plane (`istiod`) and ingress gateway are ArgoCD-managed. Cilium must run without kube-proxy replacement (`kubeProxyReplacement: false`) to avoid conflict with Istio's iptables interception — verify current Cilium config before enabling. Namespaces opt in to the mesh via the `istio-injection: enabled` label.
+**3. etcd snapshot job on pi0** — runs from wave `-1`, not wave 3, because pi0 is a single point of failure and DR must exist before stateful workloads. Implementation: a systemd timer on pi0 that calls `etcdctl snapshot save` and uploads to S3 via `aws s3 cp`. AWS credentials read from a root-only file populated by Ansible from a vault-stored variable.
+
+- Schedule: daily at 03:00 local
+- Retention: 14 days in S3 (lifecycle rule on the bucket)
+- Snapshot also written locally to `/var/lib/etcd-backup/` (keep last 7)
+- Restore procedure documented in `homekube-main/docs/restore-etcd.md`
+
+Re-run `task 22-k8s-nodes` to apply prerequisites 1 and 2 before enabling Longhorn in ArgoCD. The etcd timer is in its own play and lands as part of the same task run.
 
 ---
 
-## Acceptance Criteria
+## Deferred (out of scope for Phase 5)
 
-### Foundation (wave -1)
+Capabilities deliberately pushed to a later phase. Tracked here so the boundaries of Phase 5 are explicit.
 
-- [ ] `kubectl get csr` shows no `Pending` entries for `kubernetes.io/kubelet-serving` within 60s of node start
-- [ ] `kubectl top nodes` returns CPU/memory for all 4 nodes
-- [ ] `kubectl get pods -n metallb-system` — all pods Running
-- [ ] MetalLB assigns an IP to a test `type: LoadBalancer` service from the `192.168.86.241/251` pool
-- [ ] `kubectl get pods -n longhorn-system` — all pods Running
-- [ ] Longhorn UI accessible; all 4 nodes listed as schedulable; no disk warnings
-- [ ] A `PersistentVolumeClaim` with `storageClass: longhorn` binds successfully (2-replica volume)
+- **Gateway API + Istio ingress** — Kubernetes Gateway API (`HTTPRoute`, `GatewayClass`) as the ingress layer via Istio. Preferred over traditional Ingress. Deferred until Service Mesh is stable.
+- **DNS (Tailscale split DNS)** — in-cluster DNS server (`k8s_gateway` or CoreDNS) exposed via MetalLB; Tailscale split DNS routes `*.homekube.internal` to it; ExternalDNS writes records. No public domain. Depends on Gateway API being in place first. Until then, SSO redirect URIs use `https://piN:PORT` with the `homekube-ca` cert.
+- **Public ACME / Let's Encrypt** — once DNS lands, swap the self-signed `ClusterIssuer` for an ACME issuer. cert-manager is already in place; only the issuer changes.
+- **Tailscale subnet routing on pi0** — interim bridge for `darth` to reach in-cluster services from outside the home network. Root cause: Cilium's eBPF kube-proxy replacement attaches only to `eth0` (the physical switch interface); traffic arriving on `tailscale0` is not intercepted, so NodePort and LoadBalancer IPs are unreachable over Tailscale. Fix: advertise the service CIDR (`10.96.0.0/12`), pod CIDR (`10.244.0.0/16`), and MetalLB LB pool (`192.168.86.241/251`) as Tailscale subnet routes from `pi0` (`tailscale up --advertise-routes=...`), then approve them in the Tailscale admin console and enable IP forwarding on pi0. Once active, `darth` can reach LB IPs, NodePorts via any node IP, and pod IPs directly — without `kubectl port-forward` workarounds. Pairs well with the MetalLB capability (4): once both are in place, all user-facing services get LB IPs reachable from any Tailscale client.
+- **Stacked-etcd control-plane HA** — promote pi1/pi2 to control plane for a 3-node quorum. Deferred; relying on backups instead.
+- **Network policies**
+- **OPA / admission control**
+- **Multi-tenancy**
 
-### Observability (wave 1)
+---
 
-- [ ] `kubectl get pods -n minio` — Running; MinIO console accessible
-- [ ] All three Loki buckets exist in MinIO
-- [ ] `kubectl get pods -n observability` — Prometheus, Grafana, Alertmanager, node-exporter (×4), kube-state-metrics all Running
-- [ ] Grafana UI accessible at `:30003`; Prometheus datasource shows green; Loki datasource shows green
-- [ ] `kubectl get pods -n observability -l app=promtail` — one pod per node (DaemonSet), all Running
-- [ ] Loki receives logs: Grafana → Explore → Loki → `{namespace="kube-system"}` returns entries
-- [ ] Prometheus scraping cluster metrics: `kubectl --namespace observability port-forward svc/prometheus-operated 9090` → Targets page shows all targets Up
-- [ ] Node-exporter dashboard visible in Grafana (pre-built dashboard 1860 or similar)
-- [ ] Longhorn dashboard visible in Grafana
+## Rollout Order
 
-### Identity / SSO (wave 2)
+```
+Ansible    /storage · open-iscsi · etcd snapshot timer (pi0)
+            ↓
+wave -1   Secrets Mgmt (sealed-secrets) · Internal TLS (cert-manager)
+          Node Hygiene · Service Exposure (MetalLB) · Block Storage (Longhorn)
+            ↓
+wave  1   Metrics (Prom/AM/node-exp/KSM) · Logs (MinIO → Loki → Alloy) · Dashboards (Grafana + Telegram)
+            ↓
+wave  2   Identity & SSO (Dex)  →  re-wire ArgoCD + Grafana OIDC
+            ↓
+wave  3   Service Mesh (Istio + Kiali) · Backups & DR (Longhorn + Velero)
+```
 
-- [ ] SSO UI accessible and login works
-- [ ] ArgoCD login via SSO (OIDC redirect works end-to-end)
-- [ ] Grafana login via SSO (OIDC redirect works end-to-end)
-- [ ] Kubernetes API accessible via OIDC token (optional, see Open Questions)
+Order within a wave is enforced by ArgoCD sync-wave + dependency annotations where needed (e.g. sealed-secrets before MinIO sealed cred; MinIO before Loki).
 
-### Service Mesh (wave 3)
+### Step-by-step deployment
 
-- [ ] `kubectl get pods -n istio-system` — istiod and ingress gateway Running
-- [ ] Kiali UI accessible; service graph renders cluster traffic
-- [ ] mTLS enforced in at least one test namespace (PeerAuthentication `STRICT` mode)
-- [ ] Existing cluster traffic unaffected after mesh activation (all wave-1 apps still healthy)
-- [ ] Cilium CNI compatibility confirmed — no iptables conflicts, pod networking healthy
-
-### Backups (wave 3)
-
-- [ ] External S3 bucket provisioned and credentials stored as a Kubernetes Secret
-- [ ] Longhorn backup target configured (S3 endpoint + bucket in Longhorn settings); test backup of one volume completes
-- [ ] Velero installed and connected to S3; `velero backup create smoke-test` completes successfully
-- [ ] etcd snapshot CronJob running on pi0 (daily); snapshot uploaded to S3; verify restore procedure documented
-- [ ] Longhorn scheduled backups enabled (daily, retain 7)
+1. **Ansible prerequisites** — `/storage`, `open-iscsi`, etcd snapshot timer → run `task 22-k8s-nodes` and verify the first etcd snapshot lands in S3
+2. **Wave -1** — enable in kustomization, in this order: `sealed-secrets`, `cert-manager` (+ `ClusterIssuer/homekube-ca`), `kubelet-csr-approver`, `metallb`, `longhorn`
+3. **Validate wave -1** (acceptance criteria for capabilities 1–5)
+4. **Wave 1** — seal MinIO + Telegram credentials → enable `minio`, `longhorn-extras`, `kube-prometheus-stack`, `loki`; create `alloy` manifest
+5. **Validate wave 1** (capabilities 6–8)
+6. **Wave 2** — Google OAuth client → sealed-secret → Dex → ArgoCD/Grafana OIDC config
+7. **Validate wave 2** (capability 9)
+8. **Wave 3** — verify Cilium `kubeProxyReplacement: false` as a separate scheduled change; install Istio + Kiali (opt-in namespaces only); provision external S3 → sealed AWS creds → Velero + Longhorn backups
+9. **Validate wave 3** (capabilities 10–11)
 
 ---
 
 ## Open Questions
 
-### OQ-1: Identity / SSO solution — DECIDED
-
-**Dex + Google OIDC.**
-
-Dex acts as an OIDC federation proxy; Google is the upstream identity provider. ArgoCD and Grafana are configured as Dex OIDC clients. Users authenticate with their Google account.
-
-**Prerequisites before deploying:**
-- Create a Google OAuth2 client ID + secret in Google Cloud Console (Credentials → OAuth 2.0 Client ID, type: Web application)
-- Redirect URI: `http://<dex-host>/callback` — must be registered in Google Console
-- Store client ID and secret as a Kubernetes Secret (not in git)
-
-**Constraints to be aware of:**
-- No local user management — everyone needs a Google account
-- Group-based RBAC requires Google Workspace; free accounts expose email/profile only
-- Dex has no admin UI — configured entirely via Helm values
-
-### OQ-2: Access strategy
-
-SSO (and a polished cluster experience) requires stable service hostnames for OIDC redirect URIs.
-
-**Decided:**
-- **Ingress layer:** Kubernetes Gateway API (`GatewayClass`, `Gateway`, `HTTPRoute`) via Istio — preferred over traditional Ingress, deferred until wave 3 Istio is stable.
-- **DNS:** Tailscale split DNS with in-cluster DNS server (`k8s_gateway`) exposed via MetalLB. Domain `homekube.internal` resolves on all Tailscale devices; no public exposure. Deferred until Gateway API is in place.
-- **Tailscale subnet routing:** Enable on pi0 to give darth direct access to MetalLB LB IPs (`192.168.86.x`) as a bridge until full DNS is wired up.
-
-**For this phase (wave 1–2):** services remain on NodePort. SSO redirect URIs will use `http://piN:PORT` format temporarily.
-
-### OQ-3: External S3 provider for backups — DECIDED
-
-**AWS S3.** First-class support in both Velero and Longhorn. AWS credentials stored as Kubernetes Secrets (not in git). Bucket and IAM user/policy created as a human checkpoint before wave 3.
-
-### OQ-4: Grafana timezone — DECIDED
-
-**Australia/Sydney.** Already set in current Helm values — no change needed.
-
----
-
-## Deployment Order
-
-1. **Ansible prerequisite:** add `/storage` dir task → run `task 22-k8s-nodes`
-2. **Wave -1:** enable in kustomization: `kubelet-csr-approver`, `metallb`, `longhorn` (already have manifests for metallb and longhorn; new manifest needed for csr-approver)
-3. **Validate wave -1** (acceptance criteria above)
-4. **Wave 1:** enable `minio`, `longhorn-extras`, `kube-prometheus-stack`, `loki`; create new `promtail` manifest
-5. **Validate wave 1**
-6. **Wave 2:** implement chosen SSO solution; update ArgoCD + Grafana OIDC config
-7. **Validate wave 2**
+None outstanding. Identity solution, backup provider, ingress layer, DNS strategy, MetalLB subnet (Wi-Fi, accepted), control-plane SPOF (accepted with backup), secrets tool (sealed-secrets), alert sink (Telegram), and Grafana timezone are all decided — captured inline in the relevant capability sections above. Future material changes (e.g. swapping Istio for another mesh, promoting to HA control plane) should be recorded in `DECISIONS.md`.

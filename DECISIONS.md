@@ -2,6 +2,54 @@
 
 ---
 
+## 022 — Drop Bitnami MinIO chart, use upstream minio/minio (2026-05-23)
+
+**Decision:** Use the upstream `minio/minio` Helm chart with the `quay.io/minio/minio:RELEASE.2025-10-15T17-29-55Z` image. Earlier spec drafts referenced `bitnami/minio` — removed.
+
+**Rationale:** Broadcom restructured the Bitnami catalog in August 2025, moving most "free" images to the paid `bitnamisecure` registry. The free `bitnami/minio` chart is no longer reliable on fresh installs and has no upstream commitment to fix. The MinIO project's own chart is multi-arch (arm64 included), unaffected by Bitnami licensing, and tracks the latest MinIO release line directly. Same caution extends to any future Bitnami chart — verify the image is still pullable before adopting.
+
+---
+
+## 021 — Promtail → Grafana Alloy for log shipping (2026-05-23)
+
+**Decision:** Use Grafana Alloy as the DaemonSet log shipper into Loki. Do not deploy Promtail.
+
+**Rationale:** Grafana moved Promtail into feature-frozen maintenance in 2024 and named Alloy as its successor. Deploying Promtail on a fresh cluster builds in a forced migration within the lifetime of Phase 5. Alloy is the actively maintained path and configuration-wise is close enough to Promtail that the migration cost is paid once, now, instead of twice (now + later).
+
+---
+
+## 020 — sealed-secrets for in-git credentials (2026-05-23)
+
+**Decision:** Use `bitnami-labs/sealed-secrets` (controller in `kube-system`, `kubeseal` CLI on darth) as the only mechanism for committing Kubernetes Secrets to git. No plaintext secrets in any repo. external-secrets + AWS Secrets Manager and SOPS+age were considered and rejected.
+
+**Rationale:** Solo home-lab with a small number of secrets (MinIO root, Telegram bot, Google OAuth, AWS S3 creds) — a controller that round-trips sealed YAML in git is the simplest workflow with no external dependency. external-secrets adds an external store plus controller pods; SOPS+age requires ArgoCD plugin configuration that is fragile to maintain. The `bitnami-labs/sealed-secrets` project is the upstream maintainer repo and is unaffected by the Bitnami catalog changes (DECISION-022). Trade-off accepted: if the controller's signing key is lost without backup, every committed secret becomes unrecoverable; mitigation is exporting `kubeseal --fetch-cert` and the private key to the password manager immediately after first install.
+
+---
+
+## 019 — MetalLB L2 pool on home Wi-Fi subnet, not the wired cluster plane (2026-05-23)
+
+**Decision:** The MetalLB `IPAddressPool` lives on `192.168.86.241–251` (home Wi-Fi `192.168.86.0/24`), not on the wired switch subnet `10.0.0.0/24` that carries inter-node and etcd traffic. ARP responses egress on `wlan0`. `L2Advertisement` is pinned to a subset of nodes (pi1/pi2/pi3) to keep failover deterministic and avoid GARP storms.
+
+**Rationale:** LoadBalancer IPs need to be reachable from family devices on the home Wi-Fi without static routes or Tailscale subnet routing. Putting the pool on the wired `10.0.0.0/24` plane would have given a faster path but would have required either Tailscale subnet routing on pi0 (deferred) or static routes on every consuming device. Trade-off accepted: user-facing LB traffic crosses Wi-Fi, while cluster-internal traffic (etcd, inter-node) stays on the wired switch. Documented in the spec so it doesn't read as a misconfig in a future review.
+
+---
+
+## 018 — Accept single control plane on pi0, mitigate with etcd snapshots from wave -1 (2026-05-23)
+
+**Decision:** Phase 5 does not introduce stacked-etcd HA. pi0 remains the sole control plane. Disaster recovery relies on an etcd snapshot systemd timer running on pi0 from the earliest wave, uploading to external S3 daily with 14-day retention. Restore procedure is manual and documented in `homekube-main/docs/restore-etcd.md`.
+
+**Rationale:** Promoting pi1 and pi2 to control plane for a 3-node etcd quorum would have required nontrivial Ansible work (kubeadm join `--control-plane`, certificate distribution, re-templating workloads to tolerate fewer worker resources). For a home lab the cost is asymmetric — the realistic failure mode is NVMe/SD corruption on pi0, which a tested backup handles. Important: the etcd backup lives in wave `-1`, not wave `3` as the original spec draft had it. Backup must exist before any stateful workload runs, otherwise the first Longhorn-backed PVC is on borrowed time. Stacked-etcd HA is listed in the Deferred section for a future phase.
+
+---
+
+## 017 — Track latest upstream GA for every cluster component (Version Policy) (2026-05-23)
+
+**Decision:** All Helm charts, application images, and Kubernetes components in `homekube-apps` track the latest upstream GA release. No release candidates, betas, alphas, or `*-pre.*` builds enter any wave. Patch and minor bumps applied on the cadence Renovate (or equivalent) surfaces them; major bumps reviewed for breaking values-schema changes, then applied promptly. The Pinned Versions table in `docs/specs/005-production-cluster-setup.md` is the source of truth at any given time and is re-verified at the start of each implementation session.
+
+**Rationale:** Home cluster is a learning environment — accumulating tech debt from N-2 versions defeats the purpose, and the "let's not bump that until we have to" pattern silently builds upgrade cliffs. Renovate-style PRs into `homekube-apps` are cheap; merging them through ArgoCD is the same flow as any other change. Trade-off accepted: occasional values-schema breaks on major chart bumps (e.g. Loki chart `6.x → 7.x`) are absorbed up-front during the upgrade PR rather than amortised by drifting further behind.
+
+---
+
 ## 016 — kubernetes Python package required for kubernetes.core on control node (2026-05-20)
 
 **Decision:** Add `kubernetes>=31.0.0` to `homekube-main/pyproject.toml`. Convert all remaining raw shell commands in the `gitops` role (`kubectl get nodes`, `helm upgrade --install`) to `kubernetes.core` modules (`k8s_info`, `helm`), consistent with the rest of the role.

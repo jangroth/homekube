@@ -76,7 +76,8 @@ After the physical step, ansible handles the rest:
 ## Working Approach
 
 - **Spec-driven**: write a spec in `docs/specs/NNN-title.md` before any significant implementation. Specs define the problem, acceptance criteria, and approach.
-- **Decision log**: record key decisions in `DECISIONS.md`, newest decision first
+- **Decision log**: record key decisions in `DECISIONS.md`, newest decision first. Decisions capture **why**.
+- **Change log**: append every material change to `CHANGELOG.md` (top-level, reverse-chronological, [Keep a Changelog](https://keepachangelog.com) format). Captures **what was done**: additions, version bumps, removals, fixes, operational interventions. Distinct from `DECISIONS.md`.
 - **Todo**: open tasks tracked in `TODO.md`
 - **Trust**: Claude proposes, human approves for destructive/irreversible operations (this policy evolves over time as trust is established)
 
@@ -85,5 +86,6 @@ After the physical step, ansible handles the rest:
 ## Key Files
 
 - `TODO.md` — open tasks
-- `DECISIONS.md` — decision log
+- `DECISIONS.md` — decision log (why)
+- `CHANGELOG.md` — change log (what was done), top-level, spans all three repos
 - `docs/specs/` — specs for significant work items
