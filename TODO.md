@@ -85,13 +85,19 @@ Each pi steps:
   - [ ] Bump existing ArgoCD chart 9.5.14 → 9.5.15 — `group_vars/all.yml` updated; run `task 50-gitops` to apply
   - [x] Ansible prerequisites — `/storage` partition (851.5 GiB, nvme0n1p3) created on all 4 nodes; `10-nvme.yml` updated to automate for future provisioning; `open-iscsi` was already present
   - [ ] Etcd snapshot systemd timer on pi0 (daily → S3, 14-day retention) — deferred
-  - [ ] Wave -1: sealed-secrets 0.37.0, cert-manager 1.20.2 (+ `homekube-ca` ClusterIssuer), kubelet-csr-approver 1.2.14, metallb 0.16.0 (bump from 0.14.9), longhorn 1.11.2 (bump from 1.9.1)
-  - [ ] Validate wave -1 (capabilities 1–5 acceptance criteria)
-  - [ ] Wave 1: MinIO upstream chart (drop Bitnami), longhorn-extras, kube-prometheus-stack 85.3.0 (bump from 79.50.0), Loki chart 7.1.0 (v6 → v7 values-schema rewrite), Alloy DaemonSet (new manifest, replaces Promtail)
+  - [ ] Wave -1:
+    - [x] sealed-secrets chart 2.18.6 / app 0.37.0 — ArgoCD app manifest deployed to homekube-apps
+    - [ ] **Validate sealed-secrets**: `kubeseal --fetch-cert` → save cert to password manager; round-trip test (create Secret → seal → apply → controller materialises it)
+    - [ ] cert-manager chart v1.20.2 + `homekube-ca` ClusterIssuer
+    - [ ] kubelet-csr-approver chart 1.2.14
+    - [ ] metallb chart 0.16.0 (bump from 0.14.9) + IPAddressPool + L2Advertisement
+    - [ ] longhorn chart 1.11.2 (bump from 1.9.1)
+  - [ ] Validate wave -1 (capabilities 2–5 acceptance criteria)
+  - [ ] Wave 1: MinIO upstream chart, longhorn-extras, kube-prometheus-stack chart 85.3.0, Loki chart 7.0.0 (v6 → v7 values-schema rewrite), Alloy chart 1.8.1 (new manifest, replaces Promtail)
   - [ ] Validate wave 1 (capabilities 6–8); confirm Telegram alert receiver delivers a test alert
-  - [ ] Wave 2: Google OAuth client → sealed-secret → Dex 2.45.1 → ArgoCD + Grafana OIDC config
+  - [ ] Wave 2: Google OAuth client → sealed-secret → Dex chart 0.24.0 / app 2.44.0 → ArgoCD + Grafana OIDC config
   - [ ] Validate wave 2 (capability 9)
-  - [ ] Wave 3: verify Cilium `kubeProxyReplacement` (separate scheduled change if flip needed) → Istio 1.30.0 + Kiali (opt-in namespaces only) → external S3 + sealed AWS creds → Velero 1.18.1 (CSI plugin) + Longhorn backup target
+  - [ ] Wave 3: verify Cilium `kubeProxyReplacement` (separate scheduled change if flip needed) → Istio 1.30.0 + Kiali (opt-in namespaces only) → external S3 + sealed AWS creds → Velero chart 12.0.1 / app 1.18.0 (CSI plugin) + Longhorn backup target
   - [ ] Validate wave 3 (capabilities 10–11); document etcd restore drill in `homekube-main/docs/restore-etcd.md`
 
 ---

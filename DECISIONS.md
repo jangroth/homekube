@@ -2,6 +2,14 @@
 
 ---
 
+## 025 — Spec 005 version table pins Helm chart versions, not app versions (2026-05-25)
+
+**Decision:** All entries in the spec 005 Pinned Versions table record the **Helm chart version** (the value used as `targetRevision` in ArgoCD Application manifests) alongside the app version. Earlier entries recorded app versions only, which caused ArgoCD manifest failures when the two diverged (e.g. sealed-secrets chart `2.18.6` ships app `0.37.0`; Dex chart `0.24.0` ships app `2.44.0`; Velero chart `12.0.1` ships app `1.18.0`).
+
+**Rationale:** ArgoCD's `targetRevision` is the Helm chart version — specifying an app version that doesn't exist as a chart version causes an immediate "chart not found" error at sync time. For most components chart = app (cert-manager, MetalLB, Longhorn, kubelet-csr-approver), but for projects where chart and app are versioned independently this distinction is critical. Catching this in the spec prevents silent failures at deploy time.
+
+---
+
 ## 024 — Dedicated /storage partition on every NVMe node (2026-05-25)
 
 **Decision:** Each Pi's NVMe is partitioned as: 512 MiB vfat boot (`nvme0n1p1`) + 80 GiB ext4 root (`nvme0n1p2`) + ~851 GiB ext4 storage (`nvme0n1p3`, `LABEL=storage`, mounted at `/storage`). Longhorn's `defaultDataPath` points to `/storage`. The `copy_mmc_to_nvme.yml` playbook is updated to produce this layout automatically on future provisioning runs.
