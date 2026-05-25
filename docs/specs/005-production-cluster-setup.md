@@ -62,7 +62,7 @@ The table below is the source of truth for what is pinned at spec time. Inline m
 | Kubernetes | 1.36.1 | already installed via kubeadm |
 | Cilium | 1.19.4 | already installed; 1.20 still pre-release |
 | ArgoCD (Helm chart) | 9.5.15 | argo Helm repo |
-| sealed-secrets | 0.37.0 | `bitnami-labs/sealed-secrets` |
+| sealed-secrets | 2.18.6 (app 0.37.0) | `bitnami-labs/sealed-secrets` |
 | cert-manager | 1.20.2 | jetstack |
 | kubelet-csr-approver | 1.2.14 | postfinance |
 | MetalLB (Helm chart) | 0.16.0 | confirm exact chart tag at install |
