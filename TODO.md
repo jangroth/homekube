@@ -82,8 +82,9 @@ Each pi steps:
 - [x] Verify ArgoCD is up and syncing homekube-apps (metrics-server + argocd-config active)
 - [x] Verify metrics-server healthy (`kubectl top nodes` — all 4 nodes reporting)
 - [ ] Phase 5 production setup — see spec 005
-  - [ ] Bump existing ArgoCD chart 9.5.14 → 9.5.15 (Version Policy alignment)
-  - [ ] Ansible prerequisites: `/storage` dir, `open-iscsi` package + iscsid, etcd snapshot systemd timer on pi0 (daily → S3, 14-day retention)
+  - [ ] Bump existing ArgoCD chart 9.5.14 → 9.5.15 — `group_vars/all.yml` updated; run `task 50-gitops` to apply
+  - [x] Ansible prerequisites — `/storage` partition (851.5 GiB, nvme0n1p3) created on all 4 nodes; `10-nvme.yml` updated to automate for future provisioning; `open-iscsi` was already present
+  - [ ] Etcd snapshot systemd timer on pi0 (daily → S3, 14-day retention) — deferred
   - [ ] Wave -1: sealed-secrets 0.37.0, cert-manager 1.20.2 (+ `homekube-ca` ClusterIssuer), kubelet-csr-approver 1.2.14, metallb 0.16.0 (bump from 0.14.9), longhorn 1.11.2 (bump from 1.9.1)
   - [ ] Validate wave -1 (capabilities 1–5 acceptance criteria)
   - [ ] Wave 1: MinIO upstream chart (drop Bitnami), longhorn-extras, kube-prometheus-stack 85.3.0 (bump from 79.50.0), Loki chart 7.1.0 (v6 → v7 values-schema rewrite), Alloy DaemonSet (new manifest, replaces Promtail)

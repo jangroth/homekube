@@ -2,6 +2,22 @@
 
 ---
 
+## 024 — Dedicated /storage partition on every NVMe node (2026-05-25)
+
+**Decision:** Each Pi's NVMe is partitioned as: 512 MiB vfat boot (`nvme0n1p1`) + 80 GiB ext4 root (`nvme0n1p2`) + ~851 GiB ext4 storage (`nvme0n1p3`, `LABEL=storage`, mounted at `/storage`). Longhorn's `defaultDataPath` points to `/storage`. The `copy_mmc_to_nvme.yml` playbook is updated to produce this layout automatically on future provisioning runs.
+
+**Rationale:** A bare `/storage` directory on the root filesystem (the original plan) gives Longhorn access to the entire 931 GiB NVMe but without isolation — a full storage volume could exhaust the root filesystem and destabilise the OS. A dedicated partition removes that risk and makes disk usage for storage independently observable. Repartitioning required booting from SD card because the root partition occupied the full NVMe (the SD-to-NVMe clone had already expanded). Now automated in `copy_mmc_to_nvme.yml`: the `expected` state classifier checks for 3 partitions with `LABEL=storage` on p3; the wipe+partition block creates the correct layout; the fstab entry is added to the clone before reboot.
+
+---
+
+## 023 — SD-first EEPROM boot order (0xf61) on all nodes (2026-05-25)
+
+**Decision:** All four Pis are configured with `BOOT_ORDER=0xf61` (SD card first, NVMe fallback). With no SD card inserted the Pi boots NVMe normally. Inserting a SD card and power-cycling boots into it for recovery. The `copy_mmc_to_nvme.yml` playbook sets `0xf61` after NVMe migration.
+
+**Rationale:** The only remote access path is Tailscale over WiFi. If the NVMe-booted OS loses WiFi connectivity (router reset, changed password) there is no way to SSH in and change the boot order — a catch-22. SD-first breaks that dependency: recovery is always "insert SD card + power cycle", which requires only physical access, not a working network. NVMe-first (`0xf16`) was originally chosen after NVMe migration but reversed once the WiFi-lockout scenario was considered. Trade-off accepted: a stray SD card left in a slot would cause the Pi to boot SD instead of NVMe — operationally, SD cards are kept out of slots during normal operation and stored nearby for recovery.
+
+---
+
 ## 022 — Drop Bitnami MinIO chart, use upstream minio/minio (2026-05-23)
 
 **Decision:** Use the upstream `minio/minio` Helm chart with the `quay.io/minio/minio:RELEASE.2025-10-15T17-29-55Z` image. Earlier spec drafts referenced `bitnami/minio` — removed.
