@@ -55,25 +55,27 @@ A few decisions that cut across multiple capabilities, called out here so they a
 
 The table below is the source of truth for what is pinned at spec time. Inline mentions in capability sections must match this table; if they drift, this table wins. Re-verify before each implementation session — versions older than ~30 days are stale by definition.
 
-### Pinned Versions (verified 2026-05-23)
+### Pinned Versions (verified 2026-05-25)
 
-| Component | Pinned | Notes |
-|---|---|---|
-| Kubernetes | 1.36.1 | already installed via kubeadm |
-| Cilium | 1.19.4 | already installed; 1.20 still pre-release |
-| ArgoCD (Helm chart) | 9.5.15 | argo Helm repo |
-| sealed-secrets | 2.18.6 (app 0.37.0) | `bitnami-labs/sealed-secrets` |
-| cert-manager | 1.20.2 | jetstack |
-| kubelet-csr-approver | 1.2.14 | postfinance |
-| MetalLB (Helm chart) | 0.16.0 | confirm exact chart tag at install |
-| Longhorn | 1.11.2 | two minors ahead of prior spec draft |
-| MinIO | `RELEASE.2025-10-15T17-29-55Z` | upstream chart, not Bitnami |
-| Loki (Helm chart) | 7.1.0 | **chart v7 is a major bump**: values schema differs from v6; fresh install only |
-| kube-prometheus-stack (Helm chart) | 85.3.0 | six minors ahead of prior spec draft |
-| Grafana Alloy (Helm chart) | 1.8.x (latest at install) | replaces Promtail |
-| Dex | 2.45.1 | dexidp |
-| Istio | 1.30.0 | istioctl install + helm |
-| Velero | 1.18.1 | with CSI snapshot plugin + `velero-plugin-for-aws` |
+Chart version is the `targetRevision` used in ArgoCD manifests. App version is what runs in the cluster.
+
+| Component | Chart Version | App Version | Notes |
+|---|---|---|---|
+| Kubernetes | 1.36.1 | 1.36.1 | already installed via kubeadm |
+| Cilium | 1.19.4 | 1.19.4 | already installed; 1.20 still pre-release |
+| ArgoCD | 9.5.15 | v3.4.2 | argo Helm repo |
+| sealed-secrets | 2.18.6 | 0.37.0 | `bitnami-labs/sealed-secrets` |
+| cert-manager | v1.20.2 | v1.20.2 | jetstack |
+| kubelet-csr-approver | 1.2.14 | v1.2.14 | postfinance |
+| MetalLB | 0.16.0 | v0.16.0 | |
+| Longhorn | 1.11.2 | v1.11.2 | |
+| MinIO | — | `RELEASE.2025-10-15T17-29-55Z` | upstream chart, not Bitnami; version is image tag |
+| Loki | 7.0.0 | 3.6.7 | **chart v7 is a major bump**: values schema differs from v6; fresh install only |
+| kube-prometheus-stack | 85.3.0 | v0.90.1 | |
+| Grafana Alloy | 1.8.1 | v1.16.1 | replaces Promtail |
+| Dex | 0.24.0 | 2.44.0 | dexidp |
+| Istio | 1.30.0 | 1.30.0 | istioctl install + helm |
+| Velero | 12.0.1 | 1.18.0 | with CSI snapshot plugin + `velero-plugin-for-aws` |
 
 ---
 
@@ -263,7 +265,7 @@ Phase 5 introduces eleven capabilities. Each maps to a sync-wave for ArgoCD exec
 **Wave:** `01`
 
 **Components:**
-- Helm chart `grafana/loki 7.1.0` (Loki backend) — manifest needs refresh; **single-binary mode** (`deploymentMode: SingleBinary`) — lowest memory ceiling, sufficient for home-lab cardinality. **Chart v7 is a major bump from v6** — values schema changed; do not lift v6 values blindly.
+- Helm chart `grafana/loki 7.0.0` (Loki backend) — manifest needs refresh; **single-binary mode** (`deploymentMode: SingleBinary`) — lowest memory ceiling, sufficient for home-lab cardinality. **Chart v7 is a major bump from v6** — values schema changed; do not lift v6 values blindly.
 - Helm chart `grafana/alloy` (DaemonSet log shipper) — **new manifest** under `wave-01-apps/`; chart `1.8.x` (latest at install per Version Policy). Replaces Promtail, which is in feature-frozen maintenance.
 
 #### Sub-capability: Object Storage (MinIO)
@@ -332,7 +334,7 @@ Loki needs S3-compatible object storage. MinIO runs in-cluster and exists solely
 **Wave:** `02`
 
 **Components:**
-- Helm chart `dex/dex` (`https://charts.dexidp.io`) — app `2.45.1`
+- Helm chart `dex/dex` (`https://charts.dexidp.io`) — chart `0.24.0`, app `2.44.0`
 - ArgoCD OIDC client config (update to `argocd-config`)
 - Grafana OIDC config (update to `kube-prometheus-stack` Helm values)
 
@@ -391,7 +393,7 @@ Loki needs S3-compatible object storage. MinIO runs in-cluster and exists solely
 
 **Components (wave 3):**
 - Longhorn → S3 backup target (built-in Longhorn backups)
-- Helm chart `vmware-tanzu/velero` — app `1.18.1` — with the **CSI snapshot plugin** + `velero-plugin-for-aws` → S3
+- Helm chart `vmware-tanzu/velero` — chart `12.0.1`, app `1.18.0` — with the **CSI snapshot plugin** + `velero-plugin-for-aws` → S3
 - AWS credentials stored as a **sealed-secret** (`velero-aws-credentials`)
 
 **Depends on:** human checkpoint — AWS S3 bucket provisioned, IAM user/policy created, credentials sealed. Plus Secrets Management (capability 1) and Block Storage (capability 5).
