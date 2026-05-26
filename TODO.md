@@ -82,12 +82,12 @@ Each pi steps:
 - [x] Verify ArgoCD is up and syncing homekube-apps (metrics-server + argocd-config active)
 - [x] Verify metrics-server healthy (`kubectl top nodes` — all 4 nodes reporting)
 - [ ] Phase 5 production setup — see spec 005
-  - [ ] Bump existing ArgoCD chart 9.5.14 → 9.5.15 — `group_vars/all.yml` updated; run `task 50-gitops` to apply
+  - [x] Bump existing ArgoCD chart 9.5.14 → 9.5.15 — confirmed running 9.5.15 (chart `argo-cd-9.5.15`, app `v3.4.2`)
   - [x] Ansible prerequisites — `/storage` partition (851.5 GiB, nvme0n1p3) created on all 4 nodes; `10-nvme.yml` updated to automate for future provisioning; `open-iscsi` was already present
   - [ ] Etcd snapshot systemd timer on pi0 (daily → S3, 14-day retention) — deferred
   - [ ] Wave -1:
     - [x] sealed-secrets chart 2.18.6 / app 0.37.0 — ArgoCD app manifest deployed to homekube-apps
-    - [ ] **Validate sealed-secrets**: `kubeseal --fetch-cert` → save cert to password manager; round-trip test (create Secret → seal → apply → controller materialises it)
+    - [x] **Validate sealed-secrets**: `kubeseal --fetch-cert` → cert saved to password manager; round-trip test passed
     - [ ] cert-manager chart v1.20.2 + `homekube-ca` ClusterIssuer
     - [ ] kubelet-csr-approver chart 1.2.14
     - [ ] metallb chart 0.16.0 (bump from 0.14.9) + IPAddressPool + L2Advertisement

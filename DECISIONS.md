@@ -2,6 +2,14 @@
 
 ---
 
+## 026 — README.md for human docs, CLAUDE.md for AI context only (2026-05-27)
+
+**Decision:** Each repo has a `README.md` for human-readable operational documentation (what's deployed, how to access it, how to add an app). `CLAUDE.md` files are AI workspace context only — not the place for human-facing reference material.
+
+**Rationale:** `CLAUDE.md` is loaded automatically by Claude Code and is written for an AI audience (concise, structured for tool consumption). A human landing on the repo from GitHub should find a `README.md` that explains what's running and how to operate it. The two documents serve different readers and should be maintained separately. `homekube-apps/README.md` was rewritten this session to reflect only currently deployed components; it grows as the spec rolls out.
+
+---
+
 ## 025 — Spec 005 version table pins Helm chart versions, not app versions (2026-05-25)
 
 **Decision:** All entries in the spec 005 Pinned Versions table record the **Helm chart version** (the value used as `targetRevision` in ArgoCD Application manifests) alongside the app version. Earlier entries recorded app versions only, which caused ArgoCD manifest failures when the two diverged (e.g. sealed-secrets chart `2.18.6` ships app `0.37.0`; Dex chart `0.24.0` ships app `2.44.0`; Velero chart `12.0.1` ships app `1.18.0`).
