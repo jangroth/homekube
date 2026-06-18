@@ -2,6 +2,22 @@
 
 ---
 
+## 029 — kubelet --node-ip restricts CSR SANs to switch interface (2026-06-18)
+
+**Decision:** All nodes have `KUBELET_EXTRA_ARGS="--node-ip={{ node_switch_ip }}"` written to `/etc/default/kubelet` via Ansible (`configure_kubelet_node_ip.yml`). The `node_switch_ip` variable is already defined in each node's `host_vars`.
+
+**Rationale:** Without `--node-ip`, the kubelet includes every interface IP (`eth0`, `wlan0`, `tailscale0`) as SANs in its serving certificate CSR. The kubelet-csr-approver only allows `10.0.0.0/24` (switch) and `10.244.0.0/16` (pod CIDR), so the Wi-Fi IP (`192.168.86.x`) triggered a denial on every CSR. Setting `--node-ip` to the switch address causes the kubelet to advertise only that IP, keeping CSR SANs within the allowed range.
+
+---
+
+## 028 — kubelet-csr-approver requires bypassDnsResolution: true (2026-06-18)
+
+**Decision:** The kubelet-csr-approver Helm release is deployed with `bypassDnsResolution: true`.
+
+**Rationale:** The approver's default behaviour is to resolve every DNS SAN in the CSR and verify the resulting IP is within the allowed CIDR ranges. Node hostnames (e.g. `pi2`) are not resolvable from within the cluster — they exist only in Tailscale MagicDNS and `/etc/hosts` on the nodes themselves, not in CoreDNS. Without the bypass flag, every kubelet-serving CSR is denied with "The SAN DNS Name could not be resolved". Bypassing DNS validation means only IP SAN checks are applied, which is sufficient given the `--node-ip` restriction (DECISION-029) ensures only the switch IP appears as a SAN.
+
+---
+
 ## 027 — cert-manager split into two ArgoCD Applications to avoid webhook timing race (2026-06-17)
 
 **Decision:** cert-manager is deployed as two separate ArgoCD Applications: `cert-manager` (wave `-1`, Helm chart) and `cert-manager-config` (wave `0`, ClusterIssuers from git). The `homekube-ca` ClusterIssuer and self-signed bootstrap resources live in the wave `0` application.

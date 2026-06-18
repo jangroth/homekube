@@ -91,7 +91,7 @@ Each pi steps:
     - [x] cert-manager chart v1.20.2 + `homekube-ca` ClusterIssuer — deployed, all pods Running, `ClusterIssuer/homekube-ca` Ready=True
       - [x] **Human step:** export CA cert → trust on darth (`sudo security add-trusted-cert ...`)
       - [x] **Human step:** save `homekube-ca-secret` (full YAML, cert + key) to password manager
-    - [ ] kubelet-csr-approver chart 1.2.14
+    - [x] kubelet-csr-approver chart 1.2.14 — deployed; `bypassDnsResolution: true` required; `--node-ip` set on all nodes via Ansible (see DECISION-028/029)
     - [ ] metallb chart 0.16.0 (bump from 0.14.9) + IPAddressPool + L2Advertisement
     - [ ] longhorn chart 1.11.2 (bump from 1.9.1)
   - [ ] Validate wave -1 (capabilities 2–5 acceptance criteria)
