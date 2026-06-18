@@ -15,6 +15,13 @@ Cross-repo entries reference commits as `repo@sha` (e.g. `homekube-main@e77a322`
 
 ---
 
+## 2026-06-18
+
+### Operational
+- cert-manager validation: applied a test `Certificate` against `ClusterIssuer/homekube-ca`, confirmed `Ready=True` and secret populated, cleaned up — spec 005 capability 2 acceptance complete
+
+---
+
 ## 2026-05-23 — Baseline
 
 End of Phase 5 bootstrap. Cluster is a working, minimalistic Kubernetes installation. Future changes are tracked from this point onward.

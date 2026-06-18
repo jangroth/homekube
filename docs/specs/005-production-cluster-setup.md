@@ -149,7 +149,7 @@ Phase 5 introduces eleven capabilities. Each maps to a sync-wave for ArgoCD exec
 **Acceptance:**
 - [x] `cert-manager`, `cainjector`, `webhook` pods Running
 - [x] `ClusterIssuer/homekube-ca` reports `Ready=True`
-- [ ] A test `Certificate` issues and the secret is populated
+- [x] A test `Certificate` issues and the secret is populated
 - [x] Root CA cert exported and trusted on darth (`sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain homekube-ca.crt`)
 - [x] `homekube-ca-secret` (full secret YAML, cert + key) saved to password manager
 
