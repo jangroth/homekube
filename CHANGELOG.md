@@ -17,8 +17,13 @@ Cross-repo entries reference commits as `repo@sha` (e.g. `homekube-main@e77a322`
 
 ## 2026-06-18
 
+### Added
+- kubelet-csr-approver `1.2.14` deployed to `kube-system` (spec 005 capability 3); `bypassDnsResolution: true` required because node hostnames are not resolvable from within the cluster
+- Ansible: `configure_kubelet_node_ip.yml` task sets `--node-ip={{ node_switch_ip }}` on all nodes via `/etc/default/kubelet`, preventing Wi-Fi and Tailscale IPs from appearing in kubelet serving CSR SANs
+
 ### Operational
 - cert-manager validation: applied a test `Certificate` against `ClusterIssuer/homekube-ca`, confirmed `Ready=True` and secret populated, cleaned up — spec 005 capability 2 acceptance complete
+- kubelet-csr-approver: accidentally deleted `kubelet-client-current.pem` target on pi2 during serving cert teardown; recovered via `kubeadm token create` bootstrap re-join
 
 ---
 

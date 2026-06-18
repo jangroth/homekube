@@ -177,8 +177,8 @@ Phase 5 introduces eleven capabilities. Each maps to a sync-wave for ArgoCD exec
   Do not assume the kubeadm default `10.244.0.0/16`.
 
 **Acceptance:**
-- [ ] `kubectl get csr` shows no `Pending` entries for `kubernetes.io/kubelet-serving` within 60s of any node start
-- [ ] CSRs from outside the allowed CIDRs are not approved
+- [x] `kubectl get csr` shows no `Pending` entries for `kubernetes.io/kubelet-serving` within 60s of any node start
+- [x] CSRs from outside the allowed CIDRs are not approved
 
 ---
 
