@@ -21,8 +21,9 @@ ArgoCD and `metrics-server` are running. The cluster has no persistent storage, 
 | ArgoCD 9.5.15 | Running, root-app synced |
 | metrics-server | Running, healthy |
 | argocd-config | Synced (NodePort :30000) |
+| Ansible prerequisites | `/storage` (NVMe-backed) on all 4 nodes; `open-iscsi` present |
 | kubelet CSR auto-approval | Manual bulk-approve only — breaks on cert rotation |
-| Secrets management | None — credentials would be plaintext in git |
+| Secrets management | sealed-secrets 2.18.6 deployed + validated (cert saved, round-trip passed) |
 | Internal TLS | None — no CA, no cert automation |
 | Persistent storage | None |
 | Load balancer | Not deployed |
@@ -116,9 +117,9 @@ Phase 5 introduces eleven capabilities. Each maps to a sync-wave for ArgoCD exec
 - Cluster-wide scope (`--scope cluster-wide`) is *not* used — secrets are sealed per namespace.
 
 **Acceptance:**
-- [ ] `sealed-secrets-controller` pod Running in `kube-system`
-- [ ] `kubeseal --fetch-cert` returns the public cert; cert saved to password manager
-- [ ] Round-trip test: create a Secret → `kubeseal` → apply → controller materialises the original Secret
+- [x] `sealed-secrets-controller` pod Running in `kube-system`
+- [x] `kubeseal --fetch-cert` returns the public cert; cert saved to password manager
+- [x] Round-trip test: create a Secret → `kubeseal` → apply → controller materialises the original Secret
 
 ---
 
@@ -137,12 +138,20 @@ Phase 5 introduces eleven capabilities. Each maps to a sync-wave for ArgoCD exec
 **Constraints & decisions:**
 - Self-signed root CA — public ACME is deferred with DNS. The root CA cert is exported and trusted on darth so browsers don't warn.
 - One `ClusterIssuer` for the whole cluster; no per-namespace issuers in this phase.
+- `homekube-ca-secret` (cert + private key) is **backed up out-of-band** to the password manager — same reasoning as the sealed-secrets key. If cert-manager is reinstalled and the secret is lost, all previously-issued certificates become unverifiable. On reinstall, restore the secret before ArgoCD syncs `cert-manager-config` so cert-manager adopts the existing key pair instead of generating a new one:
+  ```sh
+  # Export (do once, store in password manager):
+  kubectl get secret homekube-ca-secret -n cert-manager -o yaml > homekube-ca-secret.yaml
+  # Restore (before cert-manager-config syncs on reinstall):
+  kubectl apply -f homekube-ca-secret.yaml
+  ```
 
 **Acceptance:**
-- [ ] `cert-manager`, `cainjector`, `webhook` pods Running
-- [ ] `ClusterIssuer/homekube-ca` reports `Ready=True`
+- [x] `cert-manager`, `cainjector`, `webhook` pods Running
+- [x] `ClusterIssuer/homekube-ca` reports `Ready=True`
 - [ ] A test `Certificate` issues and the secret is populated
-- [ ] Root CA exported and trusted on darth
+- [x] Root CA cert exported and trusted on darth (`sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain homekube-ca.crt`)
+- [x] `homekube-ca-secret` (full secret YAML, cert + key) saved to password manager
 
 ---
 

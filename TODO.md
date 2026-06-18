@@ -88,7 +88,9 @@ Each pi steps:
   - [ ] Wave -1:
     - [x] sealed-secrets chart 2.18.6 / app 0.37.0 — ArgoCD app manifest deployed to homekube-apps
     - [x] **Validate sealed-secrets**: `kubeseal --fetch-cert` → cert saved to password manager; round-trip test passed
-    - [ ] cert-manager chart v1.20.2 + `homekube-ca` ClusterIssuer
+    - [x] cert-manager chart v1.20.2 + `homekube-ca` ClusterIssuer — deployed, all pods Running, `ClusterIssuer/homekube-ca` Ready=True
+      - [x] **Human step:** export CA cert → trust on darth (`sudo security add-trusted-cert ...`)
+      - [x] **Human step:** save `homekube-ca-secret` (full YAML, cert + key) to password manager
     - [ ] kubelet-csr-approver chart 1.2.14
     - [ ] metallb chart 0.16.0 (bump from 0.14.9) + IPAddressPool + L2Advertisement
     - [ ] longhorn chart 1.11.2 (bump from 1.9.1)

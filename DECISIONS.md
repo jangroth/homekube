@@ -2,6 +2,14 @@
 
 ---
 
+## 027 — cert-manager split into two ArgoCD Applications to avoid webhook timing race (2026-06-17)
+
+**Decision:** cert-manager is deployed as two separate ArgoCD Applications: `cert-manager` (wave `-1`, Helm chart) and `cert-manager-config` (wave `0`, ClusterIssuers from git). The `homekube-ca` ClusterIssuer and self-signed bootstrap resources live in the wave `0` application.
+
+**Rationale:** cert-manager's admission webhook must be running before any `cert-manager.io/v1` resource (ClusterIssuer, Certificate) can be applied — the API server routes those resources through the webhook for validation. If both the Helm chart and the ClusterIssuers are in the same Application and same sync, ArgoCD may attempt to apply the ClusterIssuers before the webhook pod is Ready, causing a sync failure. Splitting into wave `-1` (Helm) and wave `0` (config) guarantees the webhook is live before the ClusterIssuers are created. The CA private key (`homekube-ca-secret`) is backed up out-of-band to the password manager for the same reason as sealed-secrets — a reinstall without restoring the secret makes all previously-issued certificates unverifiable.
+
+---
+
 ## 026 — README.md for human docs, CLAUDE.md for AI context only (2026-05-27)
 
 **Decision:** Each repo has a `README.md` for human-readable operational documentation (what's deployed, how to access it, how to add an app). `CLAUDE.md` files are AI workspace context only — not the place for human-facing reference material.
