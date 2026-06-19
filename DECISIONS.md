@@ -2,11 +2,20 @@
 
 ---
 
-## 030 — Cilium devices expanded to include wlan0 (2026-06-19)
+## 030 — Cilium + MetalLB wlan0 conflict: REVERTED, open problem (2026-06-19)
 
-**Decision:** Cilium's `devices` config was changed from `eth0` to `eth0,wlan0` and the DaemonSet restarted. Cilium attaches TCX (TC express) programs to both interfaces.
+**Attempted:** Add `wlan0` to Cilium's `devices` (`eth0,wlan0`) so Cilium's TCX programs intercept and DNAT traffic arriving on wlan0 (the MetalLB L2 subnet).
 
-**Rationale:** MetalLB L2 mode announces LoadBalancer IPs on `wlan0` (the home Wi-Fi subnet `192.168.86.0/24`). With `devices: eth0` only, Cilium's eBPF kube-proxy replacement did not intercept traffic arriving on `wlan0`, so no DNAT occurred and connections to LB IPs were dropped at the kernel routing step. Adding `wlan0` to devices causes Cilium to attach TCX ingress/egress programs there too, enabling correct DNAT for both direct Wi-Fi clients and Tailscale-routed traffic. XDP is not supported on wireless drivers; Cilium falls back to TCX automatically with no errors.
+**What worked:** Cilium attached TCX programs to wlan0 successfully (no XDP — wireless driver fallback to TCX is automatic). Initial testing showed DNAT working — curl from darth via Tailscale returned HTTP 200.
+
+**What broke:** Intermittent ARP failure for MetalLB VIPs. Root cause: Cilium, as a native device manager on wlan0, probes MetalLB VIPs as kernel neighbors (`ip neigh`). MetalLB VIPs are not real node IPs — MetalLB responds to ARP via raw sockets, not the kernel IP stack. When Cilium's neighbor probe for a VIP fails (the announcing node doesn't respond to its own ARP probe), the kernel marks the neighbor `FAILED`. Cilium then drops forwarded traffic for that VIP on wlan0 ingress. This is intermittent because it only breaks after the first successful ARP probe ages out.
+
+**Reverted to:** `devices: eth0` (Cilium only processes the switch interface). MetalLB LB IPs on `192.168.86.x` are currently not reachable from darth via Tailscale or from wlan0 clients — the DNAT step is skipped for wlan0 traffic. NodePort remains the workaround.
+
+**Options to investigate next session:**
+1. `kubeProxyReplacement: false` + run standard kube-proxy — kube-proxy installs iptables PREROUTING rules that apply to all interfaces including wlan0, no Cilium neighbor conflict.
+2. Change MetalLB pool to switch subnet (`10.0.0.241–251`) — MetalLB announces on eth0, Cilium processes natively. Home Wi-Fi devices would need a static route via the router; Tailscale subnet route changes to `10.0.0.240/28`.
+3. Investigate Cilium `bpf-lb-external-clusterip` or similar flags that might prevent neighbor probing of service VIPs on secondary devices.
 
 ---
 
