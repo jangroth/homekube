@@ -2,6 +2,14 @@
 
 ---
 
+## 030 — Cilium devices expanded to include wlan0 (2026-06-19)
+
+**Decision:** Cilium's `devices` config was changed from `eth0` to `eth0,wlan0` and the DaemonSet restarted. Cilium attaches TCX (TC express) programs to both interfaces.
+
+**Rationale:** MetalLB L2 mode announces LoadBalancer IPs on `wlan0` (the home Wi-Fi subnet `192.168.86.0/24`). With `devices: eth0` only, Cilium's eBPF kube-proxy replacement did not intercept traffic arriving on `wlan0`, so no DNAT occurred and connections to LB IPs were dropped at the kernel routing step. Adding `wlan0` to devices causes Cilium to attach TCX ingress/egress programs there too, enabling correct DNAT for both direct Wi-Fi clients and Tailscale-routed traffic. XDP is not supported on wireless drivers; Cilium falls back to TCX automatically with no errors.
+
+---
+
 ## 029 — kubelet --node-ip restricts CSR SANs to switch interface (2026-06-18)
 
 **Decision:** All nodes have `KUBELET_EXTRA_ARGS="--node-ip={{ node_switch_ip }}"` written to `/etc/default/kubelet` via Ansible (`configure_kubelet_node_ip.yml`). The `node_switch_ip` variable is already defined in each node's `host_vars`.

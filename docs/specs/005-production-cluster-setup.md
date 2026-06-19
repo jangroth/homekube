@@ -191,20 +191,27 @@ Phase 5 introduces eleven capabilities. Each maps to a sync-wave for ArgoCD exec
 **Components:**
 - Helm chart `metallb/metallb 0.16.0` (manifest already exists — bump from 0.14.9 per Version Policy)
 - `IPAddressPool` and `L2Advertisement` CRDs
+- Tailscale subnet route on **all 4 nodes** advertising `192.168.86.240/28` (covers the MetalLB pool; Tailscale auto-selects best path and fails over)
 
 **Depends on:** nothing.
 
 **Constraints & decisions:**
 - L2 mode, IP pool `192.168.86.241–192.168.86.251` (home Wi-Fi subnet). LB ARP responses egress on `wlan0` — documented and accepted; inter-node and etcd traffic remain on the wired switch.
-- `L2Advertisement` pinned to a subset of nodes (e.g. pi1/pi2/pi3) to keep failover deterministic and avoid GARP storms across all four interfaces.
-- Tailscale clients (e.g. `darth` away from home) still need NodePort or Tailscale subnet routing on `pi0` to reach LB IPs. Subnet routing is out of scope; flagged as a follow-up.
+- `L2Advertisement` pinned to pi1/pi2/pi3 (worker nodes only) to keep failover deterministic and avoid GARP storms across all four interfaces.
+- **Tailscale subnet routing on pi0** makes LB IPs reachable from `darth` regardless of network:
+  - IP forwarding (`net.ipv4.ip_forward=1`) already enabled on all nodes via existing k8s sysctl config — no change needed
+  - `tailscale set --advertise-routes=192.168.86.240/28` on **all 4 nodes** via Ansible; Tailscale auto-selects best path and fails over if a node goes down
+  - Approve all 4 routes in the Tailscale admin console (human step — one click per node)
+  - Traffic path: darth → `tailscale0` on any node → kernel routes to `wlan0` → MetalLB IP. Cilium is configured with `devices: eth0,wlan0` so TCX programs are attached to both interfaces; wlan0 traffic is DNAT'd correctly (see DECISION-030).
+  - Advertising only `/28` (not the full `/24`) limits exposure to the MetalLB pool; home devices (router, NAS etc.) remain unreachable from Tailscale unless explicitly widened later.
 - Standard going forward: new user-facing services use `type: LoadBalancer`; NodePorts kept only for existing services until they're migrated.
 
 **Acceptance:**
-- [ ] `kubectl get pods -n metallb-system` — all pods Running
-- [ ] A test `type: LoadBalancer` service receives an IP from `192.168.86.241/251`
-- [ ] LB IP is reachable from a host on the home Wi-Fi network
-- [ ] `L2Advertisement` only advertises from the configured node set
+- [x] `kubectl get pods -n metallb-system` — all pods Running
+- [x] A test `type: LoadBalancer` service receives an IP from `192.168.86.241–251`
+- [x] LB IP is reachable from a host on the home Wi-Fi network
+- [x] `L2Advertisement` only advertises from the configured node set (pi1/pi2/pi3)
+- [x] LB IP is reachable from `darth` over Tailscale (away from home Wi-Fi)
 
 ---
 
@@ -502,7 +509,6 @@ Capabilities deliberately pushed to a later phase. Tracked here so the boundarie
 - **Gateway API + Istio ingress** — Kubernetes Gateway API (`HTTPRoute`, `GatewayClass`) as the ingress layer via Istio. Preferred over traditional Ingress. Deferred until Service Mesh is stable.
 - **DNS (Tailscale split DNS)** — in-cluster DNS server (`k8s_gateway` or CoreDNS) exposed via MetalLB; Tailscale split DNS routes `*.homekube.internal` to it; ExternalDNS writes records. No public domain. Depends on Gateway API being in place first. Until then, SSO redirect URIs use `https://piN:PORT` with the `homekube-ca` cert.
 - **Public ACME / Let's Encrypt** — once DNS lands, swap the self-signed `ClusterIssuer` for an ACME issuer. cert-manager is already in place; only the issuer changes.
-- **Tailscale subnet routing on pi0** — interim bridge for `darth` to reach in-cluster services from outside the home network. Root cause: Cilium's eBPF kube-proxy replacement attaches only to `eth0` (the physical switch interface); traffic arriving on `tailscale0` is not intercepted, so NodePort and LoadBalancer IPs are unreachable over Tailscale. Fix: advertise the service CIDR (`10.96.0.0/12`), pod CIDR (`10.244.0.0/16`), and MetalLB LB pool (`192.168.86.241/251`) as Tailscale subnet routes from `pi0` (`tailscale up --advertise-routes=...`), then approve them in the Tailscale admin console and enable IP forwarding on pi0. Once active, `darth` can reach LB IPs, NodePorts via any node IP, and pod IPs directly — without `kubectl port-forward` workarounds. Pairs well with the MetalLB capability (4): once both are in place, all user-facing services get LB IPs reachable from any Tailscale client.
 - **Stacked-etcd control-plane HA** — promote pi1/pi2 to control plane for a 3-node quorum. Deferred; relying on backups instead.
 - **Network policies**
 - **OPA / admission control**
