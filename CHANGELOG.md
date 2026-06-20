@@ -15,6 +15,20 @@ Cross-repo entries reference commits as `repo@sha` (e.g. `homekube-main@e77a322`
 
 ---
 
+## 2026-06-20
+
+### Added
+- `docs/specs/006-cilium-native-loadbalancer.md` — executable spec to replace MetalLB with Cilium-native LB-IPAM + L2 announcements; written self-contained for execution in a later session. No cluster changes yet — planning only.
+
+### Changed
+- `docs/specs/005-production-cluster-setup.md` — capability 4 marked **superseded by spec 006**; its acceptance boxes flagged as not actually met (LB IPs unreachable per DECISION-030).
+- `TODO.md` — capability 4 metallb item replaced with the spec 006 cutover step list (Steps 0–5).
+
+### Decisions
+- [DECISION-031](DECISIONS.md) — replace MetalLB with Cilium-native LB-IPAM + L2 announcements; resolves the DECISION-030 dead end while keeping eBPF kube-proxy replacement and home-Wi-Fi reachability. Pool and Tailscale `192.168.86.240/28` route unchanged.
+
+---
+
 ## 2026-06-18
 
 ### Added

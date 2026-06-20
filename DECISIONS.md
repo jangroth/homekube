@@ -2,6 +2,18 @@
 
 ---
 
+## 031 — Replace MetalLB with Cilium-native LB-IPAM + L2 announcements (2026-06-20)
+
+**Decision:** Drop MetalLB. Use Cilium 1.19.4's built-in LoadBalancer IPAM (`CiliumLoadBalancerIPPool`) and L2 announcements (`CiliumL2AnnouncementPolicy`) for `type: LoadBalancer` service exposure. The IP pool stays on the home Wi-Fi subnet (`192.168.86.241–251`) and announcements still egress `wlan0` from pi1/pi2/pi3, so DECISION-019's subnet rationale and the existing Tailscale `192.168.86.240/28` subnet route are unchanged. Cilium `devices` becomes `eth0,wlan0`. Full execution plan in `docs/specs/006-cilium-native-loadbalancer.md`.
+
+**Rationale:** This resolves the DECISION-030 dead end. The reason `devices: eth0,wlan0` broke with MetalLB was that Cilium probed MetalLB's VIPs as kernel L3 neighbors on `wlan0`; the VIPs aren't real kernel IPs (MetalLB answers ARP via raw sockets), the probe failed, and the kernel marked them `FAILED`, causing Cilium to drop forwarded traffic. With Cilium owning the VIP end-to-end, the same address is a known *service* VIP in its eBPF datapath — DNAT'd at ingress to a pod backend, never treated as a remote neighbor to forward to. The failing mechanism structurally cannot occur because the announcer and the DNAT engine are the same component.
+
+Of the three options in DECISION-030, this is the only one that **both** keeps Cilium's eBPF kube-proxy replacement (study value + clean architecture) **and** preserves direct home-Wi-Fi reachability of LB IPs (option 2, switch subnet, would have required router static routes for family devices; option 1, standard kube-proxy, would have discarded Cilium's headline feature). Cilium's LB-IPAM + L2/BGP is a functional superset of the MetalLB features in use or plausibly needed here (IP pools, specific-IP request, IP sharing, node/interface pinning, and — if a BGP-capable router ever appears — native BGP integrated with pod-CIDR advertisement). The only MetalLB-exclusive items (FRR-mode BGP nuances, literal `autoAssign:false` semantics) are implausible for a 4-Pi home lab, and MetalLB's CNI-independence is moot given Cilium is a fixed decision.
+
+**Trade-offs accepted:** (1) L2-announcement leader election is API-chatty — one lease per announcing service — so `k8sClientRateLimit` must be raised (`qps: 50 / burst: 100` starting point). (2) Cutover requires removing MetalLB *before* adding `wlan0` to Cilium `devices` (else the DECISION-030 trap recurs against still-live MetalLB VIPs), incurring a short LB-IP outage window; NodePort is unaffected. (3) `CiliumLoadBalancerIPPool`/`CiliumL2AnnouncementPolicy` apiVersion has drifted across Cilium releases (`v2alpha1` → `v2`) — the served version must be confirmed on 1.19.4 before committing the CRs.
+
+---
+
 ## 030 — Cilium + MetalLB wlan0 conflict: REVERTED, open problem (2026-06-19)
 
 **Attempted:** Add `wlan0` to Cilium's `devices` (`eth0,wlan0`) so Cilium's TCX programs intercept and DNAT traffic arriving on wlan0 (the MetalLB L2 subnet).

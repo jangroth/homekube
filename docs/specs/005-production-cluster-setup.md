@@ -184,6 +184,13 @@ Phase 5 introduces eleven capabilities. Each maps to a sync-wave for ArgoCD exec
 
 ### 4. Service Exposure — L4 Load Balancer
 
+> ⚠️ **Superseded by spec 006.** The MetalLB approach below announces correctly but LB IPs are
+> **not actually reachable** — Cilium's eBPF DNAT only attaches to `eth0`, and adding `wlan0`
+> conflicts with MetalLB's VIPs (DECISION-030). The acceptance boxes were checked optimistically;
+> treat them as **not met**. Replacement: Cilium-native LB-IPAM + L2 announcements — see
+> `docs/specs/006-cilium-native-loadbalancer.md` and DECISION-031. The section below is retained
+> as the historical record of the MetalLB design.
+
 **Purpose:** Allocate routable IPs to `type: LoadBalancer` services. Removes the NodePort-only constraint and is a prerequisite for any sensible ingress story later (Gateway API in a future phase).
 
 **Wave:** `-1`
