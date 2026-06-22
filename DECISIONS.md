@@ -2,6 +2,16 @@
 
 ---
 
+## 032 — Add tailscale0 to Cilium devices for Tailscale → VIP access (2026-06-22)
+
+**Decision:** Add `tailscale0` to Cilium's `devices` config (`eth0,wlan0,tailscale0`). This attaches `cil_from_netdev` (TCX) to the Tailscale TUN interface on pi0, allowing Cilium to intercept and DNAT traffic destined for LoadBalancer VIPs that arrives via Tailscale subnet routing.
+
+**Rationale:** Without `tailscale0` in devices, packets arriving from darth via Tailscale for VIP `192.168.86.241` entered pi0's kernel on `tailscale0`, but Cilium had no TCX hook there. The packets were never DNAT'd — the VIP is not a local kernel address and the kernel's IP forwarding path could not deliver them to a pod. Adding `tailscale0` causes Cilium's `cil_from_netdev` to intercept VIP-destined traffic at ingress on pi0, DNAT directly to the pod backend, and handle the return path with no kernel IP forwarding needed. Validated: 36/36 successful requests over 3 minutes via Tailscale (`curl --interface utun8`).
+
+**Trade-offs accepted:** Cilium now manages `tailscale0`, attaching TCX programs. Tailscale's own control/data traffic (WireGuard handshakes, 100.x.x.x addresses) is unaffected — Cilium passes through anything that doesn't match service VIPs or pod CIDRs. The DECISION-030 FAILED-neighbor regression risk does not apply: `tailscale0` is a TUN device with no L2 neighbor table, and the L2 announcement policy is explicitly restricted to `^wlan0$`. Wi-Fi → VIP access (L2 announcement path via `wlan0` on pi2) remains intermittently flaky; see Backlog in `TODO.md`.
+
+---
+
 ## 031 — Replace MetalLB with Cilium-native LB-IPAM + L2 announcements (2026-06-20)
 
 **Decision:** Drop MetalLB. Use Cilium 1.19.4's built-in LoadBalancer IPAM (`CiliumLoadBalancerIPPool`) and L2 announcements (`CiliumL2AnnouncementPolicy`) for `type: LoadBalancer` service exposure. The IP pool stays on the home Wi-Fi subnet (`192.168.86.241–251`) and announcements still egress `wlan0` from pi1/pi2/pi3, so DECISION-019's subnet rationale and the existing Tailscale `192.168.86.240/28` subnet route are unchanged. Cilium `devices` becomes `eth0,wlan0`. Full execution plan in `docs/specs/006-cilium-native-loadbalancer.md`.

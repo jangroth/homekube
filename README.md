@@ -43,7 +43,7 @@ git clone https://github.com/jangroth/homekube-apps.git
 
 ## Stack
 
-Cilium · Longhorn · ArgoCD · Prometheus · Grafana · Loki · MetalLB
+Cilium (CNI + LB) · Longhorn · ArgoCD · Prometheus · Grafana · Loki
 
 ## Navigation
 

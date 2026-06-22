@@ -15,6 +15,30 @@ Cross-repo entries reference commits as `repo@sha` (e.g. `homekube-main@e77a322`
 
 ---
 
+## 2026-06-22
+
+### Added
+- Cilium LB-IPAM + L2 announcements: `CiliumLoadBalancerIPPool` (`homekube-pool`, `192.168.86.241–251`) and `CiliumL2AnnouncementPolicy` (`homekube-l2`, wlan0, workers only) deployed via ArgoCD (`cilium-lb` app, wave -1)
+- Network architecture diagram in `homekube-main/README.md` showing all three network planes (Tailscale, Wi-Fi, k8s switch) and both LB traffic paths
+
+### Changed
+- `cilium-helm-values.yaml`: `devices` → `eth0,wlan0,tailscale0`; added `l2announcements.enabled: true`; `k8sClientRateLimit qps:50/burst:100`
+- `CLAUDE.md` stack table: MetalLB → Cilium LB-IPAM + L2
+- `README.md`: stack line drops MetalLB, notes Cilium (CNI + LB)
+- `homekube-main/README.md`: cluster architecture Mermaid updated (MetalLB → Cilium LB, pi1/2/pi3 corrected); network architecture diagram added
+- `homekube-apps/CLAUDE.md` wave table: MetalLB → Cilium LB (pool + L2 policy)
+- `homekube-apps/README.md` deployed components: added Cilium LB-IPAM, cert-manager, kubelet-csr-approver rows
+- `configure_tailscale_subnet.yml` task name: "MetalLB pool" → "LoadBalancer pool (Cilium LB-IPAM)"
+- `check-versions.md`: removed metallb helm repo line
+
+### Removed
+- MetalLB: `metallb.yaml` Application, `metallb/` CRs, `metallb-system` namespace; 9 MetalLB CRDs manually deleted post-ArgoCD-prune (Helm safety policy prevents auto-deletion)
+
+### Decisions
+- [DECISION-032](DECISIONS.md) — add `tailscale0` to Cilium devices so `cil_from_netdev` intercepts Tailscale → VIP traffic on pi0; validated 36/36 over 3 min. Wi-Fi path intermittent (wlan0 dual-use + BPF reload windows); tracked in Backlog.
+
+---
+
 ## 2026-06-20
 
 ### Added

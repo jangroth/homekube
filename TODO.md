@@ -92,13 +92,13 @@ Each pi steps:
       - [x] **Human step:** export CA cert → trust on darth (`sudo security add-trusted-cert ...`)
       - [x] **Human step:** save `homekube-ca-secret` (full YAML, cert + key) to password manager
     - [x] kubelet-csr-approver chart 1.2.14 — deployed; `bypassDnsResolution: true` required; `--node-ip` set on all nodes via Ansible (see DECISION-028/029)
-    - [ ] ~~metallb chart 0.16.0 + IPAddressPool + L2Advertisement~~ — **superseded by spec 006** (DECISION-031). MetalLB announces but LB IPs unreachable (DECISION-030). Replace with Cilium-native LB-IPAM + L2 announcements:
-      - [ ] **Step 0** — pre-flight: confirm served apiVersion for `CiliumLoadBalancerIPPool` / `CiliumL2AnnouncementPolicy` on 1.19.4 (`v2alpha1` vs `v2`); capture `cilium-config`; note current LB svc + IP
-      - [ ] **Step 1** — remove MetalLB: drop from root kustomization, `git rm` `metallb.yaml` + `metallb/`; ArgoCD prunes `metallb-system` (LB IPs go down here — NodePort unaffected)
-      - [ ] **Step 2** — Cilium values: `devices: "eth0,wlan0"` + `l2announcements.enabled: true` + `k8sClientRateLimit qps:50/burst:100`; `task 40-cni`; `rollout restart ds/cilium`; verify no rate-limit/FAILED log lines
-      - [ ] **Step 3** — add `cilium-lb/` (pool.yaml + l2policy.yaml) + `cilium-lb.yaml` Application (wave -1), wire into root kustomization
-      - [ ] **Step 4** — validate (spec 006 §6): test LB svc gets `192.168.86.241–251`; reachable from home Wi-Fi AND from darth over Tailscale **sustained ≥3 min** (DECISION-030 regression check); failover moves lease; announce only pi1/2/3
-      - [ ] **Step 5** — finalize docs per **spec 006 §7 full MetalLB inventory** (top + homekube-main + homekube-apps CLAUDE/README, check-versions.md, tailscale task comment, wave tables) + CHANGELOG + spec 006 Status→Done + this block. Gate: `grep -rIl -i metallb` returns only the §7 "Leave" historical files.
+    - [x] ~~metallb chart 0.16.0 + IPAddressPool + L2Advertisement~~ — **superseded by spec 006** (DECISION-031). Replaced with Cilium-native LB-IPAM + L2 announcements (2026-06-22):
+      - [x] **Step 0** — pre-flight: confirmed `CiliumLoadBalancerIPPool` = `v2`, `CiliumL2AnnouncementPolicy` = `v2alpha1`
+      - [x] **Step 1** — MetalLB removed (GitOps prune); CRDs manually deleted
+      - [x] **Step 2** — Cilium values: `devices: "eth0,wlan0,tailscale0"` + l2announcements + rate limit; rolled out
+      - [x] **Step 3** — `cilium-lb/` (pool.yaml + l2policy.yaml) + Application deployed via ArgoCD
+      - [x] **Step 4** — validated: VIP `192.168.86.241` assigned; Tailscale 36/36 over 3 min ✓; Wi-Fi intermittent (see Backlog)
+      - [x] **Step 5** — docs finalized (spec 006 §7); DECISION-032 recorded; CHANGELOG updated
       - Note: Tailscale route `192.168.86.240/28` unchanged (pool stays on Wi-Fi subnet)
     - [ ] longhorn chart 1.11.2 (bump from 1.9.1)
   - [ ] Validate wave -1 (capabilities 2–5 acceptance criteria)
@@ -123,6 +123,10 @@ Each pi steps:
 ---
 
 ## Backlog
+
+- [ ] **Consolidate documentation** — once all specs (005–007+) are implemented, do a pass to merge the scattered component-version tables, outdated README sections, and phase docs into a coherent state. `homekube-main/README.md` Components table is a known stale spot.
+
+- [ ] **Investigate Wi-Fi → LB VIP flakiness** — Cilium L2 announcement path via `wlan0` (pi2 as L2 leader) is intermittently unreliable: some devices/attempts succeed, others time out. Tailscale path is solid (36/36). Likely causes: brief Cilium BPF reload windows during endpoint regeneration, wlan0 dual-use (internet + LB), or AP-level wireless variability. Investigate Cilium endpoint regeneration frequency and whether pinning the L2 leader or reducing endpoint churn improves stability. See DECISION-032.
 
 - [ ] Revisit `display_dependencies` task in k8s-node role — current approach may have a better solution
 

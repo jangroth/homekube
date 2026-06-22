@@ -44,7 +44,7 @@ Hardware: Raspberry Pi 5 (8GB), Raspberry Pi OS Lite 64-bit (aarch64), 1TB NVMe 
 | CSI | Longhorn 1.9 |
 | GitOps | ArgoCD (App-of-Apps) |
 | Monitoring | Prometheus + Grafana + Loki |
-| Load Balancer | MetalLB |
+| Load Balancer | Cilium LB-IPAM + L2 |
 | Provisioning | Ansible + Task |
 
 ---

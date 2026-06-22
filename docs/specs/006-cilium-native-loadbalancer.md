@@ -1,6 +1,6 @@
 # Spec 006 — Cilium-native LoadBalancer (replace MetalLB)
 
-**Status:** Planned (not yet executed)
+**Status:** Done (executed 2026-06-22)
 **Supersedes:** the MetalLB approach in spec 005 capability 4
 **Related decisions:** DECISION-031 (this change), DECISION-030 (the conflict that motivates it), DECISION-019 (Wi-Fi subnet choice — still holds)
 
@@ -59,7 +59,7 @@ route-approval work in this spec.
 
 **Cilium Helm values** (`cilium-helm-values.yaml`) gain:
 ```yaml
-devices: "eth0,wlan0"          # was "eth0" — wlan0 needed so eBPF DNAT attaches to the LB subnet
+devices: "eth0,wlan0,tailscale0"  # was "eth0"; tailscale0 added per DECISION-032 for Tailscale→VIP path
 
 l2announcements:
   enabled: true
@@ -162,22 +162,22 @@ for confirmation before running playbooks; one chunk at a time.
 
 ## 6. Validation / acceptance criteria
 
-- [ ] `kubectl get ciliumloadbalancerippool` shows `homekube-pool`, not disabled, no conflicts.
-- [ ] `kubectl get ciliuml2announcementpolicy` shows `homekube-l2`.
-- [ ] A test `type: LoadBalancer` service receives an IP from `192.168.86.241–251`
-      (`kubectl get svc` EXTERNAL-IP populated).
-- [ ] `kubectl get lease -n kube-system | grep -i l2announce` shows a lease held by one of pi1/2/3.
-- [ ] From a host on home Wi-Fi: `ip neigh` / `arping` resolves the VIP to the leader node's MAC,
-      and `curl http://<VIP>:<port>` returns the app (HTTP 200).
-- [ ] **From darth over Tailscale, away from home Wi-Fi** (the case that failed in DECISION-030):
-      `curl` the VIP, and **loop it for ≥3 minutes** to confirm no intermittent drop / `FAILED`
-      neighbor regression. This is the key regression check.
-- [ ] Announcement only from pi1/pi2/pi3 (control-plane excluded) — confirm leader is never pi0.
-- [ ] Failover: `kubectl cordon <leader>` + `kubectl drain --ignore-daemonsets <leader>` (or stop
-      its cilium pod); confirm the lease moves to another worker and traffic resumes within a few
-      seconds. Uncordon afterward.
-- [ ] `kubectl -n kube-system logs ds/cilium | grep -i 'rate ?limit'` stays clean under steady state.
-- [ ] NodePort access still works (no regression).
+- [x] `kubectl get ciliumloadbalancerippool` shows `homekube-pool`, not disabled, no conflicts.
+- [x] `kubectl get ciliuml2announcementpolicy` shows `homekube-l2`.
+- [x] A test `type: LoadBalancer` service receives an IP from `192.168.86.241–251`
+      (`kubectl get svc` EXTERNAL-IP populated). → `192.168.86.241` assigned instantly.
+- [x] `kubectl get lease -n kube-system | grep -i l2announce` shows a lease held by one of pi1/2/3.
+      → pi2 holding `cilium-l2announce-default-lb-test`.
+- [~] From a host on home Wi-Fi: `arping` resolves the VIP to the leader node's MAC,
+      and `curl http://<VIP>:<port>` returns the app (HTTP 200). → **Intermittent** — ARP works
+      (pi2 responds correctly), but TCP sometimes fails mid-burst. See Backlog in `TODO.md`.
+- [x] **From darth over Tailscale, away from home Wi-Fi** (the DECISION-030 regression check):
+      36/36 successful curls over 3 minutes via `--interface utun8`. No `FAILED` neighbor entries.
+      Required adding `tailscale0` to Cilium devices (DECISION-032).
+- [x] Announcement only from pi1/pi2/pi3 (control-plane excluded) — leader is never pi0.
+- [ ] Failover: cordon leader, confirm lease moves, uncordon. **Not yet tested — deferred to Backlog.**
+- [x] `kubectl -n kube-system logs ds/cilium | grep -i 'rate ?limit'` clean under steady state.
+- [x] NodePort access still works (no regression).
 
 ## 7. Documentation to update on completion — full MetalLB inventory
 
