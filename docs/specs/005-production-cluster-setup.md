@@ -241,10 +241,10 @@ Phase 5 introduces eleven capabilities. Each maps to a sync-wave for ArgoCD exec
 - `PodDisruptionBudget` for `longhorn-manager` (minAvailable: 3 of 4) so drains don't take the CSI driver offline.
 
 **Acceptance:**
-- [ ] `kubectl get pods -n longhorn-system` — all pods Running
-- [ ] Longhorn UI lists 3 worker nodes (pi1/pi2/pi3) as schedulable; no disk warnings. pi0 is intentionally excluded — it runs etcd and is the control-plane SPOF; mixing storage I/O with etcd on the same NVMe risks latency spikes, and a pi0 reboot would degrade every volume that had a replica there.
-- [ ] A PVC with `storageClass: longhorn` binds and is writable from a test pod (2-replica volume)
-- [ ] `iscsid` running on all nodes (Ansible verifies)
+- [x] `kubectl get pods -n longhorn-system` — all pods Running
+- [x] Longhorn UI lists 3 worker nodes (pi1/pi2/pi3) as schedulable; no disk warnings. pi0 is intentionally excluded — it runs etcd and is the control-plane SPOF; mixing storage I/O with etcd on the same NVMe risks latency spikes, and a pi0 reboot would degrade every volume that had a replica there.
+- [x] A PVC with `storageClass: longhorn` binds and is writable from a test pod (2-replica volume)
+- [x] `iscsid` running on all nodes (Ansible verifies)
 
 ---
 

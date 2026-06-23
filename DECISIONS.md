@@ -2,6 +2,16 @@
 
 ---
 
+## 034 — Longhorn storage pool restricted to worker nodes pi1/pi2/pi3 (2026-06-23)
+
+**Decision:** Longhorn runs only on the three worker nodes. pi0 (control plane) carries no Longhorn DaemonSet — no toleration for `node-role.kubernetes.io/control-plane:NoSchedule` is added to the Helm values.
+
+**Rationale:** pi0 is the cluster's single point of failure. It also runs etcd on the same NVMe that Longhorn would use for replica storage. etcd is latency-sensitive to disk I/O; Longhorn volume traffic would compete on the same device. Additionally, any reboot or maintenance of pi0 would transiently degrade every volume that had a replica there. Three worker nodes with `defaultReplicaCount: 2` is sufficient — any single worker loss still leaves one live replica per volume.
+
+**Trade-offs accepted:** Total Longhorn capacity is 3×NVMe instead of 4×. This is acceptable for a home lab. Spec 005 §5 acceptance criterion updated to reflect 3 nodes.
+
+---
+
 ## 033 — Move ArgoCD service to LoadBalancer, pin to 192.168.86.241 (2026-06-23)
 
 **Decision:** Replace the custom NodePort service (`cst-argocd-server`, port 30000) with a LoadBalancer service on port 80, pinned to `192.168.86.241` via the `io.cilium/lb-ipam-ips` annotation. The first address in the Cilium LB-IPAM pool is reserved for ArgoCD.
