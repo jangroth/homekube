@@ -101,7 +101,7 @@ Each pi steps:
       - [x] **Step 5** — docs finalized (spec 006 §7); DECISION-032 recorded; CHANGELOG updated
       - Note: Tailscale route `192.168.86.240/28` unchanged (pool stays on Wi-Fi subnet)
     - [x] Move ArgoCD service from NodePort :30000 to LoadBalancer `192.168.86.241:80` (DECISION-033)
-    - [ ] longhorn chart 1.11.2 (bump from 1.9.1)
+    - [x] longhorn chart 1.11.2 (bump from 1.9.1) + UI exposed via LoadBalancer `192.168.86.242:80`; runs on pi1/pi2/pi3 only — pi0 excluded (etcd SPOF, shared NVMe, see spec 005 §5)
   - [ ] Validate wave -1 (capabilities 2–5 acceptance criteria)
   - [ ] Wave 1: MinIO upstream chart, longhorn-extras, kube-prometheus-stack chart 85.3.0, Loki chart 7.0.0 (v6 → v7 values-schema rewrite), Alloy chart 1.8.1 (new manifest, replaces Promtail)
   - [ ] Validate wave 1 (capabilities 6–8); confirm Telegram alert receiver delivers a test alert

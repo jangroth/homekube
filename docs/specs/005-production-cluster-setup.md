@@ -242,7 +242,7 @@ Phase 5 introduces eleven capabilities. Each maps to a sync-wave for ArgoCD exec
 
 **Acceptance:**
 - [ ] `kubectl get pods -n longhorn-system` — all pods Running
-- [ ] Longhorn UI lists all 4 nodes as schedulable; no disk warnings
+- [ ] Longhorn UI lists 3 worker nodes (pi1/pi2/pi3) as schedulable; no disk warnings. pi0 is intentionally excluded — it runs etcd and is the control-plane SPOF; mixing storage I/O with etcd on the same NVMe risks latency spikes, and a pi0 reboot would degrade every volume that had a replica there.
 - [ ] A PVC with `storageClass: longhorn` binds and is writable from a test pod (2-replica volume)
 - [ ] `iscsid` running on all nodes (Ansible verifies)
 
