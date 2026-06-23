@@ -100,6 +100,7 @@ Each pi steps:
       - [x] **Step 4** — validated: VIP `192.168.86.241` assigned; Tailscale 36/36 over 3 min ✓; Wi-Fi intermittent (see Backlog)
       - [x] **Step 5** — docs finalized (spec 006 §7); DECISION-032 recorded; CHANGELOG updated
       - Note: Tailscale route `192.168.86.240/28` unchanged (pool stays on Wi-Fi subnet)
+    - [x] Move ArgoCD service from NodePort :30000 to LoadBalancer `192.168.86.241:80` (DECISION-033)
     - [ ] longhorn chart 1.11.2 (bump from 1.9.1)
   - [ ] Validate wave -1 (capabilities 2–5 acceptance criteria)
   - [ ] Wave 1: MinIO upstream chart, longhorn-extras, kube-prometheus-stack chart 85.3.0, Loki chart 7.0.0 (v6 → v7 values-schema rewrite), Alloy chart 1.8.1 (new manifest, replaces Promtail)

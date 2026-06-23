@@ -2,6 +2,16 @@
 
 ---
 
+## 033 — Move ArgoCD service to LoadBalancer, pin to 192.168.86.241 (2026-06-23)
+
+**Decision:** Replace the custom NodePort service (`cst-argocd-server`, port 30000) with a LoadBalancer service on port 80, pinned to `192.168.86.241` via the `io.cilium/lb-ipam-ips` annotation. The first address in the Cilium LB-IPAM pool is reserved for ArgoCD.
+
+**Rationale:** NodePort :30000 was a bootstrap workaround — it requires knowing a node IP and an arbitrary port, and breaks if that node is unavailable. Now that Cilium LB-IPAM is operational, a LoadBalancer service gives ArgoCD a stable, predictable address (`http://192.168.86.241`) reachable via Tailscale (reliable) and home Wi-Fi (best-effort), consistent with how all other services will be exposed going forward.
+
+**Trade-offs accepted:** `.241` is now a named reservation at the start of the pool (`241–251`), reducing the effective pool by one address. The old NodePort `cst-argocd-server` is replaced — any bookmark or script referencing `pi0:30000` must be updated.
+
+---
+
 ## 032 — Add tailscale0 to Cilium devices for Tailscale → VIP access (2026-06-22)
 
 **Decision:** Add `tailscale0` to Cilium's `devices` config (`eth0,wlan0,tailscale0`). This attaches `cil_from_netdev` (TCX) to the Tailscale TUN interface on pi0, allowing Cilium to intercept and DNAT traffic destined for LoadBalancer VIPs that arrives via Tailscale subnet routing.
