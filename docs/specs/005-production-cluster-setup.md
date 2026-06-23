@@ -56,7 +56,7 @@ A few decisions that cut across multiple capabilities, called out here so they a
 
 The table below is the source of truth for what is pinned at spec time. Inline mentions in capability sections must match this table; if they drift, this table wins. Re-verify before each implementation session — versions older than ~30 days are stale by definition.
 
-### Pinned Versions (verified 2026-05-25)
+### Pinned Versions (verified 2026-06-23)
 
 Chart version is the `targetRevision` used in ArgoCD manifests. App version is what runs in the cluster.
 
@@ -72,7 +72,7 @@ Chart version is the `targetRevision` used in ArgoCD manifests. App version is w
 | Longhorn | 1.11.2 | v1.11.2 | |
 | MinIO | — | `RELEASE.2025-10-15T17-29-55Z` | upstream chart, not Bitnami; version is image tag |
 | Loki | 7.0.0 | 3.6.7 | **chart v7 is a major bump**: values schema differs from v6; fresh install only |
-| kube-prometheus-stack | 85.3.0 | v0.90.1 | |
+| kube-prometheus-stack | 87.0.1 | v0.92.0 | bumped from 85.3.0; review changelog before applying (2-chart-version jump) |
 | Grafana Alloy | 1.8.1 | v1.16.1 | replaces Promtail |
 | Dex | 0.24.0 | 2.44.0 | dexidp |
 | Istio | 1.30.0 | 1.30.0 | istioctl install + helm |
@@ -265,10 +265,14 @@ Phase 5 introduces eleven capabilities. Each maps to a sync-wave for ArgoCD exec
 **Depends on:** Block Storage (Prometheus PVC); sealed-secrets (for the Alertmanager Telegram token, configured in capability 8).
 
 **Constraints & decisions:**
-- Tracks latest GA per Version Policy; pin is `85.3.0` at spec time. Major bumps (e.g. CRD changes) get a brief review against current Helm values, then ship.
+- Tracks latest GA per Version Policy; pin is `87.0.1` at spec time. Major bumps (e.g. CRD changes) get a brief review against current Helm values, then ship.
+- `grafana.enabled: false` — Grafana is intentionally disabled in this chart deployment. It is enabled and configured in capability 8 (Dashboards & Alerting) where its datasources, OIDC, and NodePort are all wired up together.
 - Prometheus retention: `retention: 15d`, `retentionSize: 40GiB` (gives headroom under the 50 Gi PVC; prevents WAL-fills).
 - `nodeAffinity` keeps Prometheus and Alertmanager off `pi0` so the control plane isn't competing with metrics ingest.
-- `PodDisruptionBudget` for Prometheus and Alertmanager (`maxUnavailable: 0` — single-replica services).
+- `PodDisruptionBudget` for Prometheus and Alertmanager (`maxUnavailable: 0` — single-replica services). Note: this blocks `kubectl drain` on the node Prometheus is running on; delete the pod first or temporarily remove the PDB before any planned node maintenance.
+- **No LoadBalancer IP for Prometheus or Alertmanager.** Both are internal infrastructure; Grafana (capability 8) is the external entry point for observability. LB IPs are reserved for user-facing services.
+- Prometheus exposed on NodePort `:30002` for occasional target inspection and ad-hoc PromQL queries. `kubectl port-forward` is the preferred path for deeper debugging.
+- Alertmanager exposed on NodePort `:30004` for silence management.
 - Resource requests/limits set explicitly (see Resource Budget table below).
 - Manifest already exists; needs `additionalDataSources` (Loki) added and uncommenting in `kustomization.yaml`.
 
