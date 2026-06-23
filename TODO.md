@@ -103,7 +103,13 @@ Each pi steps:
     - [x] Move ArgoCD service from NodePort :30000 to LoadBalancer `192.168.86.241:80` (DECISION-033)
     - [x] longhorn chart 1.11.2 (bump from 1.9.1) + UI exposed via LoadBalancer `192.168.86.242:80`; runs on pi1/pi2/pi3 only — pi0 excluded (etcd SPOF, shared NVMe, see spec 005 §5)
   - [x] Validate wave -1 (capabilities 2–5 acceptance criteria)
-  - [ ] Wave 1: MinIO upstream chart, longhorn-extras, kube-prometheus-stack chart 85.3.0, Loki chart 7.0.0 (v6 → v7 values-schema rewrite), Alloy chart 1.8.1 (new manifest, replaces Promtail)
+  - [ ] Wave 1:
+    - [x] kube-prometheus-stack chart 87.0.1 — manifest updated (grafana disabled, retention 15d/40GiB, nodeAffinity off pi0, PDBs, resource limits); uncommented in kustomization; pushed
+    - [x] **Validate cap-6 (Metrics)**: all pods Running in `observability`; all 28 Prometheus targets Up (incl. controller-manager, scheduler, etcd after bind-address fix); NodePorts :30002/:30004 reachable; retention `15d or 40GiB` confirmed
+    - [ ] MinIO upstream chart — new manifest under wave-01-apps/; seal credentials
+    - [ ] Loki chart 7.0.0 — values-schema rewrite (v6 → v7 is a breaking change); new manifest
+    - [ ] Alloy chart 1.8.1 — new manifest (DaemonSet log shipper, replaces Promtail)
+    - [ ] longhorn-extras — already manifested; uncomment in kustomization when ready
   - [ ] Validate wave 1 (capabilities 6–8); confirm Telegram alert receiver delivers a test alert
   - [ ] Wave 2: Google OAuth client → sealed-secret → Dex chart 0.24.0 / app 2.44.0 → ArgoCD + Grafana OIDC config
   - [ ] Validate wave 2 (capability 9)

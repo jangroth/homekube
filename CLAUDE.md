@@ -80,6 +80,7 @@ After the physical step, ansible handles the rest:
 - **Change log**: append every material change to `CHANGELOG.md` (top-level, reverse-chronological, [Keep a Changelog](https://keepachangelog.com) format). Captures **what was done**: additions, version bumps, removals, fixes, operational interventions. Distinct from `DECISIONS.md`.
 - **Todo**: open tasks tracked in `TODO.md`
 - **Trust**: Claude proposes, human approves for destructive/irreversible operations (this policy evolves over time as trust is established)
+- **Source reflects runtime**: when a change is made to a running cluster (static pod manifest, sysctl, Ansible variable), always propagate it back to the canonical source file (`kubeadm-config.yaml`, Ansible role, Helm values) in the same piece of work. The source must be sufficient to rebuild the cluster from scratch.
 
 ---
 
