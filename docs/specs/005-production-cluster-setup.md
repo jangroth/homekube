@@ -70,8 +70,7 @@ Chart version is the `targetRevision` used in ArgoCD manifests. App version is w
 | kubelet-csr-approver | 1.2.14 | v1.2.14 | postfinance |
 | MetalLB | 0.16.0 | v0.16.0 | |
 | Longhorn | 1.11.2 | v1.11.2 | |
-| MinIO | — | `RELEASE.2025-10-15T17-29-55Z` | upstream chart, not Bitnami; version is image tag |
-| Loki | 7.0.0 | 3.6.7 | **chart v7 is a major bump**: values schema differs from v6; fresh install only |
+| Loki | 7.0.0 | 3.6.7 | **chart v7 is a major bump**: values schema differs from v6; fresh install only. `deploymentMode: Monolithic` (renamed from `SingleBinary` in chart v12+; verify field name against chart being installed) |
 | kube-prometheus-stack | 87.0.1 | v0.92.0 | bumped from 85.3.0; review changelog before applying (2-chart-version jump) |
 | Grafana Alloy | 1.8.1 | v1.16.1 | replaces Promtail |
 | Dex | 0.24.0 | 2.44.0 | dexidp |
@@ -292,34 +291,24 @@ Phase 5 introduces eleven capabilities. Each maps to a sync-wave for ArgoCD exec
 **Wave:** `01`
 
 **Components:**
-- Helm chart `grafana/loki 7.0.0` (Loki backend) — manifest needs refresh; **single-binary mode** (`deploymentMode: SingleBinary`) — lowest memory ceiling, sufficient for home-lab cardinality. **Chart v7 is a major bump from v6** — values schema changed; do not lift v6 values blindly.
+- Helm chart `grafana/loki 7.0.0` (Loki backend) — manifest needs refresh; **monolithic mode** (`deploymentMode: Monolithic`, formerly `SingleBinary` — verify field name against chart being installed). Filesystem storage backend on a Longhorn PVC. **Chart v7 is a major bump from v6** — values schema changed; do not lift v6 values blindly.
 - Helm chart `grafana/alloy` (DaemonSet log shipper) — **new manifest** under `wave-01-apps/`; chart `1.8.x` (latest at install per Version Policy). Replaces Promtail, which is in feature-frozen maintenance.
 
-#### Sub-capability: Object Storage (MinIO)
+**No in-cluster object storage.** MinIO (`minio/minio`) was archived April 2026 and the Loki chart's built-in MinIO subchart is deprecated (removed 2026-10-31). Loki uses the filesystem storage backend backed by a Longhorn PVC — durable across pod restarts, sufficient for home-lab cardinality, no extra components.
 
-Loki needs S3-compatible object storage. MinIO runs in-cluster and exists solely to back Loki — it is not a user-facing capability, but rolls out as part of this wave because Logs cannot function without it.
-
-- Helm chart: `minio/minio` upstream operator-less chart (vanilla deployment). **Bitnami's catalog is not used** — most Bitnami images moved to a paid registry in 2025; the upstream chart is multi-arch and unaffected.
-- Image: `quay.io/minio/minio:RELEASE.2025-10-15T17-29-55Z` (latest GA per Version Policy; security release).
-- Pre-flight: `crane manifest --platform linux/arm64 quay.io/minio/minio:RELEASE.2025-10-15T17-29-55Z` before enabling.
-- Wave `01` (deploys before Loki)
-- Buckets: `loki-logs`, `loki-ruler`, `loki-admin`
-- Credentials: generated locally, stored as a **sealed-secret** committed to git (`minio-root-credentials`). No plaintext credentials in any manifest.
-
-**Depends on:** Block Storage (MinIO PVC); Secrets Management (sealed-secret for MinIO root creds). Loki has persistence disabled and uses S3 only — no PVC for Loki itself.
+**Depends on:** Block Storage (Loki PVC on Longhorn).
 
 **Constraints & decisions:**
-- Loki S3 endpoint: `minio.minio.svc.cluster.local:9000`
-- Retention: 90 days
-- Alloy target: `loki.observability.svc.cluster.local`
-- Loki single-binary mode chosen explicitly over SimpleScalable (3-component) — fewer pods, lower RAM, fine for projected cardinality.
+- Loki PVC: `20 Gi` on Longhorn, `storageClass: longhorn`.
+- Retention: 90 days (configured in Loki `limits_config`).
+- Monolithic mode (1 replica) — filesystem backend is not safe for >1 replica; scale-out would require migrating to object storage.
+- Alloy target: `loki.observability.svc.cluster.local`.
 
 **Acceptance:**
-- [ ] MinIO pods Running; console reachable; three Loki buckets exist
 - [ ] Loki pod Running; ready endpoint healthy
+- [ ] Loki PVC bound on Longhorn (20 Gi)
 - [ ] Alloy DaemonSet — one pod per node, all Running
 - [ ] LogQL query via Grafana Explore returns entries for `{namespace="kube-system"}`
-- [ ] No plaintext credentials in any committed manifest (grep check)
 
 ---
 
@@ -456,14 +445,13 @@ Rough RAM allocation, sized for 4×8 GiB = 32 GiB total. Numbers are `requests`;
 | 6 | Alertmanager | 128 MiB | |
 | 6 | kube-state-metrics | 128 MiB | |
 | 6 | node-exporter ×4 | 256 MiB | |
-| 7 | MinIO | 512 MiB | single replica |
-| 7 | Loki (single-binary) | 1 GiB | |
+| 7 | Loki (monolithic) | 1 GiB | filesystem backend on Longhorn PVC |
 | 7 | Alloy ×4 | 512 MiB | |
 | 8 | Grafana | 256 MiB | |
 | 9 | Dex | 128 MiB | |
 | 10 | Istio (istiod + gateway, no sidecars) | 1 GiB | sidecars budgeted per opt-in namespace |
 | 11 | Velero | 256 MiB | |
-| — | **Subtotal (workload)** | **~8.4 GiB** | |
+| — | **Subtotal (workload)** | **~7.9 GiB** | |
 | — | System reserved (4 nodes) | ~4 GiB | |
 | — | Headroom / app workloads | ~19 GiB | comfortable |
 
@@ -535,7 +523,7 @@ Ansible    /storage · open-iscsi · etcd snapshot timer (pi0)
 wave -1   Secrets Mgmt (sealed-secrets) · Internal TLS (cert-manager)
           Node Hygiene · Service Exposure (MetalLB) · Block Storage (Longhorn)
             ↓
-wave  1   Metrics (Prom/AM/node-exp/KSM) · Logs (MinIO → Loki → Alloy) · Dashboards (Grafana + Telegram)
+wave  1   Metrics (Prom/AM/node-exp/KSM) · Logs (Loki → Alloy) · Dashboards (Grafana + Telegram)
             ↓
 wave  2   Identity & SSO (Dex)  →  re-wire ArgoCD + Grafana OIDC
             ↓
@@ -549,7 +537,7 @@ Order within a wave is enforced by ArgoCD sync-wave + dependency annotations whe
 1. **Ansible prerequisites** — `/storage`, `open-iscsi`, etcd snapshot timer → run `task 22-k8s-nodes` and verify the first etcd snapshot lands in S3
 2. **Wave -1** — enable in kustomization, in this order: `sealed-secrets`, `cert-manager` (+ `ClusterIssuer/homekube-ca`), `kubelet-csr-approver`, `metallb`, `longhorn`
 3. **Validate wave -1** (acceptance criteria for capabilities 1–5)
-4. **Wave 1** — seal MinIO + Telegram credentials → enable `minio`, `longhorn-extras`, `kube-prometheus-stack`, `loki`; create `alloy` manifest
+4. **Wave 1** — seal Telegram credentials → enable `longhorn-extras`, `kube-prometheus-stack`, `loki`; create `alloy` manifest
 5. **Validate wave 1** (capabilities 6–8)
 6. **Wave 2** — Google OAuth client → sealed-secret → Dex → ArgoCD/Grafana OIDC config
 7. **Validate wave 2** (capability 9)
