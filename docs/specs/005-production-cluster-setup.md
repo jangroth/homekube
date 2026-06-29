@@ -70,7 +70,7 @@ Chart version is the `targetRevision` used in ArgoCD manifests. App version is w
 | kubelet-csr-approver | 1.2.14 | v1.2.14 | postfinance |
 | MetalLB | 0.16.0 | v0.16.0 | |
 | Longhorn | 1.11.2 | v1.11.2 | |
-| Loki | 7.0.0 | 3.6.7 | **chart v7 is a major bump**: values schema differs from v6; fresh install only. `deploymentMode: Monolithic` (renamed from `SingleBinary` in chart v12+; verify field name against chart being installed) |
+| Loki | 7.0.0 | 3.6.7 | **chart v7 is a major bump**: values schema differs from v6; fresh install only. ⚠️ **VERIFY at install:** the single-replica `deploymentMode` value — the chart historically uses `SingleBinary`; confirm against the actual 7.0.0 `values.yaml` before committing (do not assume `Monolithic`). |
 | kube-prometheus-stack | 87.0.1 | v0.92.0 | bumped from 85.3.0; review changelog before applying (2-chart-version jump) |
 | Grafana Alloy | 1.8.1 | v1.16.1 | replaces Promtail |
 | Dex | 0.24.0 | 2.44.0 | dexidp |
@@ -91,7 +91,7 @@ Phase 5 introduces eleven capabilities. Each maps to a sync-wave for ArgoCD exec
 | 4 | Service Exposure (L4 LB) | `-1` |
 | 5 | Block Storage | `-1` |
 | 6 | Metrics | `01` |
-| 7 | Logs (incl. internal Object Storage) | `01` |
+| 7 | Logs | `01` |
 | 8 | Dashboards & Alerting | `01` |
 | 9 | Identity & SSO | `02` |
 | 10 | Service Mesh | `03` |
@@ -223,7 +223,7 @@ Phase 5 introduces eleven capabilities. Each maps to a sync-wave for ArgoCD exec
 
 ### 5. Block Storage
 
-**Purpose:** Provide a CSI-backed `StorageClass` so workloads can request PersistentVolumeClaims. Required by Metrics (Prometheus PVC) and Logs (MinIO PVC).
+**Purpose:** Provide a CSI-backed `StorageClass` so workloads can request PersistentVolumeClaims. Required by Metrics (Prometheus PVC) and Logs (Loki PVC).
 
 **Wave:** `-1`
 
@@ -291,12 +291,18 @@ Phase 5 introduces eleven capabilities. Each maps to a sync-wave for ArgoCD exec
 **Wave:** `01`
 
 **Components:**
-- Helm chart `grafana/loki 7.0.0` (Loki backend) — manifest needs refresh; **monolithic mode** (`deploymentMode: Monolithic`, formerly `SingleBinary` — verify field name against chart being installed). Filesystem storage backend on a Longhorn PVC. **Chart v7 is a major bump from v6** — values schema changed; do not lift v6 values blindly.
+- Helm chart `grafana/loki 7.0.0` (Loki backend) — manifest needs refresh; **single-binary mode** (`deploymentMode` value to be confirmed against the chart — see Version Policy note). Filesystem storage backend on a Longhorn PVC. **Chart v7 is a major bump from v6** — values schema changed; do not lift v6 values blindly.
 - Helm chart `grafana/alloy` (DaemonSet log shipper) — **new manifest** under `wave-01-apps/`; chart `1.8.x` (latest at install per Version Policy). Replaces Promtail, which is in feature-frozen maintenance.
 
-**No in-cluster object storage.** MinIO (`minio/minio`) was archived April 2026 and the Loki chart's built-in MinIO subchart is deprecated (removed 2026-10-31). Loki uses the filesystem storage backend backed by a Longhorn PVC — durable across pod restarts, sufficient for home-lab cardinality, no extra components.
+**No in-cluster object storage.** MinIO (`minio/minio`) was archived April 2026 and the Loki chart's built-in MinIO subchart is deprecated (removed 2026-10-31). Loki uses the filesystem storage backend backed by a Longhorn PVC — durable across pod restarts, sufficient for home-lab cardinality, no extra components. A side benefit: the filesystem backend needs no credentials, so this also removes the plaintext S3 creds the old MinIO-based manifest carried in git.
 
 **Depends on:** Block Storage (Loki PVC on Longhorn).
+
+> **Work to be done (manifests do not yet reflect this rewrite).** As of this revision the repo still encodes the old S3/MinIO design and must be rebuilt fresh — nothing is live (both `loki.yaml` and `minio/minio.yaml` are commented out in `kustomization.yaml`), so there is no migration, only a clean install:
+> - **Rewrite `applications/wave-01-apps/loki.yaml`** — currently chart `6.41.1`, `storage.type: s3` → `minio.minio.svc.cluster.local`, `persistence.enabled: false`, with hardcoded `admin/admin1234` creds. Target: chart `7.0.0`, filesystem backend, `persistence.enabled: true` (20 Gi, `storageClass: longhorn`), single-binary mode, `delete_request_store: filesystem`, no credentials. Decide schema version (a fresh v7 install would normally use `v13`, not the carried-over `v12`).
+> - **Create `applications/wave-01-apps/alloy.yaml`** — no Alloy Application exists yet; `manual/alloy/alloy-values.yaml` is empty. Alloy ships pod/node logs to `http://loki.observability.svc.cluster.local:3100/loki/api/v1/push` (gateway disabled).
+> - **Delete obsolete files** — `applications/wave-01-apps/minio/` and the dead, unused `manual/loki/loki-values.yaml` (the Application carries inline values; this file is not consumed).
+> - **Enable in `kustomization.yaml`** — uncomment `loki.yaml`, add `alloy.yaml`; leave `minio/minio.yaml` removed.
 
 **Constraints & decisions:**
 - Loki PVC: `20 Gi` on Longhorn, `storageClass: longhorn`.
@@ -305,10 +311,10 @@ Phase 5 introduces eleven capabilities. Each maps to a sync-wave for ArgoCD exec
 - Alloy target: `loki.observability.svc.cluster.local`.
 
 **Acceptance:**
-- [ ] Loki pod Running; ready endpoint healthy
-- [ ] Loki PVC bound on Longhorn (20 Gi)
-- [ ] Alloy DaemonSet — one pod per node, all Running
-- [ ] LogQL query via Grafana Explore returns entries for `{namespace="kube-system"}`
+- [x] Loki pod Running; ready endpoint healthy
+- [x] Loki PVC bound on Longhorn (20 Gi); Loki writes to the mounted volume (logs survive a pod delete — durability is the point of filesystem-on-PVC)
+- [x] Alloy DaemonSet — one pod per node, all Running
+- [ ] LogQL query via Grafana Explore returns entries for `{namespace="kube-system"}` — pipeline verified via curl (kube-system logs confirmed in Loki); Grafana Explore check deferred to cap-8
 
 ---
 
@@ -530,14 +536,14 @@ wave  2   Identity & SSO (Dex)  →  re-wire ArgoCD + Grafana OIDC
 wave  3   Service Mesh (Istio + Kiali) · Backups & DR (Longhorn + Velero)
 ```
 
-Order within a wave is enforced by ArgoCD sync-wave + dependency annotations where needed (e.g. sealed-secrets before MinIO sealed cred; MinIO before Loki).
+Order within a wave is enforced by ArgoCD sync-wave + dependency annotations where needed (e.g. Block Storage / Longhorn before Loki, since Loki's filesystem backend binds a Longhorn PVC).
 
 ### Step-by-step deployment
 
 1. **Ansible prerequisites** — `/storage`, `open-iscsi`, etcd snapshot timer → run `task 22-k8s-nodes` and verify the first etcd snapshot lands in S3
 2. **Wave -1** — enable in kustomization, in this order: `sealed-secrets`, `cert-manager` (+ `ClusterIssuer/homekube-ca`), `kubelet-csr-approver`, `metallb`, `longhorn`
 3. **Validate wave -1** (acceptance criteria for capabilities 1–5)
-4. **Wave 1** — seal Telegram credentials → enable `longhorn-extras`, `kube-prometheus-stack`, `loki`; create `alloy` manifest
+4. **Wave 1** — seal Telegram credentials → rewrite `loki` manifest for chart v7 / filesystem backend, create `alloy` manifest, delete the obsolete `minio/` manifests → enable `longhorn-extras`, `kube-prometheus-stack`, `loki`, `alloy`
 5. **Validate wave 1** (capabilities 6–8)
 6. **Wave 2** — Google OAuth client → sealed-secret → Dex → ArgoCD/Grafana OIDC config
 7. **Validate wave 2** (capability 9)

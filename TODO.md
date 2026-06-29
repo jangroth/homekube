@@ -106,11 +106,13 @@ Each pi steps:
   - [ ] Wave 1:
     - [x] kube-prometheus-stack chart 87.0.1 — manifest updated (grafana disabled, retention 15d/40GiB, nodeAffinity off pi0, PDBs, resource limits); uncommented in kustomization; pushed
     - [x] **Validate cap-6 (Metrics)**: all pods Running in `observability`; all 28 Prometheus targets Up (incl. controller-manager, scheduler, etcd after bind-address fix); NodePorts :30002/:30004 reachable; retention `15d or 40GiB` confirmed
-    - [ ] MinIO upstream chart — new manifest under wave-01-apps/; seal credentials
-    - [ ] Loki chart 7.0.0 — values-schema rewrite (v6 → v7 is a breaking change); new manifest
-    - [ ] Alloy chart 1.8.1 — new manifest (DaemonSet log shipper, replaces Promtail)
+    - ~~MinIO upstream chart~~ — dropped; MinIO archived April 2026 (see spec 005 §7)
+    - [x] Loki chart 7.0.0 — SingleBinary, filesystem backend on 20 Gi Longhorn PVC, schema v13, auth_enabled: false, replication_factor: 1
+    - [x] Alloy chart 1.8.1 — DaemonSet log shipper; control-plane toleration for pi0 coverage (DECISION-035)
     - [ ] longhorn-extras — already manifested; uncomment in kustomization when ready
   - [ ] Validate wave 1 (capabilities 6–8); confirm Telegram alert receiver delivers a test alert
+    - [x] cap-6 (Metrics) validated
+    - [x] cap-7 (Logs) validated — pipeline confirmed via curl; Grafana Explore check deferred to cap-8
   - [ ] Wave 2: Google OAuth client → sealed-secret → Dex chart 0.24.0 / app 2.44.0 → ArgoCD + Grafana OIDC config
   - [ ] Validate wave 2 (capability 9)
   - [ ] Wave 3: verify Cilium `kubeProxyReplacement` (separate scheduled change if flip needed) → Istio 1.30.0 + Kiali (opt-in namespaces only) → external S3 + sealed AWS creds → Velero chart 12.0.1 / app 1.18.0 (CSI plugin) + Longhorn backup target

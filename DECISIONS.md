@@ -2,6 +2,16 @@
 
 ---
 
+## 035 — Alloy DaemonSet tolerated on control-plane node pi0 (2026-06-29)
+
+**Decision:** Add `node-role.kubernetes.io/control-plane:NoSchedule` toleration to the Alloy DaemonSet so it runs on all 4 nodes including pi0.
+
+**Rationale:** Without the toleration, the DaemonSet schedules only on worker nodes (pi1/pi2/pi3). pi0 runs etcd, kube-apiserver, kube-scheduler, and kube-controller-manager — the most operationally important logs in the cluster. Missing them defeats a large part of the value of log aggregation. Unlike Prometheus and Longhorn (which are kept off pi0 to protect etcd from I/O and memory contention), Alloy is a lightweight tail-and-forward agent with a small resource footprint (128 MiB request) that poses no meaningful risk to etcd stability.
+
+**Trade-offs accepted:** Alloy runs on the control-plane node, which increases its pod count. Resource limits are set conservatively (256 MiB limit) to contain any unexpected growth.
+
+---
+
 ## 034 — Longhorn storage pool restricted to worker nodes pi1/pi2/pi3 (2026-06-23)
 
 **Decision:** Longhorn runs only on the three worker nodes. pi0 (control plane) carries no Longhorn DaemonSet — no toleration for `node-role.kubernetes.io/control-plane:NoSchedule` is added to the Helm values.
