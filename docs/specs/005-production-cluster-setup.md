@@ -277,11 +277,11 @@ Phase 5 introduces eleven capabilities. Each maps to a sync-wave for ArgoCD exec
 - Manifest already exists; needs `additionalDataSources` (Loki) added and uncommenting in `kustomization.yaml`.
 
 **Acceptance:**
-- [ ] `kubectl get pods -n observability` — Prometheus, Alertmanager, node-exporter (×4), kube-state-metrics all Running
-- [ ] Prometheus port-forward → Targets page shows all targets Up
-- [ ] Alertmanager UI reachable on NodePort `:30004`
-- [ ] Prometheus NodePort `:30002` returns query results for a basic cluster metric (e.g. `up`)
-- [ ] Retention settings visible in Prometheus `/status/runtimeinfo`
+- [x] `kubectl get pods -n observability` — Prometheus, Alertmanager, node-exporter (×4), kube-state-metrics all Running
+- [x] Prometheus port-forward → Targets page shows all targets Up (all 28 incl. controller-manager, scheduler, etcd after bind-address fix)
+- [x] Alertmanager UI reachable on NodePort `:30004`
+- [x] Prometheus NodePort `:30002` returns query results for a basic cluster metric (e.g. `up`)
+- [x] Retention settings visible in Prometheus `/status/runtimeinfo` (`15d or 40GiB`)
 
 ---
 
