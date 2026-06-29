@@ -2,6 +2,16 @@
 
 ---
 
+## 036 — Grafana as kube-prometheus-stack subchart; LB VIP .243; TLS deferred to cap-9 (2026-06-29)
+
+**Decision:** Grafana (spec 005 cap-8) is deployed by re-enabling the `kube-prometheus-stack` **subchart** (`grafana.enabled: true` in the existing `kube-prometheus.yaml`), not as a standalone `grafana/grafana` ArgoCD Application. It is exposed on Cilium LB-IPAM VIP `192.168.86.243` (`type: LoadBalancer`), the NodePort `:30003` is dropped, persistence is disabled (stateless), and TLS is deferred to cap-9 — cap-8 serves HTTP over the VIP.
+
+**Rationale:** A `kube-prometheus-stack` cap-6 commit message referred to a separate `kube-prometheus-grafana.yaml`, but no such file or DECISION ever existed — the "split" was only ever a temporal deferral (configure Grafana in cap-8), not a structural one. The subchart auto-wires the Prometheus datasource and ships ~20 curated node/cluster dashboards, directly satisfying cap-8's dashboard-heavy acceptance criteria; a standalone chart would discard both and add a second chart version to track for no benefit this lab cashes in. VIP `.243` continues the LoadBalancer standard set in DECISION-033 (ArgoCD `.241`, Longhorn `.242`). TLS is unnecessary until OIDC (cap-9) forces a stable HTTPS endpoint; issuing an IP-SAN cert in cap-8 would only be re-issued against a hostname once DNS lands, so it rides along with the OIDC work instead.
+
+**Trade-offs accepted:** Grafana and Prometheus share one ArgoCD Application — they sync and roll back together and cannot be reasoned about independently. Acceptable for a 4-Pi solo lab; reversible later (e.g. if Prometheus is swapped for Mimir/Thanos) by promoting Grafana to its own chart. The Longhorn dashboard, absent from the chart, is injected via a ConfigMap labelled `grafana_dashboard: "1"` picked up by the chart's dashboard sidecar.
+
+---
+
 ## 035 — Alloy DaemonSet tolerated on control-plane node pi0 (2026-06-29)
 
 **Decision:** Add `node-role.kubernetes.io/control-plane:NoSchedule` toleration to the Alloy DaemonSet so it runs on all 4 nodes including pi0.

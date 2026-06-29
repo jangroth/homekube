@@ -325,27 +325,32 @@ Phase 5 introduces eleven capabilities. Each maps to a sync-wave for ArgoCD exec
 **Wave:** `01`
 
 **Components:**
-- Grafana (bundled with `kube-prometheus-stack`)
+- Grafana — the `kube-prometheus-stack` **subchart**, re-enabled in `kube-prometheus.yaml` (`grafana.enabled: true`). *Not* a standalone `grafana/grafana` Application: the subchart auto-wires the Prometheus datasource, ships the curated node/cluster dashboards, and rides the already-pinned chart version (no new version to track). See DECISION-036.
+- Grafana dashboard **sidecar** (chart default) — loads any ConfigMap labelled `grafana_dashboard: "1"`; this is how the Longhorn dashboard is injected.
 - Alertmanager UI (already counted in Metrics; included here as the alert frontend)
 - **Telegram receiver** wired into Alertmanager configuration
 
-**Depends on:** Metrics (Prometheus datasource), Logs (Loki datasource), Secrets Management (Telegram bot token as sealed-secret), Internal TLS (Grafana serving over HTTPS via cert-manager).
+**Depends on:** Metrics (Prometheus datasource), Logs (Loki datasource), Secrets Management (Telegram bot token as sealed-secret). Internal TLS is **not** a cap-8 dependency — Grafana serves HTTP over its LB VIP here; HTTPS is added in capability 9 when OIDC requires a stable HTTPS endpoint (see DECISION-036).
 
 **Constraints & decisions:**
-- Datasources: Prometheus auto-wired by the chart; Loki added via `additionalDataSources` in Helm values.
+- **Re-enabled in the existing `kube-prometheus.yaml`** (subchart), not a separate Application. The stale `kube-prometheus-grafana.yaml` reference in that manifest's comment is corrected during implementation.
+- Datasources: Prometheus auto-wired by the chart; Loki added via `grafana.additionalDataSources`, pointing at `http://loki.observability.svc.cluster.local:3100` (SingleBinary, gateway disabled, `auth_enabled: false` — no org-ID header needed). Wiring the Loki datasource is what closes capability 7's deferred Grafana-Explore acceptance box.
+- Dashboards: the chart's bundled node-exporter / kube-state / cluster dashboards are provisioned automatically (`grafana.defaultDashboardsEnabled: true`). The **Longhorn** dashboard is not in the chart — add it as a ConfigMap labelled `grafana_dashboard: "1"` in the `observability` namespace so the sidecar loads it.
+- **Exposure: Cilium LB-IPAM VIP `192.168.86.243`** (`type: LoadBalancer`, pinned via `io.cilium/lb-ipam-ips`), next after ArgoCD `.241` and Longhorn `.242`, per the LoadBalancer standard (DECISION-033). The old NodePort `:30003` is dropped.
+- **Persistence: stateless** (`grafana.persistence.enabled: false`). Datasources and dashboards come from Helm values / git ConfigMaps; login moves to OIDC in cap-9 — no durable state worth a PVC.
+- **TLS deferred to capability 9.** Grafana serves HTTP over the VIP in this capability; the HTTPS / `homekube-ca` cert (with the VIP as an `ipAddresses` SAN) is set up alongside OIDC. See DECISION-036.
 - Timezone: `Australia/Sydney` (already set in current Helm values).
 - OIDC config (SSO) is added in wave `02` once Dex is up — not in this capability's scope.
-- NodePort `:30003` retained; LB IP added once MetalLB is validated.
-- Telegram bot created out-of-band; bot token + target chat ID stored as a sealed-secret (`alertmanager-telegram`). Alertmanager `receivers:` config references it via `bot_token_file`.
+- Telegram bot created out-of-band (human checkpoint via @BotFather; capture bot token + target chat ID). Bot token sealed as `alertmanager-telegram`; Alertmanager references it via `bot_token_file`. The secret is **mounted** into the Alertmanager pod with `alertmanager.alertmanagerSpec.secrets: [alertmanager-telegram]`, read from `/etc/alertmanager/secrets/alertmanager-telegram/...`. Chat ID is not secret and can be inline in the receiver config.
 - Default route: all alerts → Telegram. Severity-based routing can be added later.
 
 **Acceptance:**
-- [ ] Grafana reachable on `:30003` (and via MetalLB LB IP); Prometheus and Loki datasources both green
-- [ ] Pre-built node-exporter dashboard (1860 or similar) renders for all 4 nodes
+- [ ] Grafana reachable on LB VIP `192.168.86.243` (over Tailscale and home Wi-Fi); Prometheus and Loki datasources both green
+- [ ] LogQL query via Grafana Explore returns entries for `{namespace="kube-system"}` (closes capability 7's deferred box)
+- [ ] Pre-built node-exporter dashboard renders for all 4 nodes
 - [ ] Longhorn dashboard renders; volume metrics populated
 - [ ] Alertmanager UI reachable; default cluster alerts visible (firing or pending)
 - [ ] Test alert (silenced rule + manual fire) reaches the Telegram chat
-- [ ] Grafana serves a valid cert from `homekube-ca`
 
 ---
 
@@ -367,13 +372,15 @@ Phase 5 introduces eleven capabilities. Each maps to a sync-wave for ArgoCD exec
 - Group-based RBAC requires Google Workspace; free Google accounts only expose email/profile.
 - Dex has no admin UI; configured entirely via Helm values.
 - **OIDC redirect URIs need stable hostnames.** DNS + Gateway API are deferred (see Deferred section below). For this phase, redirect URIs use `https://piN:PORT` (TLS via `homekube-ca`) — this means OIDC config will need re-writing once DNS lands. Acknowledged churn cost.
-- Tailscale subnet routing on `pi0` is the interim bridge for `darth` to reach `:30000`/`:30003` from outside the home network.
+- **Grafana TLS lands here** (deferred from cap-8, DECISION-036). Grafana self-terminates HTTPS using a cert-manager `Certificate` from `homekube-ca` with the LB VIP `192.168.86.243` as an `ipAddresses` SAN, plus `grafana.ini [server] protocol=https`. `homekube-ca` is already trusted on darth, so no browser warning.
+- Tailscale subnet routing on `pi0` is the interim bridge for `darth` to reach service VIPs from outside the home network.
 
 **Acceptance:**
 - [ ] Dex pod(s) Running; reachable on its NodePort over HTTPS
 - [ ] Dex cert issued by `homekube-ca`; clients accept it
 - [ ] ArgoCD login via Google OIDC completes end-to-end (logout → re-login → roles applied)
 - [ ] Grafana login via Google OIDC completes end-to-end
+- [ ] Grafana serves a valid cert from `homekube-ca` (HTTPS on VIP `192.168.86.243`) — deferred from cap-8
 - [ ] (Optional) Kubernetes API accessible via OIDC token — deferred unless trivially configurable
 
 ---

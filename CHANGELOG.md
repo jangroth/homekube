@@ -15,6 +15,17 @@ Cross-repo entries reference commits as `repo@sha` (e.g. `homekube-main@e77a322`
 
 ---
 
+## 2026-06-29
+
+### Changed
+- Spec 005 cap-8 (Dashboards & Alerting) reviewed and rewritten: Grafana deployed as the `kube-prometheus-stack` subchart (re-enabled in `kube-prometheus.yaml`), exposed on Cilium LB-IPAM VIP `192.168.86.243`, stateless (no PVC); Loki added via `additionalDataSources`; Longhorn dashboard via sidecar ConfigMap; Telegram `bot_token_file` mount mechanism spelled out
+- Removed stale MetalLB / NodePort `:30003` references from cap-8; Grafana TLS deferred from cap-8 to cap-9 (cap-9 §gains the IP-SAN cert constraint + acceptance box)
+
+### Decisions
+- [DECISION-036](DECISIONS.md) — Grafana as kube-prometheus-stack subchart; LB VIP `.243`; TLS deferred to cap-9
+
+---
+
 ## 2026-06-22
 
 ### Added

@@ -110,10 +110,13 @@ Each pi steps:
     - [x] Loki chart 7.0.0 — SingleBinary, filesystem backend on 20 Gi Longhorn PVC, schema v13, auth_enabled: false, replication_factor: 1
     - [x] Alloy chart 1.8.1 — DaemonSet log shipper; control-plane toleration for pi0 coverage (DECISION-035)
     - [ ] longhorn-extras — already manifested; uncomment in kustomization when ready
+    - [x] cap-8 (Dashboards & Alerting) reviewed — DECISION-036: Grafana = subchart, LB VIP `.243`, stateless, TLS→cap-9
+    - [ ] Implement cap-8: re-enable Grafana in `kube-prometheus.yaml` (`grafana.enabled: true`, `type: LoadBalancer` VIP `.243`, `persistence.enabled: false`); Loki `additionalDataSources` (`loki.observability.svc.cluster.local:3100`); Longhorn dashboard ConfigMap (`grafana_dashboard: "1"`); seal `alertmanager-telegram` + wire `bot_token_file` via `alertmanagerSpec.secrets`; fix stale `kube-prometheus-grafana.yaml` comment
   - [ ] Validate wave 1 (capabilities 6–8); confirm Telegram alert receiver delivers a test alert
     - [x] cap-6 (Metrics) validated
     - [x] cap-7 (Logs) validated — pipeline confirmed via curl; Grafana Explore check deferred to cap-8
-  - [ ] Wave 2: Google OAuth client → sealed-secret → Dex chart 0.24.0 / app 2.44.0 → ArgoCD + Grafana OIDC config
+    - [ ] cap-8: Grafana on VIP `.243` with both datasources green; closes cap-7's Explore box; Longhorn dashboard renders; Telegram test alert delivered
+  - [ ] Wave 2: Google OAuth client → sealed-secret → Dex chart 0.24.0 / app 2.44.0 → ArgoCD + Grafana OIDC config + Grafana TLS (IP-SAN cert from `homekube-ca`, deferred from cap-8 per DECISION-036)
   - [ ] Validate wave 2 (capability 9)
   - [ ] Wave 3: verify Cilium `kubeProxyReplacement` (separate scheduled change if flip needed) → Istio 1.30.0 + Kiali (opt-in namespaces only) → external S3 + sealed AWS creds → Velero chart 12.0.1 / app 1.18.0 (CSI plugin) + Longhorn backup target
   - [ ] Validate wave 3 (capabilities 10–11); document etcd restore drill in `homekube-main/docs/restore-etcd.md`
