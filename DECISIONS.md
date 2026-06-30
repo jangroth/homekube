@@ -2,6 +2,26 @@
 
 ---
 
+## 038 — Alertmanager config must explicitly define "null" receiver (2026-06-30)
+
+**Decision:** When overriding `alertmanager.config` in kube-prometheus-stack Helm values, include a `- name: "null"` receiver with no config (no-op sink).
+
+**Rationale:** kube-prometheus-stack automatically appends a `Watchdog → null` route to any custom `alertmanager.config` to prevent constant Watchdog notifications. If the `"null"` receiver is not defined in the custom receivers list, the Prometheus Operator rejects the generated config with `undefined receiver "null" used in route`, silently keeping the previous config active with no error surface in Alertmanager itself. The Operator logs the failure; the pod runs the stale config indefinitely.
+
+**Trade-offs accepted:** None — it's a required workaround for the chart's injection behaviour.
+
+---
+
+## 037 — Alloy log path uses namespace/podname glob to cover static pods (2026-06-30)
+
+**Decision:** Build the log file path in Alloy's relabeling rules from `namespace + "_" + pod_name + "_*"` (wildcard for UID) rather than `__meta_kubernetes_pod_uid`. Pattern: `/var/log/pods/$namespace_$podname_*/$container/*.log`.
+
+**Rationale:** Static pods (kube-apiserver, etcd, kube-scheduler, kube-controller-manager) are represented in the Kubernetes API as *mirror pods* with a different UID than the UID the kubelet uses on the filesystem. A path built from the API UID never matches the actual log directory, so static pod logs are silently dropped. Using `namespace_podname_*` (with a filesystem glob for the UID segment) matches both static pods (kubelet-assigned UID) and regular pods (API UID) because the directory name format is always `<namespace>_<pod-name>_<uid>`.
+
+**Trade-offs accepted:** The glob could theoretically match stale log directories if a pod was replaced and the old directory wasn't cleaned up, but kubelet garbage-collects these promptly and the extra ingestion of a few old log lines is harmless.
+
+---
+
 ## 036 — Grafana as kube-prometheus-stack subchart; LB VIP .243; TLS deferred to cap-9 (2026-06-29)
 
 **Decision:** Grafana (spec 005 cap-8) is deployed by re-enabling the `kube-prometheus-stack` **subchart** (`grafana.enabled: true` in the existing `kube-prometheus.yaml`), not as a standalone `grafana/grafana` ArgoCD Application. It is exposed on Cilium LB-IPAM VIP `192.168.86.243` (`type: LoadBalancer`), the NodePort `:30003` is dropped, persistence is disabled (stateless), and TLS is deferred to cap-9 — cap-8 serves HTTP over the VIP.

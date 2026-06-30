@@ -314,7 +314,7 @@ Phase 5 introduces eleven capabilities. Each maps to a sync-wave for ArgoCD exec
 - [x] Loki pod Running; ready endpoint healthy
 - [x] Loki PVC bound on Longhorn (20 Gi); Loki writes to the mounted volume (logs survive a pod delete — durability is the point of filesystem-on-PVC)
 - [x] Alloy DaemonSet — one pod per node, all Running
-- [ ] LogQL query via Grafana Explore returns entries for `{namespace="kube-system"}` — pipeline verified via curl (kube-system logs confirmed in Loki); Grafana Explore check deferred to cap-8
+- [x] LogQL query via Grafana Explore returns entries for `{namespace="kube-system"}` — closed in cap-8; required Alloy log-path fix for static pods (see DECISION-037)
 
 ---
 
@@ -335,7 +335,7 @@ Phase 5 introduces eleven capabilities. Each maps to a sync-wave for ArgoCD exec
 **Constraints & decisions:**
 - **Re-enabled in the existing `kube-prometheus.yaml`** (subchart), not a separate Application. The stale `kube-prometheus-grafana.yaml` reference in that manifest's comment is corrected during implementation.
 - Datasources: Prometheus auto-wired by the chart; Loki added via `grafana.additionalDataSources`, pointing at `http://loki.observability.svc.cluster.local:3100` (SingleBinary, gateway disabled, `auth_enabled: false` — no org-ID header needed). Wiring the Loki datasource is what closes capability 7's deferred Grafana-Explore acceptance box.
-- Dashboards: the chart's bundled node-exporter / kube-state / cluster dashboards are provisioned automatically (`grafana.defaultDashboardsEnabled: true`). The **Longhorn** dashboard is not in the chart — add it as a ConfigMap labelled `grafana_dashboard: "1"` in the `observability` namespace so the sidecar loads it.
+- Dashboards: the chart's bundled node-exporter / kube-state / cluster dashboards are provisioned automatically (`grafana.defaultDashboardsEnabled: true`). The **Longhorn** dashboard is loaded via `grafana.dashboards.default.longhorn.gnetId: 13032` — the chart's init container downloads it from grafana.com and writes it to `/var/lib/grafana/dashboards/default/`. A `grafana.dashboardProviders` entry is required to register that path with Grafana; without it the sidecar provider (which only watches `/tmp/dashboards`) never sees the file.
 - **Exposure: Cilium LB-IPAM VIP `192.168.86.243`** (`type: LoadBalancer`, pinned via `io.cilium/lb-ipam-ips`), next after ArgoCD `.241` and Longhorn `.242`, per the LoadBalancer standard (DECISION-033). The old NodePort `:30003` is dropped.
 - **Persistence: stateless** (`grafana.persistence.enabled: false`). Datasources and dashboards come from Helm values / git ConfigMaps; login moves to OIDC in cap-9 — no durable state worth a PVC.
 - **TLS deferred to capability 9.** Grafana serves HTTP over the VIP in this capability; the HTTPS / `homekube-ca` cert (with the VIP as an `ipAddresses` SAN) is set up alongside OIDC. See DECISION-036.
@@ -345,12 +345,12 @@ Phase 5 introduces eleven capabilities. Each maps to a sync-wave for ArgoCD exec
 - Default route: all alerts → Telegram. Severity-based routing can be added later.
 
 **Acceptance:**
-- [ ] Grafana reachable on LB VIP `192.168.86.243` (over Tailscale and home Wi-Fi); Prometheus and Loki datasources both green
-- [ ] LogQL query via Grafana Explore returns entries for `{namespace="kube-system"}` (closes capability 7's deferred box)
-- [ ] Pre-built node-exporter dashboard renders for all 4 nodes
-- [ ] Longhorn dashboard renders; volume metrics populated
-- [ ] Alertmanager UI reachable; default cluster alerts visible (firing or pending)
-- [ ] Test alert (silenced rule + manual fire) reaches the Telegram chat
+- [x] Grafana reachable on LB VIP `192.168.86.243` (over Tailscale and home Wi-Fi); Prometheus and Loki datasources both green
+- [x] LogQL query via Grafana Explore returns entries for `{namespace="kube-system"}` (closes capability 7's deferred box)
+- [x] Pre-built node-exporter dashboard renders for all 4 nodes
+- [x] Longhorn dashboard renders; volume metrics populated
+- [x] Alertmanager UI reachable; default cluster alerts visible (firing or pending)
+- [x] Test alert (silenced rule + manual fire) reaches the Telegram chat
 
 ---
 
