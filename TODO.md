@@ -116,7 +116,9 @@ Each pi steps:
     - [x] cap-6 (Metrics) validated
     - [x] cap-7 (Logs) validated — pipeline confirmed via curl + Grafana Explore (kube-system incl. apiserver/etcd after Alloy path fix)
     - [x] cap-8: Grafana on VIP `.243`, both datasources green, node-exporter + Longhorn dashboards render, Telegram alerts delivering (2026-06-30)
-  - [ ] Wave 2: Google OAuth client → sealed-secret → Dex chart 0.24.0 / app 2.44.0 → ArgoCD + Grafana OIDC config + Grafana TLS (IP-SAN cert from `homekube-ca`, deferred from cap-8 per DECISION-036)
+  - [ ] Wave 2:
+    - [x] cap-9 (Identity & SSO) reviewed — folded findings into spec 005: Dex chart 0.24.1, Dex on LB VIP `.244`, `.ts.net` callback host (Google rejects IP/non-public-domain redirect URIs — DECISION-039), disable ArgoCD's bundled Dex + use `oidc.config`, email-based RBAC (no Workspace groups), Current State row corrected (ArgoCD on VIP `.241`, not NodePort)
+    - [ ] Implement cap-9: Google OAuth client → sealed-secret `dex-google-oauth` → Dex chart 0.24.1 / app 2.44.0 (LB VIP `.244`, `.ts.net` callback) → ArgoCD + Grafana OIDC config + Grafana TLS (IP-SAN cert from `homekube-ca`, deferred from cap-8 per DECISION-036)
   - [ ] Validate wave 2 (capability 9)
   - [ ] Wave 3: verify Cilium `kubeProxyReplacement` (separate scheduled change if flip needed) → Istio 1.30.0 + Kiali (opt-in namespaces only) → external S3 + sealed AWS creds → Velero chart 12.0.1 / app 1.18.0 (CSI plugin) + Longhorn backup target
   - [ ] Validate wave 3 (capabilities 10–11); document etcd restore drill in `homekube-main/docs/restore-etcd.md`
@@ -139,6 +141,10 @@ Each pi steps:
 - [ ] **Consolidate documentation** — once all specs (005–007+) are implemented, do a pass to merge the scattered component-version tables, outdated README sections, and phase docs into a coherent state. `homekube-main/README.md` Components table is a known stale spot.
 
 - [ ] **Investigate Wi-Fi → LB VIP flakiness** — Cilium L2 announcement path via `wlan0` (pi2 as L2 leader) is intermittently unreliable: some devices/attempts succeed, others time out. Tailscale path is solid (36/36). Likely causes: brief Cilium BPF reload windows during endpoint regeneration, wlan0 dual-use (internet + LB), or AP-level wireless variability. Investigate Cilium endpoint regeneration frequency and whether pinning the L2 leader or reducing endpoint churn improves stability. See DECISION-032.
+
+- [ ] **Drop Wi-Fi LB access; go Tailscale-only** — commit to Tailscale as the sole path to LB VIPs and remove the home-Wi-Fi (`wlan0`) L2 announcement path entirely. Rationale: the Wi-Fi path is chronically flaky (see item above) while Tailscale is solid, and management already assumes Tailscale reachability. Scope: drop `wlan0` from Cilium `devices` and the L2 announcement policy, keep the VIP pool reachable purely via the Tailscale subnet route (`192.168.86.240/28`); revisit whether VIPs should even sit on the Wi-Fi subnet or move to a dedicated non-routed range. Closes out the flakiness investigation by removing the flaky path rather than fixing it. Record as a DECISION when actioned; supersedes the investigate-flakiness item above.
+
+- [ ] **Deploy Homepage application dashboard** — a single landing page ([gethomepage.dev](https://gethomepage.dev)) linking the cluster's web UIs (ArgoCD, Grafana, Longhorn, Alertmanager, Kiali, Dex) with live service/health widgets. Deploy as an ArgoCD Application, exposed on the next LB VIP; use the Kubernetes service-discovery integration (pod/ingress annotations) so entries auto-populate; widgets authenticate to backends via API keys, not the user session. **Access control:** Homepage has no built-in auth and is not an OIDC client, so it does not touch the cap-9 Dex config. Default to **Tailscale-only** access (VIP reachable only from the tailnet) — zero SSO dependency, fits the "go Tailscale-only" item above. Only if a real login page is wanted, front it with **oauth2-proxy forward-auth** (adds a new Dex client, but no new Google redirect URI).
 
 - [ ] Revisit `display_dependencies` task in k8s-node role — current approach may have a better solution
 

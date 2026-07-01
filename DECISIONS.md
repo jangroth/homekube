@@ -2,6 +2,16 @@
 
 ---
 
+## 039 — Dex OIDC callback uses Tailscale MagicDNS (`.ts.net`), not an IP or `piN` host (2026-07-01)
+
+**Decision:** For spec 005 cap-9 (Identity & SSO), the Dex OIDC issuer/callback is served on the node's Tailscale MagicDNS name — `https://pi0.<tailnet>.ts.net/dex/callback` — rather than the `https://piN:PORT` scheme originally written into the spec, or the LB VIP IP. Dex itself is exposed on LB VIP `192.168.86.244` for in-cluster/VIP reach; only the browser-facing issuer/callback uses the `.ts.net` name. In-cluster clients (ArgoCD, Grafana) reach Dex by ClusterIP.
+
+**Rationale:** Google OAuth rejects redirect URIs that are raw IP literals (`192.168.86.244`) or non-public-domain hostnames (`pi0`) at client-registration time — only real public domains or `localhost` over HTTPS are accepted. Only Dex's callback is ever registered with Google (Dex is the sole Google OAuth client; ArgoCD/Grafana federate through Dex, not Google directly), so the constraint lands on exactly one URL, but that URL must be a public domain. `.ts.net` is a public domain Google accepts, already resolves for `darth` over the existing Tailscale management plane, and Tailscale can issue a genuine Let's Encrypt cert for it — so the Google-facing leg needs no `homekube-ca` trust. This is materially cleaner than owning/registering a domain or the hosts-file workaround, and it partially pulls "DNS" forward from the Deferred list without committing to the full in-cluster DNS + Gateway API story.
+
+**Trade-offs accepted:** OIDC config is now coupled to the Tailscale tenancy (the `.ts.net` name is per-node and per-tailnet); if the cluster ever leaves Tailscale or real DNS lands, the callback URLs get rewritten. Acceptable — it's the same churn the deferred-DNS note already anticipated, and it removes a hard blocker (Google refusing the redirect URI) that would otherwise stall cap-9 entirely.
+
+---
+
 ## 038 — Alertmanager config must explicitly define "null" receiver (2026-06-30)
 
 **Decision:** When overriding `alertmanager.config` in kube-prometheus-stack Helm values, include a `- name: "null"` receiver with no config (no-op sink).

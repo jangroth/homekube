@@ -20,7 +20,7 @@ ArgoCD and `metrics-server` are running. The cluster has no persistent storage, 
 | Cilium 1.19.4 | Healthy |
 | ArgoCD 9.5.15 | Running, root-app synced |
 | metrics-server | Running, healthy |
-| argocd-config | Synced (NodePort :30000) |
+| argocd-config | Synced (LB VIP `192.168.86.241`, HTTP) |
 | Ansible prerequisites | `/storage` (NVMe-backed) on all 4 nodes; `open-iscsi` present |
 | kubelet CSR auto-approval | Manual bulk-approve only — breaks on cert rotation |
 | Secrets management | sealed-secrets 2.18.6 deployed + validated (cert saved, round-trip passed) |
@@ -73,7 +73,7 @@ Chart version is the `targetRevision` used in ArgoCD manifests. App version is w
 | Loki | 7.0.0 | 3.6.7 | **chart v7 is a major bump**: values schema differs from v6; fresh install only. ⚠️ **VERIFY at install:** the single-replica `deploymentMode` value — the chart historically uses `SingleBinary`; confirm against the actual 7.0.0 `values.yaml` before committing (do not assume `Monolithic`). |
 | kube-prometheus-stack | 87.0.1 | v0.92.0 | bumped from 85.3.0; review changelog before applying (2-chart-version jump) |
 | Grafana Alloy | 1.8.1 | v1.16.1 | replaces Promtail |
-| Dex | 0.24.0 | 2.44.0 | dexidp |
+| Dex | 0.24.1 | 2.44.0 | dexidp (chart-only patch bump from 0.24.0) |
 | Istio | 1.30.0 | 1.30.0 | istioctl install + helm |
 | Velero | 12.0.1 | 1.18.0 | with CSI snapshot plugin + `velero-plugin-for-aws` |
 
@@ -361,25 +361,27 @@ Phase 5 introduces eleven capabilities. Each maps to a sync-wave for ArgoCD exec
 **Wave:** `02`
 
 **Components:**
-- Helm chart `dex/dex` (`https://charts.dexidp.io`) — chart `0.24.0`, app `2.44.0`
-- ArgoCD OIDC client config (update to `argocd-config`)
-- Grafana OIDC config (update to `kube-prometheus-stack` Helm values)
+- Helm chart `dex/dex` (`https://charts.dexidp.io`) — chart `0.24.1`, app `2.44.0`
+- Dex exposed on **LB VIP `192.168.86.244`** (`type: LoadBalancer`, next after Grafana `.243` per the LoadBalancer standard, DECISION-033), serving HTTPS
+- ArgoCD OIDC client config: add `argocd-cm` (`url:` base + `oidc.config`) and `argocd-rbac-cm` to the `argocd-extras` path. **Disable ArgoCD's bundled Dex** and point `oidc.config` at the standalone cluster Dex — otherwise two Dexes run and token issuance is ambiguous. (ArgoCD server currently serves HTTP on :80 via the VIP; OIDC requires a correct `url:` base with TLS terminated — sort this as part of the wiring.)
+- Grafana OIDC config (update to `kube-prometheus-stack` Helm values, `grafana.ini [auth.generic_oauth]`)
 
-**Depends on:** human checkpoint — Google OAuth2 client ID + secret created in Google Cloud Console (Credentials → OAuth 2.0 Client ID, type Web). Stored as a **sealed-secret** (`dex-google-oauth`); never plaintext. Also depends on Internal TLS (Dex must be HTTPS for OIDC clients to behave).
+**Depends on:** human checkpoint — Google OAuth2 client ID + secret created in Google Cloud Console (Credentials → OAuth 2.0 Client ID, type Web). Stored as a **sealed-secret** (`dex-google-oauth`); never plaintext. Also depends on Internal TLS (Dex must be HTTPS for OIDC clients to behave) and on a **browser-resolvable public hostname** for the Dex callback (see redirect-URI constraint below).
 
 **Constraints & decisions:**
 - Federation only — no local user database. Everyone needs a Google account.
-- Group-based RBAC requires Google Workspace; free Google accounts only expose email/profile.
+- **RBAC is email-based, not group-based.** Free Google accounts (no Workspace) expose only `email`/`profile` — no `groups` claim. So `argocd-rbac-cm` and Grafana role mapping key off individual **email**, not groups. Group-based RBAC is deferred with Workspace.
 - Dex has no admin UI; configured entirely via Helm values.
-- **OIDC redirect URIs need stable hostnames.** DNS + Gateway API are deferred (see Deferred section below). For this phase, redirect URIs use `https://piN:PORT` (TLS via `homekube-ca`) — this means OIDC config will need re-writing once DNS lands. Acknowledged churn cost.
-- **Grafana TLS lands here** (deferred from cap-8, DECISION-036). Grafana self-terminates HTTPS using a cert-manager `Certificate` from `homekube-ca` with the LB VIP `192.168.86.243` as an `ipAddresses` SAN, plus `grafana.ini [server] protocol=https`. `homekube-ca` is already trusted on darth, so no browser warning.
-- Tailscale subnet routing on `pi0` is the interim bridge for `darth` to reach service VIPs from outside the home network.
+- **Google rejects IP-literal and non-public-domain redirect URIs.** Google OAuth only accepts redirect URIs on a real public domain (or `localhost`) over HTTPS — raw IPs (`192.168.86.244`) and bare hostnames (`pi0`) are both rejected at client-registration time. Only Dex's callback is registered with Google (Dex is the sole Google OAuth client; ArgoCD/Grafana redirect to Dex, not Google), so the constraint bites on exactly one URL — but Dex's issuer URL must be browser-reachable and identical across all clients. **Resolution: use the node's Tailscale MagicDNS name** — `https://pi0.<tailnet>.ts.net/dex/callback`. `.ts.net` is a public domain Google accepts, already resolves for `darth` over Tailscale, and Tailscale can issue a genuine Let's Encrypt cert for it (so the Google-facing leg needs no `homekube-ca` trust). This partially pulls DNS forward from the Deferred list — record as a DECISION. In-cluster clients still reach Dex by its ClusterIP service; only the browser-facing issuer/callback uses the `.ts.net` name.
+- **Grafana TLS lands here** (deferred from cap-8, DECISION-036). Grafana self-terminates HTTPS using a cert-manager `Certificate` from `homekube-ca` with the LB VIP `192.168.86.243` as an `ipAddresses` SAN, plus `grafana.ini [server] protocol=https`. `homekube-ca` is already trusted on darth, so no browser warning. (If Grafana is later browsed via a hostname rather than the VIP IP, add the matching DNS SAN.)
+- Tailscale subnet routing / MagicDNS on the nodes is the interim bridge for `darth` to reach service VIPs and the Dex callback from outside the home network.
 
 **Acceptance:**
-- [ ] Dex pod(s) Running; reachable on its NodePort over HTTPS
-- [ ] Dex cert issued by `homekube-ca`; clients accept it
-- [ ] ArgoCD login via Google OIDC completes end-to-end (logout → re-login → roles applied)
-- [ ] Grafana login via Google OIDC completes end-to-end
+- [ ] Dex pod(s) Running; reachable over HTTPS on LB VIP `192.168.86.244` and via its `.ts.net` callback host
+- [ ] Dex callback (`https://pi0.<tailnet>.ts.net/dex/callback`) accepted at Google client-registration time; browser accepts Dex's cert
+- [ ] ArgoCD bundled Dex disabled; `argocd-cm` `oidc.config` points at the standalone Dex
+- [ ] ArgoCD login via Google OIDC completes end-to-end (logout → re-login → email-based roles applied)
+- [ ] Grafana login via Google OIDC completes end-to-end (email-based role mapping)
 - [ ] Grafana serves a valid cert from `homekube-ca` (HTTPS on VIP `192.168.86.243`) — deferred from cap-8
 - [ ] (Optional) Kubernetes API accessible via OIDC token — deferred unless trivially configurable
 
@@ -519,7 +521,7 @@ Re-run `task 22-k8s-nodes` to apply prerequisites 1 and 2 before enabling Longho
 Capabilities deliberately pushed to a later phase. Tracked here so the boundaries of Phase 5 are explicit.
 
 - **Gateway API + Istio ingress** — Kubernetes Gateway API (`HTTPRoute`, `GatewayClass`) as the ingress layer via Istio. Preferred over traditional Ingress. Deferred until Service Mesh is stable.
-- **DNS (Tailscale split DNS)** — in-cluster DNS server (`k8s_gateway` or CoreDNS) exposed via MetalLB; Tailscale split DNS routes `*.homekube.internal` to it; ExternalDNS writes records. No public domain. Depends on Gateway API being in place first. Until then, SSO redirect URIs use `https://piN:PORT` with the `homekube-ca` cert.
+- **DNS (Tailscale split DNS)** — in-cluster DNS server (`k8s_gateway` or CoreDNS) exposed via MetalLB; Tailscale split DNS routes `*.homekube.internal` to it; ExternalDNS writes records. No public domain. Depends on Gateway API being in place first. Until then, the Dex OIDC callback uses the node's Tailscale MagicDNS `.ts.net` name (see capability 9) — the only browser-resolvable public hostname Google will accept as a redirect URI without owning a domain.
 - **Public ACME / Let's Encrypt** — once DNS lands, swap the self-signed `ClusterIssuer` for an ACME issuer. cert-manager is already in place; only the issuer changes.
 - **Stacked-etcd control-plane HA** — promote pi1/pi2 to control plane for a 3-node quorum. Deferred; relying on backups instead.
 - **Network policies**
