@@ -2,6 +2,26 @@
 
 ---
 
+## 041 — ArgoCD LB service HTTPS-only; port 80 dropped (2026-07-02)
+
+**Decision:** The `cst-argocd-server` LoadBalancer service exposes only port 443 (→ pod port 8080). Port 80 is not exposed.
+
+**Rationale:** ArgoCD is a Tailscale-only service — all access is via an explicit bookmark or CLI over the tailnet. An HTTP redirect on port 80 adds surface with no benefit; dropping it enforces HTTPS without relying on a redirect.
+
+**Trade-offs accepted:** Anyone who types `http://192.168.86.241` gets a connection refused rather than a helpful redirect. Acceptable — this is an operator tool, not a public-facing page.
+
+---
+
+## 040 — ArgoCD OIDC + RBAC config owned by Helm, not standalone ArgoCD CMs (2026-07-02)
+
+**Decision:** `url`, `oidc.config`, and RBAC policy are configured under `configs.cm` / `configs.rbac` in `argocd-helm-values.yaml` (Helm owns `argocd-cm` and `argocd-rbac-cm`). The standalone `argocd-cm.yaml` and `argocd-rbac-cm.yaml` files previously in `argocd-extras/` are removed.
+
+**Rationale:** When both Helm and an ArgoCD Application (via `argocd-extras`) apply to the same ConfigMaps, Kubernetes Server-Side Apply records two competing field managers. On the next Helm upgrade, the conflict surfaces as a fatal error blocking the release. Additionally, ArgoCD's settings informer only caches ConfigMaps that carry the `app.kubernetes.io/part-of: argocd` label — a manually-applied CM without that label is invisible to the informer, causing a "configmap argocd-cm not found" crash loop even though the CM exists. Making Helm the sole owner avoids both problems: Helm adds the required labels automatically and there are no competing managers.
+
+**Trade-offs accepted:** OIDC config (including the `homekube-ca` root CA PEM) lives in the Helm values file rather than in a dedicated Kubernetes manifest. The CA cert is not a secret (public cert), and the OIDC client secret is a literal shared string between ArgoCD and Dex (`argocd-dex-client-secret`) — not a high-value credential. If this becomes a concern, ArgoCD's `$secret:key` reference syntax can be adopted later to pull the client secret from a SealedSecret.
+
+---
+
 ## 039 — Dex OIDC callback uses Tailscale MagicDNS (`.ts.net`), not an IP or `piN` host (2026-07-01)
 
 **Decision:** For spec 005 cap-9 (Identity & SSO), the Dex OIDC issuer/callback is served on the node's Tailscale MagicDNS name — `https://pi0.<tailnet>.ts.net/dex/callback` — rather than the `https://piN:PORT` scheme originally written into the spec, or the LB VIP IP. Dex itself is exposed on LB VIP `192.168.86.244` for in-cluster/VIP reach; only the browser-facing issuer/callback uses the `.ts.net` name. In-cluster clients (ArgoCD, Grafana) reach Dex by ClusterIP.

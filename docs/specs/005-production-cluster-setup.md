@@ -377,12 +377,12 @@ Phase 5 introduces eleven capabilities. Each maps to a sync-wave for ArgoCD exec
 - Tailscale subnet routing / MagicDNS on the nodes is the interim bridge for `darth` to reach service VIPs and the Dex callback from outside the home network.
 
 **Acceptance:**
-- [ ] Dex pod(s) Running; reachable over HTTPS on LB VIP `192.168.86.244` and via its `.ts.net` callback host
-- [ ] Dex callback (`https://pi0.<tailnet>.ts.net/dex/callback`) accepted at Google client-registration time; browser accepts Dex's cert
-- [ ] ArgoCD bundled Dex disabled; `argocd-cm` `oidc.config` points at the standalone Dex
-- [ ] ArgoCD login via Google OIDC completes end-to-end (logout → re-login → email-based roles applied)
-- [ ] Grafana login via Google OIDC completes end-to-end (email-based role mapping)
-- [ ] Grafana serves a valid cert from `homekube-ca` (HTTPS on VIP `192.168.86.243`) — deferred from cap-8
+- [x] Dex pod(s) Running; reachable over HTTPS on LB VIP `192.168.86.244` and via its `.ts.net` callback host
+- [x] Dex callback (`https://pi0.<tailnet>.ts.net/dex/callback`) accepted at Google client-registration time; browser accepts Dex's cert
+- [x] ArgoCD bundled Dex disabled; `argocd-cm` `oidc.config` points at the standalone Dex
+- [x] ArgoCD login via Google OIDC completes end-to-end (logout → re-login → email-based roles applied)
+- [x] Grafana login via Google OIDC completes end-to-end (email-based role mapping)
+- [x] Grafana serves a valid cert from `homekube-ca` (HTTPS on VIP `192.168.86.243`) — deferred from cap-8
 - [ ] (Optional) Kubernetes API accessible via OIDC token — deferred unless trivially configurable
 
 ---

@@ -116,10 +116,10 @@ Each pi steps:
     - [x] cap-6 (Metrics) validated
     - [x] cap-7 (Logs) validated — pipeline confirmed via curl + Grafana Explore (kube-system incl. apiserver/etcd after Alloy path fix)
     - [x] cap-8: Grafana on VIP `.243`, both datasources green, node-exporter + Longhorn dashboards render, Telegram alerts delivering (2026-06-30)
-  - [ ] Wave 2:
+  - [x] Wave 2:
     - [x] cap-9 (Identity & SSO) reviewed — folded findings into spec 005: Dex chart 0.24.1, Dex on LB VIP `.244`, `.ts.net` callback host (Google rejects IP/non-public-domain redirect URIs — DECISION-039), disable ArgoCD's bundled Dex + use `oidc.config`, email-based RBAC (no Workspace groups), Current State row corrected (ArgoCD on VIP `.241`, not NodePort)
-    - [ ] Implement cap-9: Google OAuth client → sealed-secret `dex-google-oauth` → Dex chart 0.24.1 / app 2.44.0 (LB VIP `.244`, `.ts.net` callback) → ArgoCD + Grafana OIDC config + Grafana TLS (IP-SAN cert from `homekube-ca`, deferred from cap-8 per DECISION-036)
-  - [ ] Validate wave 2 (capability 9)
+    - [x] Implement cap-9: Google OAuth client → sealed-secret `dex-google-oauth` → Dex chart 0.24.1 / app 2.44.0 (LB VIP `.244`, `.ts.net` callback) → ArgoCD OIDC (DECISION-040: config in Helm values) + Grafana OIDC + Grafana TLS (IP-SAN cert from `homekube-ca`) + ArgoCD TLS (IP-SAN cert, port 443 only — DECISION-041)
+  - [x] Validate wave 2 (capability 9)
   - [ ] Wave 3: verify Cilium `kubeProxyReplacement` (separate scheduled change if flip needed) → Istio 1.30.0 + Kiali (opt-in namespaces only) → external S3 + sealed AWS creds → Velero chart 12.0.1 / app 1.18.0 (CSI plugin) + Longhorn backup target
   - [ ] Validate wave 3 (capabilities 10–11); document etcd restore drill in `homekube-main/docs/restore-etcd.md`
 

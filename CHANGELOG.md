@@ -15,6 +15,34 @@ Cross-repo entries reference commits as `repo@sha` (e.g. `homekube-main@e77a322`
 
 ---
 
+## 2026-07-02
+
+### Added
+- Dex chart 0.24.1 / app 2.44.0 deployed via ArgoCD (`wave-02-apps/dex`); HTTPS on LB VIP `192.168.86.244`; Google OAuth connector via sealed-secret `dex-google-oauth`; static clients for ArgoCD and Grafana
+- CoreDNS `hosts` block mapping `pi0.taild13083.ts.net → 192.168.86.244` (in-cluster pods cannot resolve `.ts.net` or reach Tailscale IPs); deployed as `coredns-patch` ArgoCD Application
+- `dex-tls` cert-manager Certificate (DNS SAN `pi0.taild13083.ts.net`, issuer `homekube-ca`); Dex mounts it for HTTPS
+- `argocd-server-tls` cert-manager Certificate (IP SAN `192.168.86.241`, issuer `homekube-ca`); ArgoCD auto-detects and serves HTTPS
+- `grafana-tls` cert-manager Certificate (IP SAN `192.168.86.243`, issuer `homekube-ca`); Grafana self-terminates HTTPS
+- ArgoCD OIDC config: `oidc.config` in `argocd-cm` pointing at standalone Dex; `rootCA` = `homekube-ca` PEM; scopes `[email, groups]` for email-based RBAC; policy `g, jan.groth.de@gmail.com, role:admin`
+- Grafana `auth.generic_oauth` enabled against Dex; `grafana.ini` `protocol: https`; TLS cert mounted from `grafana-tls` secret
+- `argocd-extras` ArgoCD Application now serves HTTPS-only (port 443) on VIP `192.168.86.241`; port 80 removed (DECISION-041)
+- Persistent systemd journald (`Storage=persistent`) on all nodes via Ansible `k8s-node` role — enables post-crash log retrieval
+
+### Changed
+- ArgoCD Helm values: `dex.enabled: false` (bundled Dex disabled); `server.insecure` removed (HTTPS mode); OIDC + RBAC config moved into `configs.cm` / `configs.rbac` (DECISION-040); `argocd-cm.yaml` and `argocd-rbac-cm.yaml` removed from `argocd-extras`
+- `ansible.cfg`: `inject_facts_as_vars = False`; `ansible_hostname` → `ansible_facts['hostname']` in `gitops` and `cni` roles
+- Tailscale `serve` on pi0: `tailscale serve --bg --https=443 http://192.168.86.244:5556` bridges browser HTTPS (`.ts.net`) to Dex LB VIP
+
+### Operational
+- Cleared Helm pending-upgrade lock (`kubectl -n argocd delete secret -l 'status=pending-upgrade'`) after pi0 watchdog reset during `task 50-gitops`
+- Recovered ArgoCD from broken state caused by `configs.cm.create: false` (Helm deleted `argocd-cm`; informer invisible to unlabelled CM); fix: moved config to Helm values with `create: true`
+
+### Decisions
+- [DECISION-040](DECISIONS.md) — ArgoCD OIDC + RBAC config owned by Helm, not standalone ArgoCD CMs
+- [DECISION-041](DECISIONS.md) — ArgoCD LB service HTTPS-only; port 80 dropped
+
+---
+
 ## 2026-06-29
 
 ### Changed
