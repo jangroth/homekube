@@ -146,6 +146,8 @@ Each pi steps:
 
 - [ ] **Deploy Homepage application dashboard** — a single landing page ([gethomepage.dev](https://gethomepage.dev)) linking the cluster's web UIs (ArgoCD, Grafana, Longhorn, Alertmanager, Kiali, Dex) with live service/health widgets. Deploy as an ArgoCD Application, exposed on the next LB VIP; use the Kubernetes service-discovery integration (pod/ingress annotations) so entries auto-populate; widgets authenticate to backends via API keys, not the user session. **Access control:** Homepage has no built-in auth and is not an OIDC client, so it does not touch the cap-9 Dex config. Default to **Tailscale-only** access (VIP reachable only from the tailnet) — zero SSO dependency, fits the "go Tailscale-only" item above. Only if a real login page is wanted, front it with **oauth2-proxy forward-auth** (adds a new Dex client, but no new Google redirect URI).
 
+- [ ] **Investigate pi0 hardware watchdog shutdown under load** — pi0 (control plane) crashed during a Helm upgrade (task 50-gitops). Root cause: Broadcom BCM2835 hardware watchdog (1-min timeout) fired when system load prevented systemd from sending its keepalive signal in time. Persistent journaling now in place for post-crash diagnostics. Investigate: current `RuntimeWatchdogSec` setting, whether the timeout can be raised, and whether splitting large Helm upgrades reduces the load spike enough to avoid future resets. See project memory for details.
+
 - [ ] Revisit `display_dependencies` task in k8s-node role — current approach may have a better solution
 
 - [ ] Investigate OOM root cause from previous run (kernel logs, events)
