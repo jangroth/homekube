@@ -2,6 +2,36 @@
 
 ---
 
+## 044 — Homepage's Grafana entry is link-only; live widget dropped (2026-07-03)
+
+**Decision:** Grafana appears on the Homepage dashboard (spec 007) as a plain link with no live widget. The Grafana service account minted for it was deleted; `homepage-widget-secrets` carries only the ArgoCD token.
+
+**Rationale:** Homepage's Grafana widget authenticates with basic auth only and *unconditionally* fetches `/api/admin/stats` for its dashboard/datasource counts — an endpoint that requires Grafana **server-admin**. Verified empirically: a Viewer service-account token works as basic auth (`api_key:<token>`, 200 on `/api/search` and alerts endpoints) but gets 403 on `admin/stats`, and the widget component renders an error state on any stats failure with no `fields` option to skip the call (checked `widget.js` / `component.jsx` / `use-widget-api.js` at v1.13.2). The only working credentials would be server-admin — unacceptable in the pod env of an unauthenticated dashboard, and the admin-password variant would additionally break when the cap-9 follow-up disables Grafana local auth.
+
+**Trade-offs accepted:** No dashboard/alert counts on the Grafana card. The Prometheus widget covers live monitoring status.
+
+---
+
+## 043 — Homepage is open (no auth) on its LB VIP, plain HTTP; SSO + TLS deferred to the ingress story (2026-07-03)
+
+**Decision:** The Homepage dashboard serves unauthenticated HTTP on LB VIP `192.168.86.245`. No login, no TLS.
+
+**Rationale:** Homepage ships no authentication and is not an OIDC client, so it cannot join the cap-9 Dex federation directly; fronting it with oauth2-proxy/forward-auth builds bespoke plumbing the deferred ingress/Gateway-API story would replace wholesale. The VIP is reachable only over Tailscale (and the home Wi-Fi path that is slated for removal) — never public — and the dashboard exposes only read-only status already visible to anyone on the tailnet. Same pre-ingress posture Grafana had in cap-8. Its widget backend tokens are read-only and server-side (never sent to the browser).
+
+**Trade-offs accepted:** Anyone on the tailnet/LAN sees cluster status without logging in, and the browser shows "not secure". Revisit when ingress lands (TLS + forward-auth in one move).
+
+---
+
+## 042 — Homepage installed from vendored raw manifests, not a community Helm chart (2026-07-03)
+
+**Decision:** Homepage (spec 007) is deployed from hand-maintained manifests in `applications/wave-03-apps/homepage/` (ArgoCD Application with a single git source), pinning the official image `ghcr.io/gethomepage/homepage`. No Helm chart.
+
+**Rationale:** Upstream ships no official chart and labels the community ones "unofficial". Both candidates (`jameswynn/homepage`, `M0NsTeRRR`) are single-maintainer, low-activity repos with unresponsive issue trackers — a poor dependency for the cluster's front door. Homepage's config *is* a set of YAML files, so a manifest directory holding them verbatim (ConfigMap) is more direct than reverse-engineering chart values; the only real dependency is the official multi-arch image. ArgoCD syncs a plain manifest directory as readily as a chart.
+
+**Trade-offs accepted:** We own the manifests: image bumps, probe paths, and upstream config-layout changes (e.g. the read-only-mount skeleton-copy behaviour, the providers-vs-widget URL split) are ours to track by hand instead of arriving via chart updates. Diverges from the repo's chart-based app pattern — deliberately, and documented in the spec.
+
+---
+
 ## 041 — ArgoCD LB service HTTPS-only; port 80 dropped (2026-07-02)
 
 **Decision:** The `cst-argocd-server` LoadBalancer service exposes only port 443 (→ pod port 8080). Port 80 is not exposed.

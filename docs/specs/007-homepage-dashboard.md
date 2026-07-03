@@ -1,6 +1,6 @@
 # Spec 007 — Homepage Dashboard
 
-**Status:** Draft
+**Status:** Implemented (2026-07-03)
 **Repos:** `homekube-apps` (ArgoCD app manifest + config) **and** `homekube-main` (the ArgoCD `apiKey` account + RBAC for the ArgoCD widget live in the Ansible-managed ArgoCD Helm values — `argocd-cm`/`argocd-rbac-cm` are Helm-owned, not editable via the `argocd-config` app; see Rollout §2)
 **Relates to:** `docs/specs/005-production-cluster-setup.md` — this is a cross-cutting landing page that surfaces the services stood up across all of Phase 5's waves. Written as its own spec (not a 005 capability) because it depends on the *outputs* of 005 rather than sitting inside its wave dependency graph.
 
@@ -97,19 +97,19 @@ Static, hand-maintained entries are the **reliable** population path (no Ingress
 | Service | href (browser link) | Widget | Widget `url` (in-cluster) | Auth needed |
 |---|---|---|---|---|
 | ArgoCD | `https://192.168.86.241` | `argocd` (app health counts) | `https://argocd-server.argocd.svc` (TLS — see gotcha) | **API token** → sealed-secret |
-| Longhorn | `http://192.168.86.242` | `longhorn` (volume/node health) | `http://longhorn-frontend.longhorn-system.svc` | none (reads Longhorn API) |
-| Grafana | `https://192.168.86.243` | `grafana` (dashboard/alert counts) | `https://<grafana-svc>.observability.svc:3000` (TLS — see gotcha) | **service-account token** → sealed-secret (see caveat) |
+| Longhorn | `http://192.168.86.242` | `longhorn` — an **info widget** (top bar, `widgets.yaml`), not a service widget (found at implementation: service-widget type `longhorn` doesn't exist) | `http://longhorn-frontend.longhorn-system.svc` | none (reads Longhorn API) |
+| Grafana | `https://192.168.86.243` | — (link only; see Open Question 2 resolution) | — | none |
 | Prometheus | `http://<node>:30002` | `prometheus` (targets up/down) | Prometheus `Service` in `observability`, `:9090` | none (internal) |
 | Alertmanager | `http://<node>:30004` | — (link only) | — | none |
 | Dex | `https://pi0.taild13083.ts.net/dex` | — (link only) | — | none |
 
-> **href vs widget `url` (TLS gotcha):** Homepage supports a per-service split between `href` (what the browser opens — the VIPs) and the widget's `url` (what the pod fetches). Keep them separate, and mind that **two of the four widget backends only speak HTTPS in-cluster**:
+> **href vs widget `url` (TLS gotcha):** Homepage supports a per-service split between `href` (what the browser opens — the VIPs) and the widget's `url` (what the pod fetches). Keep them separate, and mind that **not every widget backend speaks plain HTTP in-cluster**:
 > - **Longhorn, Prometheus** — plain HTTP in-cluster; widget `url` uses service DNS over `http://` (also avoids hairpinning through the LB).
-> - **ArgoCD, Grafana** — HTTPS-only in-cluster, serving `homekube-ca` certs. Verified against runtime: Grafana runs `server.protocol: https` on container `:3000` (`kube-prometheus.yaml`), and cap-9 removed `server.insecure` from ArgoCD (commit `b4135ed`), so `argocd-server:80` now redirects to TLS. There is **no** plain-HTTP endpoint to point these widgets at. Homepage's widget fetches run in Node.js, which rejects untrusted CAs, so the widgets must fetch over HTTPS **with the homekube-CA trusted**: mount the `homekube-ca` cert into the pod and set `NODE_EXTRA_CA_CERTS` (see `deployment.yaml` above and §3). This is a hard requirement for these two widgets, not a fallback.
+> - **ArgoCD** — HTTPS-only in-cluster, serving a `homekube-ca` cert: cap-9 removed `server.insecure` (commit `b4135ed`), so `argocd-server:80` now redirects to TLS. There is **no** plain-HTTP endpoint to point the widget at. Homepage's widget fetches run in Node.js, which rejects untrusted CAs, so the widget must fetch over HTTPS **with the homekube-CA trusted**: mount the `homekube-ca` cert into the pod and set `NODE_EXTRA_CA_CERTS` (see `deployment.yaml` above). This is a hard requirement, not a fallback. (Grafana is also HTTPS-only in-cluster, but per Open Question 2 it gets no widget, so only ArgoCD drives this requirement.)
 >
 > Verify exact Service names/ports at implementation. For the NodePort `href`s, pin whichever node address is used to reach them today — the widget path doesn't depend on it.
 
-> **Grafana widget caveat:** Homepage's Grafana widget authenticates with basic auth (username/password) or a service-account token. Prefer a dedicated Grafana **service-account token** (viewer role): the cap-9 follow-up may disable Grafana local auth once OIDC is stable ([[project_cap9_followup]]), and a basic-auth user would break then, whereas an SA token survives. Seal the token (not a user password). Provision it when wiring the widget (Open Question 2, now leaning SA-token).
+> **Grafana widget caveat (resolved 2026-07-03 — widget dropped):** see Open Question 2. The widget unconditionally fetches `/api/admin/stats`, which requires Grafana *server-admin*; no viewer-grade credential can render it. Grafana is listed link-only.
 
 ### 4. Annotation-based discovery (forward-looking)
 
@@ -127,7 +127,7 @@ Optionally back-fill these onto the existing LB Services so the static list and 
 
 ### 5. Sealed-secret (`homepage-widget-secrets`)
 
-- Keys: `HOMEPAGE_VAR_ARGOCD_TOKEN`, `HOMEPAGE_VAR_GRAFANA_TOKEN` (Grafana service-account token — preferred per the caveat above; `HOMEPAGE_VAR_GRAFANA_USER`/`HOMEPAGE_VAR_GRAFANA_PASSWORD` only if a local user is retained).
+- Keys: `HOMEPAGE_VAR_ARGOCD_TOKEN` only (the Grafana key was dropped with the widget — Open Question 2).
 - Sealed per-namespace (`homepage`) with `kubeseal`, committed to the manifest directory.
 - Deployment wiring: `envFrom: [{ secretRef: { name: homepage-widget-secrets } }]`.
 
@@ -155,25 +155,25 @@ Comfortable within 005's headroom. `nodeAffinity` to keep it off `pi0` (match th
 
 ## Acceptance
 
-- [ ] `kubectl get pods -n homepage` — Homepage pod Running
-- [ ] Dashboard reachable on LB VIP `192.168.86.245` from `darth` (Tailscale) **and** home Wi-Fi; no "host not allowed" error (`HOMEPAGE_ALLOWED_HOSTS` correct)
-- [ ] Kubernetes cluster-resource widget renders live CPU/memory and lists all 4 nodes (metrics-server path works)
-- [ ] Every core service (ArgoCD, Longhorn, Grafana, Prometheus, Alertmanager, Dex) is listed with a working link
-- [ ] ArgoCD widget shows live app-health counts (sealed API token works)
-- [ ] Longhorn widget shows volume/node health
-- [ ] Grafana + Prometheus widgets render live status (credentials sealed where required)
-- [ ] No plaintext credentials anywhere in `homekube-apps` (all via `homepage-widget-secrets`)
-- [ ] `applications/kustomization.yaml` includes the new manifest; ArgoCD shows the app Synced/Healthy
-- [ ] README "Deployed Components" table updated with the Homepage row ([[feedback_readme_maintenance]])
+- [x] `kubectl get pods -n homepage` — Homepage pod Running
+- [x] Dashboard reachable on LB VIP `192.168.86.245` from `darth` (Tailscale); no "host not allowed" error. *Home Wi-Fi not verified — the Wi-Fi LB path is slated for removal (TODO Backlog: "Drop Wi-Fi LB access; go Tailscale-only").*
+- [x] Kubernetes cluster-resource widget renders live CPU/memory and lists all 4 nodes (metrics-server path works)
+- [x] Every core service (ArgoCD, Longhorn, Grafana, Prometheus, Alertmanager, Dex) is listed with a working link
+- [x] ArgoCD widget shows live app-health counts (sealed API token works)
+- [x] Longhorn widget shows volume/node health (as top-bar *info* widget — see services table note)
+- [x] Prometheus widget renders live status (Grafana is link-only per Open Question 2)
+- [x] No plaintext credentials anywhere in `homekube-apps` (all via `homepage-widget-secrets`)
+- [x] `applications/kustomization.yaml` includes the new manifest; ArgoCD shows the app Synced/Healthy
+- [x] README "Deployed Components" table updated with the Homepage row ([[feedback_readme_maintenance]])
 
 ---
 
 ## Rollout
 
 1. Re-verify the image tag; run the arm64 `crane` pre-flight on `ghcr.io/gethomepage/homepage:v1.13.2`.
-2. Mint the widget credentials, then `kubeseal` both into `homepage-widget-secrets`:
+2. Mint the widget credential, then `kubeseal` it into `homepage-widget-secrets`:
    - **ArgoCD:** declare a local account with capability `apiKey` **only** (no `login`) plus a read-only RBAC entry, then generate the token. **These go in the Ansible ArgoCD Helm values in `homekube-main`** — `argocd-cm`/`argocd-rbac-cm` are Helm-owned (cap-9 commit `f0e9988`: "Helm is the sole owner of argocd-cm and argocd-rbac-cm"), *not* editable via the `argocd-config` app's extras dir (which holds only `argocd-service.yaml`). Source-reflects-runtime therefore lands in homekube-main. `apiKey`-only keeps the token working when the cap-9 follow-up disables local UI login.
-   - **Grafana:** provision a viewer-role **service-account token** (per the Grafana caveat / Open Question 2) and seal it as `HOMEPAGE_VAR_GRAFANA_TOKEN`.
+   - ~~**Grafana:** provision a viewer-role service-account token~~ — dropped; see Open Question 2.
 3. Write the manifest directory `applications/wave-03-apps/homepage/` (namespace, rbac, configmap, deployment, service, sealedsecret) and the ArgoCD `Application` (`homepage.yaml`, single git source).
 4. Append `homepage.yaml` to `applications/kustomization.yaml`.
 5. Sync via ArgoCD; walk the acceptance list.
@@ -184,4 +184,4 @@ Comfortable within 005's headroom. `nodeAffinity` to keep it off `pi0` (match th
 ## Open Questions
 
 1. ~~Which Helm chart?~~ **Resolved:** no chart. Both community charts are stale, single-maintainer, low-activity, unresponsive to issues/PRs — not a dependency worth taking for the cluster's front door. Use upstream's documented raw manifests, vendored into the repo, depending only on the official `ghcr.io/gethomepage/homepage` image. (Decided with user 2026-07-02; record in DECISIONS.)
-2. **Grafana widget auth** once local auth is disabled (cap-9 follow-up) — service-account token vs keeping a dedicated local viewer user. **Leaning service-account token** (survives local-auth disable; see caveat); confirm the SA-token path works with the widget when wiring it.
+2. ~~Grafana widget auth~~ **Resolved 2026-07-03: no Grafana widget — link only.** Tested during implementation: the widget's auth is basic-auth-only, and while Grafana accepts an SA token as basic auth (`api_key:<token>` — verified 200 on `/api/search` and the alerts endpoints with a Viewer token), the widget *unconditionally* fetches `/api/admin/stats` for its dashboard/datasource counts. That endpoint requires Grafana **server-admin** (Viewer token: 403, verified), and the component renders an error state on any stats failure — no `fields` setting skips the call (checked `widget.js`/`component.jsx`/`use-widget-api.js` at implementation time). The alternatives — a server-admin token or the admin password in the pod env of an unauthenticated dashboard — were rejected (decided with user 2026-07-03; record in DECISIONS). The Grafana SA created during implementation was deleted again; `homepage-widget-secrets` carries only the ArgoCD token. Prometheus's widget covers live monitoring status.

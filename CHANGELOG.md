@@ -15,6 +15,31 @@ Cross-repo entries reference commits as `repo@sha` (e.g. `homekube-main@e77a322`
 
 ---
 
+## 2026-07-03
+
+### Added
+- Homepage dashboard v1.13.2 (spec 007) on LB VIP `192.168.86.245:80` — vendored raw manifests in `wave-03-apps/homepage/` (DECISION-042), open on the VIP without auth (DECISION-043). Widgets: Kubernetes cluster + per-node (metrics-server), Longhorn storage (info widget), open-meteo (Cronulla); ArgoCD service widget via sealed `apiKey` token (`homepage-widget-secrets`); Prometheus targets widget; links for Grafana (DECISION-044), Alertmanager, Dex; repo bookmarks; background image. `homekube-apps@947d554` + follow-ups
+- ArgoCD local account `homepage` (`apiKey` capability only) + `role:readonly` RBAC grant in the Ansible Helm values; `crane` added to control-node packages — `homekube-main@b3c96b3`
+- `control-node` task codifying homekube-CA browser trust on darth (idempotent; no-ops where already trusted) — `homekube-main@e76299f`
+- README (homekube-apps): "Homepage widget credentials (human step)" section — token minting + kubeseal, and the rebuild re-mint/re-seal story; Homepage row in Deployed Components
+
+### Fixed
+- Homepage crashloop: `/app/config` is a read-only ConfigMap mount and homepage skeleton-copies missing config files (EROFS) — ship empty `docker.yaml`/`proxmox.yaml`/`custom.css`/`custom.js` (`homekube-apps@fd0fbf8`)
+- Longhorn info widget "Missing Longhorn URL" — URL belongs in `settings.yaml` `providers.longhorn`, not the widget entry (`homekube-apps@0beb5a9`)
+- Dex icon 404 — no `dex` icon in dashboard-icons/selfh.st; use upstream's glyph logo (`homekube-apps@1bb9a6b`)
+
+### Operational
+- Minted ArgoCD API token for the `homepage` account (admin login); sealed into `homepage-widget-secrets`
+- Created, then deleted, a Grafana viewer service account after the widget test failed on `/api/admin/stats` (DECISION-044)
+- Diagnosed open-meteo widget "API Error" as an upstream outage — `api.open-meteo.com` unreachable from both the pis and darth while general egress was healthy; no config change
+
+### Decisions
+- [DECISION-042](DECISIONS.md) — Homepage installed from vendored raw manifests, not a community Helm chart
+- [DECISION-043](DECISIONS.md) — Homepage open (no auth) on its LB VIP, plain HTTP; SSO + TLS deferred to the ingress story
+- [DECISION-044](DECISIONS.md) — Homepage's Grafana entry is link-only; live widget dropped
+
+---
+
 ## 2026-07-02
 
 ### Added
