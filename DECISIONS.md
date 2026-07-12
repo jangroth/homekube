@@ -2,6 +2,26 @@
 
 ---
 
+## 046 — Nightly automated routines open PRs for `agent-safe` issues, one routine per target repo (2026-07-12)
+
+**Decision:** Two scheduled Claude Code routines (RemoteTrigger) run nightly: `homekube-apps - nightly agent-safe issue` (2am Sydney) and `homekube-main - nightly agent-safe issue` (midnight Sydney). Each fetches open issues from the `jangroth/homekube` tracker labelled `agent-safe` + its own `repo:*` label, skips issues already in flight, picks one at random, implements it, and opens a PR for human review — never auto-merge.
+
+**Rationale:** Pattern reused from `jangroth/dotfiles`' existing nightly routine, adapted for homekube's multi-repo shape: the issue tracker (`jangroth/homekube`) is a different repo than where most fixes land (`homekube-apps`, `homekube-main`), so each routine's PR-target repo must be sourced explicitly and filtered by `repo:*` rather than assumed to match the tracker. Split into two routines (not one) because the two repos need different sanity checks before opening a PR — `kustomize build applications/` for `homekube-apps`; `ansible-playbook --syntax-check` for `homekube-main`, with no live pi access from the remote environment (no real playbook runs). Both routines currently reuse the existing dotfiles remote environment (`env_01Pq2AjWCXUsSwoC2DNrS8wX`) rather than a dedicated one, since environment creation is UI-only and out of tool reach.
+
+**Trade-offs accepted:** Sharing the dotfiles environment mixes a low-stakes personal-dotfiles trust domain with homekube's production-cluster trust domain (broader GitHub credential scope than either routine strictly needs). Flagged as worth splitting into a dedicated environment later if it causes friction, but not blocking for now.
+
+---
+
+## 045 — GitHub Issues on `jangroth/homekube` replaces `TODO.md`/`open-todos.md` as the single task tracker (2026-07-12)
+
+**Decision:** All open work items (from `TODO.md`'s Backlog, closed specs' deferred items, and externally-collected TODOs) were migrated to GitHub Issues on `jangroth/homekube` — the single tracker across all three repos (`homekube`, `homekube-main`, `homekube-apps`), rather than per-repo trackers. `TODO.md` and the staging file `open-todos.md` are both deleted; `CLAUDE.md`'s Working Approach now points at Issues. Every issue carries `area:*` (component, reusing `homekube-apps`' existing taxonomy), one of `criticality:blocker`/`degraded`/`polish` (workload-readiness impact — blocker = blocks trusting the cluster with other workloads, degraded = capability exists but not fully trustworthy, polish = doesn't affect workload-readiness), and where applicable `repo:*` (which repo the fix actually lands in) and `agent-safe`.
+
+**Rationale:** A single tracker avoids juggling three separate issue lists for a project that's really one system split across repos for deployment reasons. `repo:*` was added as a second label alongside `area:*` after discovering the two don't reliably correlate: several `area:workload` resource-limit issues initially assumed to target `homekube-apps` (Cilium/Hubble, ArgoCD) actually land in `homekube-main`, because those components are installed directly via Ansible/Helm rather than as ArgoCD-managed apps — `area:*` describes *what*, `repo:*` had to be independently verified against each fix's actual file location, not inferred from the area. `agent-safe` reuses the exact term and PR-only convention already established in `jangroth/dotfiles`, defined by four criteria: no open design decision, no destructive/irreversible live action, no physical or external-account step, and lands as a PR (never a direct push) — chosen for consistency across projects and to keep the global "never push without approval" rule intact even under automation.
+
+**Trade-offs accepted:** `TODO.md`'s Phase 0–5 completion history was deleted rather than archived — judged fully redundant with the already-closed specs (001, 003, 004, 005) and existing `DECISIONS.md`/`CHANGELOG.md` entries, and still recoverable via git history if needed.
+
+---
+
 ## 044 — Homepage's Grafana entry is link-only; live widget dropped (2026-07-03)
 
 **Decision:** Grafana appears on the Homepage dashboard (spec 007) as a plain link with no live widget. The Grafana service account minted for it was deleted; `homepage-widget-secrets` carries only the ArgoCD token.

@@ -1,6 +1,6 @@
 # Spec 006 — Cilium-native LoadBalancer (replace MetalLB)
 
-**Status:** Done (executed 2026-06-22)
+**Status:** Done (executed 2026-06-22); closed 2026-07-12 — the one remaining acceptance item (failover test, below) is not being pursued as spec follow-up. Tracked as a GitHub Issue instead.
 **Supersedes:** the MetalLB approach in spec 005 capability 4
 **Related decisions:** DECISION-031 (this change), DECISION-030 (the conflict that motivates it), DECISION-019 (Wi-Fi subnet choice — still holds)
 

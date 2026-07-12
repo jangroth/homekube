@@ -78,7 +78,7 @@ After the physical step, ansible handles the rest:
 - **Spec-driven**: write a spec in `docs/specs/NNN-title.md` before any significant implementation. Specs define the problem, acceptance criteria, and approach.
 - **Decision log**: record key decisions in `DECISIONS.md`, newest decision first. Decisions capture **why**.
 - **Change log**: append every material change to `CHANGELOG.md` (top-level, reverse-chronological, [Keep a Changelog](https://keepachangelog.com) format). Captures **what was done**: additions, version bumps, removals, fixes, operational interventions. Distinct from `DECISIONS.md`.
-- **Todo**: open tasks tracked in `TODO.md`
+- **Todo**: open tasks tracked as GitHub Issues on `jangroth/homekube` (single tracker for all three repos). Labelled `area:*` (component), `criticality:blocker`/`degraded`/`polish` (workload-readiness impact), `repo:*` (which repo the fix lands in — `homekube`/`homekube-main`/`homekube-apps`), and `agent-safe` where an unambiguous, reversible, PR-only fix exists with no open design decision or physical/external-account step. `agent-safe` issues in `homekube-apps` and `homekube-main` are picked up nightly by scheduled routines that open a PR for human review — don't assume an open `agent-safe` issue is still unclaimed without checking for an in-flight `auto/issue-<n>-*` PR first.
 - **Trust**: Claude proposes, human approves for destructive/irreversible operations (this policy evolves over time as trust is established)
 - **Source reflects runtime**: when a change is made to a running cluster (static pod manifest, sysctl, Ansible variable), always propagate it back to the canonical source file (`kubeadm-config.yaml`, Ansible role, Helm values) in the same piece of work. The source must be sufficient to rebuild the cluster from scratch.
 
@@ -86,7 +86,7 @@ After the physical step, ansible handles the rest:
 
 ## Key Files
 
-- `TODO.md` — open tasks
+- Open tasks — GitHub Issues on `jangroth/homekube`, not a file (see Working Approach)
 - `DECISIONS.md` — decision log (why)
 - `CHANGELOG.md` — change log (what was done), top-level, spans all three repos
 - `docs/specs/` — specs for significant work items

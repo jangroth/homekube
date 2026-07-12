@@ -1,6 +1,6 @@
 # Spec 004 — Kubernetes Install (Phase 4)
 
-**Status:** Draft  
+**Status:** Done  
 **Phase:** 4  
 **Playbooks:** `30-k8s-control-plane.yml`, `31-k8s-workers.yml`, `40-cni.yml`
 
@@ -42,17 +42,17 @@ Phase 4 must:
 
 ## Acceptance Criteria
 
-- [ ] `kubectl get nodes` from darth shows all four nodes (pi0–pi3), all `Ready`
-- [ ] `kubectl get nodes -o wide` shows NODE IP column as 10.0.0.x (not Tailscale IPs)
-- [ ] `kubectl get pods -n kube-system` — all system pods `Running` or `Completed`
-- [ ] `kubectl get pods -n kube-system -l k8s-app=cilium` — one Cilium pod per node, all `Running`
-- [ ] `kubectl get pods -n kube-system -l app=cilium-operator` — operator pod `Running`
-- [ ] `cilium status` (or `kubectl -n kube-system exec ds/cilium -- cilium status`) — `OK`
-- [ ] Swap active on all nodes: `swapon --show` on each pi shows `/var/swap.img`, kubelet not crashing on swap
-- [ ] `sudo journalctl -u kubelet --since "10 minutes ago"` — no `failSwapOn` errors
-- [ ] Control-plane taint is present on pi0: `kubectl describe node pi0 | grep Taints` shows `node-role.kubernetes.io/control-plane:NoSchedule`
-- [ ] Idempotent re-run of `30-k8s-control-plane.yml` (after cluster exists) reports no changes / skips init gracefully
-- [ ] kubeconfig on darth points to `https://pi0:6443`; `kubectl cluster-info` succeeds from darth
+- [x] `kubectl get nodes` from darth shows all four nodes (pi0–pi3), all `Ready`
+- [x] `kubectl get nodes -o wide` shows NODE IP column as 10.0.0.x (not Tailscale IPs)
+- [x] `kubectl get pods -n kube-system` — all system pods `Running` or `Completed`
+- [x] `kubectl get pods -n kube-system -l k8s-app=cilium` — one Cilium pod per node, all `Running`
+- [x] `kubectl get pods -n kube-system -l app=cilium-operator` — operator pod `Running`
+- [x] `cilium status` (or `kubectl -n kube-system exec ds/cilium -- cilium status`) — `OK`
+- [x] Swap active on all nodes: `swapon --show` on each pi shows `/var/swap.img`, kubelet not crashing on swap
+- [x] `sudo journalctl -u kubelet --since "10 minutes ago"` — no `failSwapOn` errors
+- [x] Control-plane taint is present on pi0: `kubectl describe node pi0 | grep Taints` shows `node-role.kubernetes.io/control-plane:NoSchedule`
+- [x] Idempotent re-run of `30-k8s-control-plane.yml` (after cluster exists) reports no changes / skips init gracefully
+- [x] kubeconfig on darth points to `https://pi0:6443`; `kubectl cluster-info` succeeds from darth
 
 ---
 

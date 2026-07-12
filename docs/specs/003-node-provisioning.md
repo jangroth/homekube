@@ -1,6 +1,6 @@
 # Spec 003 — Node Provisioning
 
-**Status:** Draft
+**Status:** Done
 **Goal:** Fully automated provisioning of all four pis, ready for `kubeadm init`. Covers Ansible-based OS configuration, swap, k8s prerequisites, and SSH access from darth and kylo — without any hardcoded IPs or DHCP dependency.
 
 ---
@@ -34,27 +34,27 @@ The current codebase has several problems to address before automation is viable
 
 Manual steps that must complete before Phase 3 begins. These cannot be automated.
 
-- [ ] **Darth keypair exists:** `ls ~/.ssh/id_darth_homekube` succeeds; if not, `ssh-keygen -t ed25519 -f ~/.ssh/id_darth_homekube -C "darth@homekube"`
-- [ ] **Kylo keypair exists:** on kylo, `ssh-keygen -t ed25519 -f ~/.ssh/id_kylo_homekube -C "kylo@homekube"`
-- [ ] **Both public keys committed** to `roles/raspberry-pi/files/pub_keys/`: `id_darth_homekube.pub` and `id_kylo_homekube.pub`
-- [ ] **Tailscale MagicDNS resolves from darth:** `tailscale status | grep pi0` returns a tailnet IP; `ssh boot@pi0` works (password auth)
-- [ ] **`pub_keys/` is empty of stale node keys** (already done; phase 3 regenerates `pi0.pub`–`pi3.pub`)
+- [x] **Darth keypair exists:** `ls ~/.ssh/id_darth_homekube` succeeds; if not, `ssh-keygen -t ed25519 -f ~/.ssh/id_darth_homekube -C "darth@homekube"`
+- [x] **Kylo keypair exists:** on kylo, `ssh-keygen -t ed25519 -f ~/.ssh/id_kylo_homekube -C "kylo@homekube"`
+- [x] **Both public keys committed** to `roles/raspberry-pi/files/pub_keys/`: `id_darth_homekube.pub` and `id_kylo_homekube.pub`
+- [x] **Tailscale MagicDNS resolves from darth:** `tailscale status | grep pi0` returns a tailnet IP; `ssh boot@pi0` works (password auth)
+- [x] **`pub_keys/` is empty of stale node keys** (already done; phase 3 regenerates `pi0.pub`–`pi3.pub`)
 
 ---
 
 ## Acceptance Criteria
 
-- [ ] `ansible-playbook 20-configure-darth.yml` succeeds
-- [ ] After (1), `ssh homekube@pi0` (and pi1–pi3) works from darth using `~/.ssh/config` with MagicDNS hostnames (no IPs), with no host-key prompt
-- [ ] `ansible-playbook 21-provision-pis.yml --tags init` succeeds on all 4 pis from a clean (boot-user-only) state
-- [ ] Re-running `ansible-playbook 21-provision-pis.yml` (no tags) after the init run completes idempotently — zero changes on the second run
-- [ ] `pub_keys/` contains exactly 6 fresh keys: `id_darth_homekube.pub`, `id_kylo_homekube.pub`, `pi0.pub`–`pi3.pub` — all generated post-NVMe-migration
-- [ ] `ssh homekube@pi0` works from kylo (key-based, over Tailscale); password auth on pis is disabled (`grep PasswordAuthentication /etc/ssh/sshd_config` → `no`)
-- [ ] `boot` user is locked on all pis (`sudo passwd -S boot` shows `L`)
-- [ ] All 4 pis have a swapfile active (`swapon --show` shows `/var/swap.img`, 4 GiB)
-- [ ] `ansible-playbook 22-k8s-nodes.yml` succeeds on all 4 nodes
-- [ ] `sudo kubeadm init --dry-run --ignore-preflight-errors=Swap` on pi0 completes with no FATAL preflight errors (Swap preflight ignored deliberately; kubelet swap config is a Phase 4 deliverable — see section 4)
-- [ ] No hardcoded DHCP IPs remain in any Ansible file used for management access
+- [x] `ansible-playbook 20-configure-darth.yml` succeeds
+- [x] After (1), `ssh homekube@pi0` (and pi1–pi3) works from darth using `~/.ssh/config` with MagicDNS hostnames (no IPs), with no host-key prompt
+- [x] `ansible-playbook 21-provision-pis.yml --tags init` succeeds on all 4 pis from a clean (boot-user-only) state
+- [x] Re-running `ansible-playbook 21-provision-pis.yml` (no tags) after the init run completes idempotently — zero changes on the second run
+- [x] `pub_keys/` contains exactly 6 fresh keys: `id_darth_homekube.pub`, `id_kylo_homekube.pub`, `pi0.pub`–`pi3.pub` — all generated post-NVMe-migration
+- [x] `ssh homekube@pi0` works from kylo (key-based, over Tailscale); password auth on pis is disabled (`grep PasswordAuthentication /etc/ssh/sshd_config` → `no`)
+- [x] `boot` user is locked on all pis (`sudo passwd -S boot` shows `L`)
+- [x] All 4 pis have a swapfile active (`swapon --show` shows `/var/swap.img`, 4 GiB)
+- [x] `ansible-playbook 22-k8s-nodes.yml` succeeds on all 4 nodes
+- [x] `sudo kubeadm init --dry-run --ignore-preflight-errors=Swap` on pi0 completes with no FATAL preflight errors (Swap preflight ignored deliberately; kubelet swap config is a Phase 4 deliverable — see section 4)
+- [x] No hardcoded DHCP IPs remain in any Ansible file used for management access
 
 ---
 

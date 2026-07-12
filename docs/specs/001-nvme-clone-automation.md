@@ -1,6 +1,6 @@
 # Spec 001 — NVMe Clone Automation
 
-**Status:** Draft
+**Status:** Done
 **Owner:** Jan
 **Created:** 2026-05-15
 

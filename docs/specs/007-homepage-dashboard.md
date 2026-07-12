@@ -1,6 +1,6 @@
 # Spec 007 — Homepage Dashboard
 
-**Status:** Implemented (2026-07-03)
+**Status:** Implemented (2026-07-03); closed 2026-07-12 — remaining follow-ups (Tailscale widget, discovery annotations, offline CA) are not being pursued as spec extensions. Tracked as GitHub Issues instead.
 **Repos:** `homekube-apps` (ArgoCD app manifest + config) **and** `homekube-main` (the ArgoCD `apiKey` account + RBAC for the ArgoCD widget live in the Ansible-managed ArgoCD Helm values — `argocd-cm`/`argocd-rbac-cm` are Helm-owned, not editable via the `argocd-config` app; see Rollout §2)
 **Relates to:** `docs/specs/005-production-cluster-setup.md` — this is a cross-cutting landing page that surfaces the services stood up across all of Phase 5's waves. Written as its own spec (not a 005 capability) because it depends on the *outputs* of 005 rather than sitting inside its wave dependency graph.
 

@@ -1,6 +1,6 @@
 # Spec 005 — Production-Like Cluster Setup (Phase 5)
 
-**Status:** Draft
+**Status:** Closed (2026-07-12) — waves `-1`, `1`, `2` implemented and validated; wave `3` (Service Mesh, Backups & DR) not pursued under this spec. Remaining scope tracked as GitHub Issues; a new spec will only be written if that work resurfaces and needs one.
 **Phase:** 5
 **Repos:** `homekube-main` (Ansible prerequisites), `homekube-apps` (ArgoCD app manifests)
 
