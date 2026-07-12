@@ -45,6 +45,51 @@ git clone https://github.com/jangroth/homekube-apps.git
 
 Cilium (CNI + LB) · Longhorn · ArgoCD · Prometheus · Grafana · Loki
 
+## Resource Budget
+
+Rough RAM allocation, sized for 4×8 GiB = 32 GiB total. Numbers are `requests`; `limits` set 1.5–2× for burst headroom. System reserved (kubelet/containerd/Cilium/CoreDNS/sealed-secrets/cert-manager) ≈ 1 GiB/node = 4 GiB. Anything above is workload budget.
+
+### Deployed
+
+| Capability | Component | RAM request | Notes |
+|---|---|---|---|
+| 1 | sealed-secrets controller | 64 MiB | |
+| 2 | cert-manager (3 pods) | 256 MiB | |
+| 3 | kubelet-csr-approver | 64 MiB | |
+| 4 | MetalLB (controller + speakers ×4) | 256 MiB | |
+| 5 | Longhorn (manager+driver+engines, all nodes) | 1.5 GiB | grows with attached volumes |
+| 6 | Prometheus | 2 GiB | retention 15d / 40 GiB |
+| 6 | Alertmanager | 128 MiB | |
+| 6 | kube-state-metrics | 128 MiB | |
+| 6 | node-exporter ×4 | 256 MiB | |
+| 7 | Loki (monolithic) | 1 GiB | filesystem backend on Longhorn PVC |
+| 7 | Alloy ×4 | 512 MiB | |
+| 8 | Grafana | 256 MiB | |
+| 9 | Dex | 128 MiB | |
+| — | **Subtotal (deployed)** | **~6.5 GiB** | |
+
+### Planned
+
+| Capability | Component | RAM request | Notes |
+|---|---|---|---|
+| 10 | Istio (istiod + gateway, no sidecars) | 1 GiB | sidecars budgeted per opt-in namespace |
+| 11 | Velero | 256 MiB | |
+| — | **Subtotal (planned)** | **~1.25 GiB** | |
+
+### Headroom
+
+| | RAM |
+|---|---|
+| System reserved (4 nodes) | ~4 GiB |
+| Deployed workload subtotal | ~6.5 GiB |
+| **Current headroom** | **~21.5 GiB** |
+| Planned workload subtotal | ~1.25 GiB |
+| **Headroom after planned deploys** | **~20.25 GiB** |
+
+Sidecar overhead is *not* in either subtotal — each opted-in namespace adds ~80–120 MiB per pod. Audit before enabling injection in a busy namespace.
+
+Update this table in the same piece of work whenever a workload's resource requests/limits change (new component, resize, removal) — see "source reflects runtime" in `CLAUDE.md`.
+
 ## Navigation
 
 - [GitHub Issues](https://github.com/jangroth/homekube/issues) — open tasks (single tracker for all three repos)

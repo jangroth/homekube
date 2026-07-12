@@ -15,6 +15,11 @@ Cross-repo entries reference commits as `repo@sha` (e.g. `homekube-main@e77a322`
 
 ---
 
+## 2026-07-13
+
+### Changed
+- Resource Budget table moved from spec 005 to top-level `README.md` — it's living information that changes as workload requests/limits change, not a point-in-time record (issue #35). Spec 005 §Resource Budget now points at README.
+
 ## 2026-07-03
 
 ### Added

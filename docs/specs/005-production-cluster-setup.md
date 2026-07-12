@@ -447,30 +447,7 @@ Phase 5 introduces eleven capabilities. Each maps to a sync-wave for ArgoCD exec
 
 ## Resource Budget
 
-Rough RAM allocation, sized for 4×8 GiB = 32 GiB total. Numbers are `requests`; `limits` set 1.5–2× for burst headroom. System reserved (kubelet/containerd/Cilium/CoreDNS/sealed-secrets/cert-manager) ≈ 1 GiB/node = 4 GiB. Anything above is workload budget.
-
-| Capability | Component | RAM request | Notes |
-|---|---|---|---|
-| 1 | sealed-secrets controller | 64 MiB | |
-| 2 | cert-manager (3 pods) | 256 MiB | |
-| 3 | kubelet-csr-approver | 64 MiB | |
-| 4 | MetalLB (controller + speakers ×4) | 256 MiB | |
-| 5 | Longhorn (manager+driver+engines, all nodes) | 1.5 GiB | grows with attached volumes |
-| 6 | Prometheus | 2 GiB | retention 15d / 40 GiB |
-| 6 | Alertmanager | 128 MiB | |
-| 6 | kube-state-metrics | 128 MiB | |
-| 6 | node-exporter ×4 | 256 MiB | |
-| 7 | Loki (monolithic) | 1 GiB | filesystem backend on Longhorn PVC |
-| 7 | Alloy ×4 | 512 MiB | |
-| 8 | Grafana | 256 MiB | |
-| 9 | Dex | 128 MiB | |
-| 10 | Istio (istiod + gateway, no sidecars) | 1 GiB | sidecars budgeted per opt-in namespace |
-| 11 | Velero | 256 MiB | |
-| — | **Subtotal (workload)** | **~7.9 GiB** | |
-| — | System reserved (4 nodes) | ~4 GiB | |
-| — | Headroom / app workloads | ~19 GiB | comfortable |
-
-Sidecar overhead is *not* in the subtotal — each opted-in namespace adds ~80–120 MiB per pod. Audit before enabling injection in a busy namespace.
+Moved to the top-level [`README.md`](../../README.md#resource-budget) — resource budget is living information that changes as workload requests/limits change, unlike this spec which is a point-in-time record. This section stays as a pointer only.
 
 ---
 
