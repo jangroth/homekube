@@ -2,6 +2,38 @@
 
 Workspace for running vanilla Kubernetes on 4x Raspberry Pi 5.
 
+---
+
+![Homekube](homekube-main/docs/images/homekube2.png)
+
+---
+
+<div style="display: flex; justify-content: space-around;">
+  <img src="homekube-main/docs/images/logo-kubernetes.svg.png" alt="kubernetes" style="height: 50px;">
+  <img src="homekube-main/docs/images/logo-cilium.png" alt="cilium" style="height: 50px;">
+  <img src="homekube-main/docs/images/logo-longhorn.png" alt="longhorn" style="height: 50px;">
+</div>
+
+---
+
+<div style="display: flex; justify-content: space-around;">
+  <img src="homekube-main/docs/images/logo-prometheus.png" alt="prometheus" style="height: 50px;">
+  <img src="homekube-main/docs/images/logo-grafana.png" alt="grafana" style="height: 50px;">
+  <img src="homekube-main/docs/images/logo-loki.png" alt="loki" style="height: 50px;">
+</div>
+
+---
+<div style="display: flex; justify-content: space-around;">
+  <img src="homekube-main/docs/images/logo-ansible.png" alt="ansible" style="height: 50px;">
+  <img src="homekube-main/docs/images/logo-argocd.png" alt="argocd" style="height: 50px;">
+</div>
+
+---
+
+![Homekube](homekube-main/docs/images/k9s.png)
+
+---
+
 ## Getting Started
 
 Clone this repo first, then the two sub-repos into it:
@@ -224,6 +256,12 @@ Rough RAM allocation, sized for 4×8 GiB = 32 GiB total. Numbers are `requests`;
 Sidecar overhead is *not* in either subtotal — each opted-in namespace adds ~80–120 MiB per pod. Audit before enabling injection in a busy namespace.
 
 Update this table in the same piece of work whenever a workload's resource requests/limits change (new component, resize, removal) — see "source reflects runtime" in `CLAUDE.md`.
+
+## References / Inspiration
+
+* [Kubernetes the hard way](https://github.com/kelseyhightower/kubernetes-the-hard-way/tree/master) - Kelsey Hightower
+* [Pi Kubernetes Cluster](https://picluster.ricsanfre.com/docs/home/) - Ricardo Sanchez
+* [k8s-gitops](https://github.com/xunholy/k8s-gitops) - Michael Fornaro
 
 ## Navigation
 
