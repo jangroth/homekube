@@ -47,6 +47,6 @@ Cilium (CNI + LB) · Longhorn · ArgoCD · Prometheus · Grafana · Loki
 
 ## Navigation
 
-- [`TODO.md`](TODO.md) — open tasks
+- [GitHub Issues](https://github.com/jangroth/homekube/issues) — open tasks (single tracker for all three repos)
 - [`DECISIONS.md`](DECISIONS.md) — decision log
 - [`docs/specs/`](docs/specs/) — specs for significant work items
