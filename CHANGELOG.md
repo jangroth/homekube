@@ -19,6 +19,10 @@ Cross-repo entries reference commits as `repo@sha` (e.g. `homekube-main@e77a322`
 
 ### Changed
 - Resource Budget table moved from spec 005 to top-level `README.md` — it's living information that changes as workload requests/limits change, not a point-in-time record (issue #35). Spec 005 §Resource Budget now points at README.
+- Consolidated documentation: cluster topology, network/architecture diagrams, and component/version tables moved from `homekube-main/README.md` and `homekube-apps/README.md` into the top-level `README.md` — sub-repo READMEs now hold only content specific to operating that repo (issue #34). Fixed version drift found in the move: Kubernetes `1.34.1`→`1.36.1`, containerd `2.1.4`→`2.3.0`, Cilium `1.18.2`→`1.19.4`, Longhorn `1.9.1`→`1.11.2` (also `CLAUDE.md`), sealed-secrets `2.18.6`→`2.19.1`, metrics-server chart version added (`3.12.2`, previously unlisted).
+
+### Removed
+- `homekube-main/README.md` Components/Nodes tables and both mermaid diagrams (now in root README); `homekube-apps/README.md` Deployed Components table (now in root README).
 
 ## 2026-07-03
 

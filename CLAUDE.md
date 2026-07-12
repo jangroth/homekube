@@ -41,7 +41,7 @@ Hardware: Raspberry Pi 5 (8GB), Raspberry Pi OS Lite 64-bit (aarch64), 1TB NVMe 
 |-------|-----------|
 | Kubernetes | kubeadm (vanilla), v1.36.1 |
 | CNI | Cilium 1.19.4 |
-| CSI | Longhorn 1.9 |
+| CSI | Longhorn 1.11 |
 | GitOps | ArgoCD (App-of-Apps) |
 | Monitoring | Prometheus + Grafana + Loki |
 | Load Balancer | Cilium LB-IPAM + L2 |
