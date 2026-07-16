@@ -224,7 +224,7 @@ Rough RAM allocation, sized for 4×8 GiB = 32 GiB total. Numbers are `requests`;
 | 2 | cert-manager (3 pods) | 256 MiB | |
 | 3 | kubelet-csr-approver | 64 MiB | |
 | 4 | MetalLB (controller + speakers ×4) | 256 MiB | |
-| 5 | Longhorn (manager+driver+engines, all nodes) | 1.5 GiB | grows with attached volumes |
+| 5 | Longhorn (manager+driver+engines, all nodes) | 1.8 GiB | manager + CSI sidecars now have explicit requests (#8); `instance-manager` remains ungoverned (chart limitation) and is the actual growth driver as volumes attach |
 | 6 | Prometheus | 2 GiB | retention 15d / 40 GiB |
 | 6 | Alertmanager | 128 MiB | |
 | 6 | kube-state-metrics | 128 MiB | |
@@ -233,7 +233,7 @@ Rough RAM allocation, sized for 4×8 GiB = 32 GiB total. Numbers are `requests`;
 | 7 | Alloy ×4 | 512 MiB | |
 | 8 | Grafana | 256 MiB | |
 | 9 | Dex | 128 MiB | |
-| — | **Subtotal (deployed)** | **~6.5 GiB** | |
+| — | **Subtotal (deployed)** | **~6.8 GiB** | |
 
 ### Planned
 
@@ -248,10 +248,10 @@ Rough RAM allocation, sized for 4×8 GiB = 32 GiB total. Numbers are `requests`;
 | | RAM |
 |---|---|
 | System reserved (4 nodes) | ~4 GiB |
-| Deployed workload subtotal | ~6.5 GiB |
-| **Current headroom** | **~21.5 GiB** |
+| Deployed workload subtotal | ~6.8 GiB |
+| **Current headroom** | **~21.2 GiB** |
 | Planned workload subtotal | ~1.25 GiB |
-| **Headroom after planned deploys** | **~20.25 GiB** |
+| **Headroom after planned deploys** | **~19.95 GiB** |
 
 Sidecar overhead is *not* in either subtotal — each opted-in namespace adds ~80–120 MiB per pod. Audit before enabling injection in a busy namespace.
 
