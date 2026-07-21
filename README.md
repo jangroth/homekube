@@ -232,10 +232,10 @@ Rough RAM allocation, sized for 4×8 GiB = 32 GiB total. Numbers are `requests`;
 | 6 | prometheus-operator (+ config-reloader sidecars) | 192 MiB | operator 128 MiB + config-reloader sidecar shared by Prometheus/Alertmanager pods, 2×32 MiB (#9) |
 | 7 | Loki (monolithic) | 1 GiB | filesystem backend on Longhorn PVC |
 | 7 | Alloy ×4 | 512 MiB | |
-| 7 | Loki sidecar (loki-sc-rules) | 32 MiB | (#9) |
-| 8 | Grafana | 320 MiB | includes sc-dashboard + sc-datasources sidecars, +64 MiB (#9); download-dashboards init container not counted (transient, doesn't add to steady-state request) |
+| 7 | Loki sidecar (loki-sc-rules) | 64 MiB | (#9); raised from 32 MiB — 64 MiB *limit* was OOMKilling the watch-cache sidecar within days |
+| 8 | Grafana | 384 MiB | includes sc-dashboard + sc-datasources sidecars, +128 MiB (#9, raised from 64 MiB for the same OOMKill reason); download-dashboards init container not counted (transient, doesn't add to steady-state request) |
 | 9 | Dex | 128 MiB | |
-| — | **Subtotal (deployed)** | **~7.1 GiB** | |
+| — | **Subtotal (deployed)** | **~7.2 GiB** | |
 
 ### Planned
 
@@ -250,10 +250,10 @@ Rough RAM allocation, sized for 4×8 GiB = 32 GiB total. Numbers are `requests`;
 | | RAM |
 |---|---|
 | System reserved (4 nodes) | ~4 GiB |
-| Deployed workload subtotal | ~7.1 GiB |
-| **Current headroom** | **~20.9 GiB** |
+| Deployed workload subtotal | ~7.2 GiB |
+| **Current headroom** | **~20.8 GiB** |
 | Planned workload subtotal | ~1.25 GiB |
-| **Headroom after planned deploys** | **~19.65 GiB** |
+| **Headroom after planned deploys** | **~19.55 GiB** |
 
 Sidecar overhead is *not* in either subtotal — each opted-in namespace adds ~80–120 MiB per pod. Audit before enabling injection in a busy namespace.
 

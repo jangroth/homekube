@@ -2,6 +2,16 @@
 
 ---
 
+## 047 — Raise `k8s-sidecar` memory limits for Loki/Grafana config-reload sidecars (2026-07-21)
+
+**Decision:** Raised memory requests/limits for the three `kiwigrid/k8s-sidecar` containers (`loki-sc-rules`, `grafana-sc-dashboard`, `grafana-sc-datasources`) from `32Mi/64Mi` to `64Mi/192Mi` in `homekube-apps/applications/wave-01-apps/{loki,kube-prometheus}.yaml`. README Resource Budget table (issue #9 rows) updated to match.
+
+**Rationale:** Both sidecars had been silently CrashLoopBackOff-ing for ~5 days (`loki-sc-rules`: 1087 restarts; `grafana-sc-dashboard`/`grafana-sc-datasources`: ~199 restarts each), all OOMKilled (exit 137) against the 64Mi limit set in issue #9 (commit `4732e0e`, 2026-07-13) — the crash-loop start times line up almost exactly with that rollout. Root cause: these sidecars run `METHOD=WATCH` with `RESOURCE=both` (configmaps+secrets), cluster-wide — the watch cache grows past the fresh-restart baseline (~32-34Mi observed via `kubectl top`) until it exceeds 64Mi and gets killed, then repeats. The 64Mi budget from #9 didn't account for this steady-state growth. Cluster has ~20 GiB of headroom, so there's no cost pressure to keep these tight.
+
+**Trade-offs accepted:** 192Mi is a generous limit chosen for headroom rather than a measured ceiling — if the underlying cause is an actual unbounded memory leak in `k8s-sidecar` (known behavior in some versions under `RESOURCE=both` + `NAMESPACE=ALL`) rather than a one-time cache-fill, this only delays the next OOM rather than fixing it. Worth revisiting if these containers start crash-looping again at the new limit.
+
+---
+
 ## 046 — Nightly automated routines open PRs for `agent-safe` issues, one routine per target repo (2026-07-12)
 
 **Decision:** Two scheduled Claude Code routines (RemoteTrigger) run nightly: `homekube-apps - nightly agent-safe issue` (2am Sydney) and `homekube-main - nightly agent-safe issue` (midnight Sydney). Each fetches open issues from the `jangroth/homekube` tracker labelled `agent-safe` + its own `repo:*` label, skips issues already in flight, picks one at random, implements it, and opens a PR for human review — never auto-merge.

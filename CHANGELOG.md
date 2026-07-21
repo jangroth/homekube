@@ -15,6 +15,14 @@ Cross-repo entries reference commits as `repo@sha` (e.g. `homekube-main@e77a322`
 
 ---
 
+## 2026-07-21
+
+### Fixed
+- `homekube-apps@b1ee1e1`: Loki (`loki-sc-rules`) and Grafana (`grafana-sc-dashboard`/`grafana-sc-datasources`) config-reload sidecars had been CrashLoopBackOff/OOMKilled for ~5 days against the 64Mi memory limit set in issue #9 — raised to 192Mi. See decision 047.
+
+### Decisions
+- [047](DECISIONS.md#047) — Raise `k8s-sidecar` memory limits for Loki/Grafana config-reload sidecars.
+
 ## 2026-07-13
 
 ### Changed
