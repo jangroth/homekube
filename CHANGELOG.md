@@ -28,6 +28,9 @@ Cross-repo entries reference commits as `repo@sha` (e.g. `homekube-main@e77a322`
 - [048](DECISIONS.md#048) — Fix misnested Alloy `configReloader` values key; raise Alloy memory limit.
 - [049](DECISIONS.md#049) — Fix misnested Loki `resources` values key.
 
+### Operational
+- Applied `homekube-main` PR #9 (Cilium/Hubble resource requests/limits) to the live cluster via `task 40-cni`; verified `cilium-agent`, `cilium-envoy`, `cilium-operator`, `hubble-relay`, and `hubble-ui` (frontend+backend) all show the PR's declared requests/limits. Added corresponding Deployed line item to `README.md` Resource Budget (~1 GiB requests). Note: most init containers on the `cilium` DaemonSet (`config`, `mount-cgroup`, `apply-sysctl-overwrites`, `mount-bpf-fs`, `clean-cilium-state`) remain unbounded — the top-level `resources:` key only reaches the main `cilium-agent` container, narrower than the PR description implies; not addressed here since these are short-lived.
+
 ## 2026-07-13
 
 ### Changed
