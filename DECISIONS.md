@@ -2,6 +2,16 @@
 
 ---
 
+## 048 — Fix misnested Alloy `configReloader` values key; raise Alloy memory limit (2026-07-21)
+
+**Decision:** In `homekube-apps/applications/wave-01-apps/alloy.yaml`, moved `configReloader.resources` from under `controller:` to the top level (the `grafana/alloy` chart v1.8.1 expects `configReloader` as a top-level key), and raised the main `alloy` container's memory limit from 256Mi to 384Mi.
+
+**Rationale:** While investigating the Loki/Grafana sidecar OOM fix (decision 047), noticed via `kubectl top` and k9s that two of the four Alloy pods were running at 80-93% of their 256Mi memory limit — not yet crash-looping, but close enough that a log-volume spike could tip them into OOMKill. While sizing the fix, found that the `configReloader.resources` block added in commit `4732e0e` (#9) was nested under `controller:`, which isn't where the chart looks for it (`helm show values grafana/alloy --version 1.8.1` confirms `configReloader` is a top-level key) — Helm silently ignored the whole block. The `config-reloader` sidecar has been running on the chart's unbounded default (50Mi request, no limit) rather than the intended 32Mi/64Mi ever since #9, undetected because ArgoCD reported the app `Synced`/`Healthy` (the rendered manifest matched the live state — the bug was in the input values, not a sync failure).
+
+**Trade-offs accepted:** 384Mi is sized for headroom, not measured against Alloy's actual peak — if log volume keeps growing this may need another bump later. Same class of risk as decision 047: a generous limit, not a proven ceiling.
+
+---
+
 ## 047 — Raise `k8s-sidecar` memory limits for Loki/Grafana config-reload sidecars (2026-07-21)
 
 **Decision:** Raised memory requests/limits for the three `kiwigrid/k8s-sidecar` containers (`loki-sc-rules`, `grafana-sc-dashboard`, `grafana-sc-datasources`) from `32Mi/64Mi` to `64Mi/192Mi` in `homekube-apps/applications/wave-01-apps/{loki,kube-prometheus}.yaml`. README Resource Budget table (issue #9 rows) updated to match.

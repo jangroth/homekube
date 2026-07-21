@@ -231,7 +231,7 @@ Rough RAM allocation, sized for 4×8 GiB = 32 GiB total. Numbers are `requests`;
 | 6 | node-exporter ×4 | 256 MiB | |
 | 6 | prometheus-operator (+ config-reloader sidecars) | 192 MiB | operator 128 MiB + config-reloader sidecar shared by Prometheus/Alertmanager pods, 2×32 MiB (#9) |
 | 7 | Loki (monolithic) | 1 GiB | filesystem backend on Longhorn PVC |
-| 7 | Alloy ×4 | 512 MiB | |
+| 7 | Alloy ×4 | 512 MiB | main container request unchanged (128 MiB); limit raised 256→384 MiB — two of four pods were running at 80%+ of the old limit. `configReloader` sidecar resources were misnested under `controller.configReloader` (chart expects it top-level) and silently ignored by Helm since #9 — fixed; sidecar now actually gets its intended 32 MiB/64 MiB request/limit instead of the chart's unbounded default |
 | 7 | Loki sidecar (loki-sc-rules) | 64 MiB | (#9); raised from 32 MiB — 64 MiB *limit* was OOMKilling the watch-cache sidecar within days |
 | 8 | Grafana | 384 MiB | includes sc-dashboard + sc-datasources sidecars, +128 MiB (#9, raised from 64 MiB for the same OOMKill reason); download-dashboards init container not counted (transient, doesn't add to steady-state request) |
 | 9 | Dex | 128 MiB | |
