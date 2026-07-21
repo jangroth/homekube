@@ -2,6 +2,16 @@
 
 ---
 
+## 049 — Fix misnested Loki `resources` values key (2026-07-21)
+
+**Decision:** In `homekube-apps/applications/wave-01-apps/loki.yaml`, moved `resources` (1Gi/100m request, 2Gi/500m limit) from under the top-level `loki:` key to `singleBinary:` — the `grafana/loki` chart (v7.0.0) has no `resources` field under `loki:` (that key is app config only: schema, storage, limits_config, etc.); for `deploymentMode: SingleBinary` the container resources live under `singleBinary.resources` (confirmed via `helm show values grafana/loki --version 7.0.0`).
+
+**Rationale:** Same class of bug as decision 048 (Alloy's misnested `configReloader`), found while investigating a report that `loki-0`'s main container was reading way over its memory/CPU limits. `kubectl get pod loki-0 -o jsonpath` showed the `loki` container with **empty** `resources` — no requests, no limits — confirming the intended 1Gi/2Gi memory and 100m/500m CPU values from #9 had never actually applied. Actual usage (`kubectl top`: ~317Mi / 18m) is well within the intended limits; the "way above limits" reading was an artifact of tools (k9s) computing %-of-limit against a limit of zero/absent, not genuine overconsumption. ArgoCD reported the `loki` app `Synced`/`Healthy` throughout, same blind spot as #048 — the rendered manifest matched the (wrong) input values, so sync status alone doesn't catch a misnested Helm key.
+
+**Trade-offs accepted:** None — straightforward key relocation, values unchanged. Worth auditing the remaining charts in this repo (kube-prometheus-stack, alloy already checked) for the same misnesting pattern, since it's evidently easy to get wrong per-chart.
+
+---
+
 ## 048 — Fix misnested Alloy `configReloader` values key; raise Alloy memory limit (2026-07-21)
 
 **Decision:** In `homekube-apps/applications/wave-01-apps/alloy.yaml`, moved `configReloader.resources` from under `controller:` to the top level (the `grafana/alloy` chart v1.8.1 expects `configReloader` as a top-level key), and raised the main `alloy` container's memory limit from 256Mi to 384Mi.

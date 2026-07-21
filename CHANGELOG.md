@@ -21,9 +21,12 @@ Cross-repo entries reference commits as `repo@sha` (e.g. `homekube-main@e77a322`
 - `homekube-apps@b1ee1e1`: Loki (`loki-sc-rules`) and Grafana (`grafana-sc-dashboard`/`grafana-sc-datasources`) config-reload sidecars had been CrashLoopBackOff/OOMKilled for ~5 days against the 64Mi memory limit set in issue #9 — raised to 192Mi. See decision 047.
 - `homekube-apps@c611c2c`: Alloy's `configReloader.resources` values were misnested under `controller:` (chart expects it top-level) and had been silently ignored by Helm since #9 — moved to top level so the sidecar actually gets its 32Mi/64Mi request/limit. Also raised the main `alloy` container's memory limit 256Mi→384Mi after finding two of four pods running at 80-93% of the old limit. See decision 048.
 
+- `homekube-apps@ea6516d`: Loki's main-container `resources` (1Gi/2Gi memory, 100m/500m CPU) were misnested under the top-level `loki:` key instead of `singleBinary:` (chart has no `resources` field under `loki:` for `deploymentMode: SingleBinary`) — never applied since #9, so `loki-0`'s main container ran with no requests/limits at all. Moved to `singleBinary.resources`. See decision 049.
+
 ### Decisions
 - [047](DECISIONS.md#047) — Raise `k8s-sidecar` memory limits for Loki/Grafana config-reload sidecars.
 - [048](DECISIONS.md#048) — Fix misnested Alloy `configReloader` values key; raise Alloy memory limit.
+- [049](DECISIONS.md#049) — Fix misnested Loki `resources` values key.
 
 ## 2026-07-13
 
