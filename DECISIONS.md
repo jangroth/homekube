@@ -2,6 +2,16 @@
 
 ---
 
+## 050 — Ansible lint runs in CI on PRs, not gated into every local task (2026-07-22)
+
+**Decision:** Added `homekube-main/.github/workflows/ansible-lint.yml`, triggered on PRs touching `ansible/**`, `Taskfile.yml`, `.ansible-lint`, `.yamllint`, `pyproject.toml`, or `uv.lock`. It installs `uv` and `task`, then runs `task setup` + `task lint` — the same commands used locally — rather than reimplementing the ansible-lint invocation directly in the workflow. `task lint` itself stays a separate, opt-in step; it is not made a dependency of the other Taskfile tasks (e.g. the `NN-*` playbook runners).
+
+**Rationale:** Running the exact `task lint` command in CI (vs. a bespoke `uv run ansible-lint ...` step) keeps local and CI lint in lockstep — a Taskfile change automatically applies to both without touching the workflow. Not gating lint into every local task was a deliberate choice: those tasks are often run mid-edit against a single playbook, and forcing a full lint pass first would slow down iteration for marginal benefit; CI is the actual enforcement point for anything landing in a PR.
+
+**Trade-offs accepted:** No local nudge before commit beyond developer discipline — a pre-commit/pre-push git hook was suggested as a lighter-weight alternative if that becomes a problem, but not implemented.
+
+---
+
 ## 049 — Fix misnested Loki `resources` values key (2026-07-21)
 
 **Decision:** In `homekube-apps/applications/wave-01-apps/loki.yaml`, moved `resources` (1Gi/100m request, 2Gi/500m limit) from under the top-level `loki:` key to `singleBinary:` — the `grafana/loki` chart (v7.0.0) has no `resources` field under `loki:` (that key is app config only: schema, storage, limits_config, etc.); for `deploymentMode: SingleBinary` the container resources live under `singleBinary.resources` (confirmed via `helm show values grafana/loki --version 7.0.0`).
