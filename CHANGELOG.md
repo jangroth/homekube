@@ -20,6 +20,12 @@ Cross-repo entries reference commits as `repo@sha` (e.g. `homekube-main@e77a322`
 ### Added
 - `homekube-main@32fdaa3`: CI workflow (`.github/workflows/ansible-lint.yml`) runs `task lint` (ansible-lint) on PRs touching ansible files, mirroring the local lint command.
 
+### Fixed
+- `homekube-apps@d8f5d7a`: Grafana had no datasources and all dashboards were empty — the `grafana-sc-datasources`/`grafana-sc-dashboard` sidecars were POSTing their reload webhook over plain HTTP against an HTTPS-only Grafana (since Cap-9), so provisioning files written to disk were never actually loaded. Pointed both `reloadURL`s at HTTPS and set `REQ_SKIP_TLS_VERIFY: "true"`. See decision 051.
+
+### Decisions
+- [051](DECISIONS.md#051) — Fix Grafana sidecar reload webhooks for HTTPS.
+
 ## 2026-07-21
 
 ### Fixed

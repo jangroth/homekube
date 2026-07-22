@@ -2,6 +2,16 @@
 
 ---
 
+## 051 — Fix Grafana sidecar reload webhooks for HTTPS (2026-07-22)
+
+**Decision:** In `homekube-apps/applications/wave-01-apps/kube-prometheus.yaml`, set `grafana.sidecar.datasources.reloadURL` and `grafana.sidecar.dashboards.reloadURL` to `https://localhost:3000/...` (from the chart default `http://localhost:3000/...`), and added `REQ_SKIP_TLS_VERIFY: "true"` to each sidecar's `env` (`homekube-apps@d8f5d7a`).
+
+**Rationale:** Reported symptom: Grafana had no datasources and every dashboard was empty. Investigation found the `prometheus-kube-prometheus-grafana-datasource` ConfigMap and all dashboard JSONs were correctly written to `/etc/grafana/provisioning/...` inside the pod, and `kubectl exec`-ing a manual `POST /api/admin/provisioning/datasources/reload` immediately populated all three datasources (Prometheus, Alertmanager, Loki) and every dashboard — proving the GitOps config and connectivity were fine. Root cause: Grafana has been HTTPS-only since Cap-9 (`5ec145c`, "Grafana TLS + OIDC via Dex"), but the `grafana-sc-datasources`/`grafana-sc-dashboard` sidecars still call their reload webhook over plain HTTP — the call fails to connect, so newly-written provisioning files are never picked up. Follow-up TLS fixes after Cap-9 (health probes, OIDC `redirect_uri`, TargetDown alert scrape) all missed this webhook. `REQ_SKIP_TLS_VERIFY` is a separate flag from the chart's `sidecar.skipTlsVerify` (which only covers kube-apiserver calls) — confirmed against `kiwigrid/k8s-sidecar` source that it's required for the reload call itself, since Grafana's cert is issued for the external VIP, not `localhost`.
+
+**Trade-offs accepted:** None — the fix only affects the sidecar-to-Grafana reload call; no application config changed. Applies to the live cluster on next ArgoCD sync (`selfHeal: true`); already applied manually to the running pod via the same API calls used to diagnose it, so Grafana is not currently missing data while the fix propagates.
+
+---
+
 ## 050 — Ansible lint runs in CI on PRs, not gated into every local task (2026-07-22)
 
 **Decision:** Added `homekube-main/.github/workflows/ansible-lint.yml`, triggered on PRs touching `ansible/**`, `Taskfile.yml`, `.ansible-lint`, `.yamllint`, `pyproject.toml`, or `uv.lock`. It installs `uv` and `task`, then runs `task setup` + `task lint` — the same commands used locally — rather than reimplementing the ansible-lint invocation directly in the workflow. `task lint` itself stays a separate, opt-in step; it is not made a dependency of the other Taskfile tasks (e.g. the `NN-*` playbook runners).
