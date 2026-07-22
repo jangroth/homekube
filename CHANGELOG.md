@@ -15,6 +15,11 @@ Cross-repo entries reference commits as `repo@sha` (e.g. `homekube-main@e77a322`
 
 ---
 
+## 2026-07-22
+
+### Added
+- `homekube-main@32fdaa3`: CI workflow (`.github/workflows/ansible-lint.yml`) runs `task lint` (ansible-lint) on PRs touching ansible files, mirroring the local lint command.
+
 ## 2026-07-21
 
 ### Fixed
