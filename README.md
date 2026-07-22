@@ -221,6 +221,7 @@ Rough RAM allocation, sized for 4×8 GiB = 32 GiB total. Numbers are `requests`;
 | Capability | Component | RAM request | Notes |
 |---|---|---|---|
 | 0 | Cilium + Hubble (agent+envoy DaemonSet ×4, operator ×2, relay, ui) | ~1 GiB | requests: agent 128 MiB + envoy 64 MiB per node, operator 64 MiB ×2, hubble-relay 32 MiB, hubble-ui 48 MiB |
+| 0 | ArgoCD (application-controller, applicationset, notifications, redis+exporter, repo-server, server) | ~400 MiB | requests: controller 128 MiB, applicationset 64 MiB, notifications 32 MiB, redis 32 MiB + exporter 16 MiB, repo-server 64 MiB, server 64 MiB (#8); `copyutil` init container not counted (transient) |
 | 1 | sealed-secrets controller | 64 MiB | |
 | 2 | cert-manager (3 pods) | 256 MiB | |
 | 3 | kubelet-csr-approver | 64 MiB | |
@@ -236,7 +237,7 @@ Rough RAM allocation, sized for 4×8 GiB = 32 GiB total. Numbers are `requests`;
 | 7 | Loki sidecar (loki-sc-rules) | 64 MiB | limit 192 MiB (#9) |
 | 8 | Grafana | 384 MiB | includes sc-dashboard + sc-datasources sidecars, limit 192 MiB each (#9); download-dashboards init container not counted (transient, doesn't add to steady-state request) |
 | 9 | Dex | 128 MiB | |
-| — | **Subtotal (deployed)** | **~8.2 GiB** | |
+| — | **Subtotal (deployed)** | **~8.6 GiB** | |
 
 ### Planned
 
@@ -251,10 +252,10 @@ Rough RAM allocation, sized for 4×8 GiB = 32 GiB total. Numbers are `requests`;
 | | RAM |
 |---|---|
 | System reserved (4 nodes) | ~4 GiB |
-| Deployed workload subtotal | ~8.2 GiB |
-| **Current headroom** | **~19.8 GiB** |
+| Deployed workload subtotal | ~8.6 GiB |
+| **Current headroom** | **~19.4 GiB** |
 | Planned workload subtotal | ~1.25 GiB |
-| **Headroom after planned deploys** | **~18.55 GiB** |
+| **Headroom after planned deploys** | **~18.15 GiB** |
 
 Sidecar overhead is *not* in either subtotal — each opted-in namespace adds ~80–120 MiB per pod. Audit before enabling injection in a busy namespace.
 

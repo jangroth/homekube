@@ -31,6 +31,11 @@ Cross-repo entries reference commits as `repo@sha` (e.g. `homekube-main@e77a322`
 ### Operational
 - Applied `homekube-main` PR #9 (Cilium/Hubble resource requests/limits) to the live cluster via `task 40-cni`; verified `cilium-agent`, `cilium-envoy`, `cilium-operator`, `hubble-relay`, and `hubble-ui` (frontend+backend) all show the PR's declared requests/limits. Added corresponding Deployed line item to `README.md` Resource Budget (~1 GiB requests). Note: most init containers on the `cilium` DaemonSet (`config`, `mount-cgroup`, `apply-sysctl-overwrites`, `mount-bpf-fs`, `clean-cilium-state`) remain unbounded — the top-level `resources:` key only reaches the main `cilium-agent` container, narrower than the PR description implies; not addressed here since these are short-lived.
 
+## 2026-07-22
+
+### Operational
+- Merged and applied `homekube-main` PR #8 (ArgoCD component resource requests/limits) to the live cluster via `task 50-gitops`; pi0 crashed mid-deployment (BCM2835 watchdog, same pattern as issue #22) and required a manual power-cycle — after re-running the task, verified all 8 declared containers (`application-controller`, `applicationset-controller`, `notifications-controller`, `redis`, `redis` exporter, `repo-server`, `copyutil` init container, `server`) show the PR's exact requests/limits, all 4 nodes `Ready`, and no stuck Helm `pending-upgrade` lock. Added ArgoCD line item to `README.md` Resource Budget (~400 MiB requests). Commented on issue #22 with this third occurrence.
+
 ## 2026-07-13
 
 ### Changed
