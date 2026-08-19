@@ -2,6 +2,16 @@
 
 ---
 
+## 052 — Wire up Hermes: Dex static client + ArgoCD Application (2026-08-19)
+
+**Decision:** Added a `hermes` static client (`id: hermes`, `public: true`, no `secret:` field — public PKCE client) to `homekube-apps/applications/wave-02-apps/dex.yaml`'s `staticClients`, and a new `homekube-apps/applications/wave-03-apps/hermes.yaml` ArgoCD `Application` sourcing `jangroth/herminator`'s `chart/` directly as a git-repo Helm chart (`homekube-apps@9b5a358`). Sync-wave `"3"` (alongside Homepage, after Dex), `automated: {prune: true, selfHeal: true}`, `CreateNamespace=true`, with an `ignoreDifferences` entry on the `hermes-tailscale-state` Secret's `/data` so ArgoCD's selfHeal doesn't fight tailscaled's runtime writes to its own state. Registered in `applications/kustomization.yaml`; `homekube-apps/CLAUDE.md`'s wave table updated to match.
+
+**Rationale:** Wiring step for [herminator Spec 001](https://github.com/jangroth/herminator/blob/main/docs/specs/001-deploy-hermes-to-homekube.md) (tracked as [homekube#38](https://github.com/jangroth/homekube/issues/38)) — herminator's chart was already built, validated, and pushed with real credentials sealed in-repo (`herminator@a4266cd`); this is the remaining `homekube-apps`-side half. The Dex client follows the existing `staticClients` pattern used by `argocd`/`grafana`, but with `public: true` instead of a `secret:` field, since hermes's self-hosted OIDC is a public PKCE client with no client secret at all. The issue explicitly excluded this from `agent-safe` — it touches Dex's auth-adjacent config and creates a new auto-sync Application — so it got a human review pass (via plan mode) before committing, per this repo's trust model.
+
+**Trade-offs accepted:** This decision documents the manifest changes as committed; the actual cluster rollout (root app → `dex` → `hermes`, cascading via each Application's `automated` sync) only happens once `homekube-apps` is pushed. The end-to-end acceptance walkthrough (OIDC login flow, shields-up check, PVC persistence) from Spec 001 is deferred to that point — this entry covers the wiring, not verified-live status.
+
+---
+
 ## 051 — Fix Grafana sidecar reload webhooks for HTTPS (2026-07-22)
 
 **Decision:** In `homekube-apps/applications/wave-01-apps/kube-prometheus.yaml`, set `grafana.sidecar.datasources.reloadURL` and `grafana.sidecar.dashboards.reloadURL` to `https://localhost:3000/...` (from the chart default `http://localhost:3000/...`), and added `REQ_SKIP_TLS_VERIFY: "true"` to each sidecar's `env` (`homekube-apps@d8f5d7a`).

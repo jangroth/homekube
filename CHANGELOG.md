@@ -15,6 +15,14 @@ Cross-repo entries reference commits as `repo@sha` (e.g. `homekube-main@e77a322`
 
 ---
 
+## 2026-08-19
+
+### Added
+- `homekube-apps@9b5a358`: Hermes registered as a Dex public PKCE static client (`wave-02-apps/dex.yaml`), and a new `hermes` ArgoCD Application (`wave-03-apps/hermes.yaml`, sourcing `jangroth/herminator`'s `chart/`, sync-wave 3) with `ignoreDifferences` on the Tailscale state Secret. Wiring step for herminator Spec 001 (homekube#38). See decision 052.
+
+### Decisions
+- [052](DECISIONS.md#052) — Wire up Hermes: Dex static client + ArgoCD Application.
+
 ## 2026-07-22
 
 ### Added
