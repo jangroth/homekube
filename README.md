@@ -209,7 +209,7 @@ Cilium (CNI + LB) · Longhorn · ArgoCD · Prometheus · Grafana · Loki
 | Grafana | `observability` | 01 | (kube-prometheus subchart) | `192.168.86.243:443` |
 | Dex | `dex` | 02 | 0.24.1 | `192.168.86.244:5556` (LAN), `https://pi0.taild13083.ts.net/dex` (browser/OIDC) |
 | Homepage | `homepage` | 03 | — (raw manifests, image v1.13.2) | `192.168.86.245:80` |
-| Hermes | `hermes` | 03 | 0.1.0 (herminator chart) | `192.168.86.246:443` (Tailscale) |
+| Hermes | `hermes` | 03 | 0.1.1 (herminator chart) | `192.168.86.246:443` (Tailscale) |
 
 Keep both tables current in the same piece of work as any version bump, new component, or resize — see "source reflects runtime" in `CLAUDE.md`.
 
