@@ -20,6 +20,10 @@ Cross-repo entries reference commits as `repo@sha` (e.g. `homekube-main@e77a322`
 ### Added
 - `homekube-apps@9b5a358`: Hermes registered as a Dex public PKCE static client (`wave-02-apps/dex.yaml`), and a new `hermes` ArgoCD Application (`wave-03-apps/hermes.yaml`, sourcing `jangroth/herminator`'s `chart/`, sync-wave 3) with `ignoreDifferences` on the Tailscale state Secret. Wiring step for herminator Spec 001 (homekube#38). See decision 052.
 
+### Fixed
+- `herminator@cbb7c5f`: hermes container crashlooped — Deployment used `command:` instead of `args:`, bypassing the image's ENTRYPOINT dispatcher. Chart bumped to 0.1.1.
+- `herminator@4f2c5ed`: hermes dashboard rejected requests with "Invalid Host header" — nginx forwarded the external VIP hostname straight through to the loopback-bound dashboard, tripping its DNS-rebinding guard. Pinned the proxied Host header to the dashboard's own bind address. Chart bumped to 0.1.2.
+
 ### Decisions
 - [052](DECISIONS.md#052) — Wire up Hermes: Dex static client + ArgoCD Application.
 
