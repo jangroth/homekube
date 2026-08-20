@@ -15,6 +15,16 @@ Cross-repo entries reference commits as `repo@sha` (e.g. `homekube-main@e77a322`
 
 ---
 
+## 2026-08-21
+
+### Added
+- `homekube-apps@7d17e07`: Hermes tile on Homepage (new `AI` service group, link to `https://192.168.86.246`).
+
+### Fixed
+- `herminator@cd67b75`: hermes dashboard served no authentication (`__HERMES_AUTH_REQUIRED__=false`) and chat WebSockets reconnect-looped with code 1006 — the loopback bind (`HERMES_DASHBOARD_HOST=127.0.0.1`) made hermes disable its Dex OAuth gate and apply loopback-only WS Origin rules. Dashboard now binds `0.0.0.0` so the gate engages; nginx got the missing WebSocket upgrade headers and forwards the real Host. Chart 0.1.5.
+- `herminator@6cbbd38`: hermes VIP timed out for all tailnet clients — the (since 0.1.4 healthy) tailscale sidecar's policy routing sent pod replies to `100.x` client IPs out its own `tailscale0` instead of back via Cilium (asymmetric return path). `postStart` hook adds an `ip rule` routing pod-CIDR-sourced traffic via the main table. Chart 0.1.6.
+- `herminator@e10f5aa` + `herminator@0dcd708`: "Failed to save model assignment" — `config.yaml` was an immutable ConfigMap `subPath` mount while hermes rewrites its config at runtime. Replaced with a seed-once init container copying onto the PVC (guard: seed when missing *or* empty — a 0-byte stub on the PVC initially bricked the rollout). See herminator DECISIONS.md #009. Chart 0.1.7/0.1.8.
+
 ## 2026-08-19
 
 ### Added
@@ -23,6 +33,7 @@ Cross-repo entries reference commits as `repo@sha` (e.g. `homekube-main@e77a322`
 ### Fixed
 - `herminator@cbb7c5f`: hermes container crashlooped — Deployment used `command:` instead of `args:`, bypassing the image's ENTRYPOINT dispatcher. Chart bumped to 0.1.1.
 - `herminator@4f2c5ed`: hermes dashboard rejected requests with "Invalid Host header" — nginx forwarded the external VIP hostname straight through to the loopback-bound dashboard, tripping its DNS-rebinding guard. Pinned the proxied Host header to the dashboard's own bind address. Chart bumped to 0.1.2.
+- `herminator@6018e57` + `herminator@0b4aa23`: hermes tailscale sidecar crashlooped with `invalid key` — the sealed `TS_AUTHKEY` didn't match any key in the tailnet; the first reseal re-encrypted the same stale plaintext. Revoked it and sealed a genuinely new key. Chart 0.1.3/0.1.4.
 
 ### Decisions
 - [052](DECISIONS.md#052) — Wire up Hermes: Dex static client + ArgoCD Application.
