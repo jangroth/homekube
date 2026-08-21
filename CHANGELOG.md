@@ -15,6 +15,14 @@ Cross-repo entries reference commits as `repo@sha` (e.g. `homekube-main@e77a322`
 
 ---
 
+## 2026-08-22
+
+### Fixed
+- `homekube-main@b81897b` + `homekube-main@22b8768`: pi0's `netplan-eth0` NetworkManager profile had no interface-name restriction, so NetworkManager was also fighting Cilium's `cilium_host`/`lxc*` veths with endless failed DHCP activations (22,292 occurrences over one 31-day boot) — a chronic background tax contributing to the pi0 watchdog crash (issue #22). Marked `cilium*`/`lxc*`/`veth*` unmanaged via a NetworkManager `conf.d` drop-in; applied to source and all 4 live nodes.
+
+### Operational
+- pi0 (control-plane, sole node) hit its 4th BCM2835 hardware-watchdog reset (issue #22): journal silent from 14:56 AEST, apiserver outage confirmed 16:40 UTC Aug 21 through manual power-cycle ~08:00 AEST Aug 22. No self-recovery; required physical power-cycle. Hermes's concurrent chart stabilization (0.1.1→0.1.8) investigated as a possible trigger and ruled out as direct cause — correctly excluded from pi0 by the control-plane taint. Commented on issue #22 with full timeline (4th occurrence).
+
 ## 2026-08-21
 
 ### Added
