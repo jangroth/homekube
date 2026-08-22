@@ -23,8 +23,10 @@ Cross-repo entries reference commits as `repo@sha` (e.g. `homekube-main@e77a322`
 ### Fixed
 - `homekube-apps@83fc330` (+ prior commit): `prometheus` ArgoCD app stuck `OutOfSync`/`Sync failed` since 2026-07-22. Grafana admin password was being regenerated every reconcile (Helm `lookup` unusable under ArgoCD's `helm template` rendering) — now pinned via a sealed `existingSecret`. The resulting selfHeal re-sync churn was racing the chart's Job-based admission-webhook cert hook, which ArgoCD misreported as failed even though the Job always succeeded — switched to `prometheusOperator.admissionWebhooks.certManager.enabled: true` to remove the Job/hook mechanism entirely. See decision 053.
 - `homekube-main@b81897b` + `homekube-main@22b8768`: pi0's `netplan-eth0` NetworkManager profile had no interface-name restriction, so NetworkManager was also fighting Cilium's `cilium_host`/`lxc*` veths with endless failed DHCP activations (22,292 occurrences over one 31-day boot) — a chronic background tax contributing to the pi0 watchdog crash (issue #22). Marked `cilium*`/`lxc*`/`veth*` unmanaged via a NetworkManager `conf.d` drop-in; applied to source and all 4 live nodes.
+- `homekube-main@37013d8`: `argocd-application-controller` OOMKilled 23 times over 31 days on pi1 — its 512Mi limit (set by issue #6 off a July 12 baseline) no longer covered actual usage as the managed-Applications count grew to 18. Raised to 768Mi (requests 128Mi → 192Mi). Root-caused issue #26; a separate historical `argocd-repo-server` OOM pattern on pi2 (pre-issue-#6, no recurrence) was also investigated and closed as resolved. See decision 055.
 
 ### Decisions
+- [055](DECISIONS.md#055--raise-argocd-application-controller-memory-limit-512mi--768mi-2026-08-22): raised argocd-application-controller memory limit, root-causing issue #26's OOM investigation.
 - [053](DECISIONS.md#053--fix-prometheus-argocd-app-sealed-grafana-admin-secret--cert-manager-admission-webhook-2026-08-22): sealed Grafana admin secret + cert-manager admission webhook, root-causing the `prometheus` app's stuck sync.
 
 ### Operational

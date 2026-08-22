@@ -2,6 +2,16 @@
 
 ---
 
+## 055 — Raise argocd-application-controller memory limit 512Mi → 768Mi (2026-08-22)
+
+**Decision:** Raised `controller.resources` in `argocd-helm-values.yaml` (`homekube-main@37013d8`): requests 128Mi → 192Mi, limits 512Mi → 768Mi. Applied live via `task 50-gitops`. Closes issue #26.
+
+**Rationale:** Issue #26 asked to root-cause a historical OOM; investigation via `journalctl -k` (sudo already works fine — the issue's "blocked on group membership" note was stale) found two distinct patterns. First, `argocd-repo-server` OOM'd ~1900 times on pi2 between 2026-07-16 and 2026-07-21 — pre-dates issue #6 (no resource limits existed on any ArgoCD container before that fix landed 2026-07-21); resolved, no recurrence since. Second, `argocd-application-controller` on pi1 was still actively OOMKilled (23 restarts over 31 days, including same-morning bursts) — issue #6 had sized its 512Mi limit off a 2026-07-12 baseline; usage has since grown with the managed-Applications count (18) and now sits ~290–413Mi baseline with bursts landing right at the 512Mi ceiling (one kill was `usage 524304kB` vs `limit 524288kB`, 16kB over). pi1's broader memory budget (2358Mi/8153Mi requested = 29%, ~3.2Gi available) had comfortable room to absorb the increase.
+
+**Trade-offs accepted:** Aggregate memory *limits* on pi1 move further into overcommit (already 85% of node capacity pre-change) — fine as long as pods don't all burst simultaneously, which they haven't. A secondary anomaly surfaced during investigation — kubelet itself running ~1.47Gi RSS on pi1, well above a normal footprint — was intentionally left uninvestigated; it's unrelated to the ArgoCD OOM pattern and may warrant its own issue.
+
+---
+
 ## 054 — Raise systemd runtime watchdog timeout 1min → 10min; downgrade issue #22 with an exit criterion (2026-08-22)
 
 **Decision:** Override the Raspberry Pi OS vendor watchdog drop-in (`/usr/lib/systemd/system.conf.d/40-rpi-enable-watchdog.conf`, `RuntimeWatchdogSec=1m`) with an Ansible-managed `/etc/systemd/system.conf.d/50-homekube-watchdog.conf` setting `RuntimeWatchdogSec=10min`, deployed by a new `configure_watchdog.yml` task in the `k8s-node` role (`homekube-main@d965291`) and applied live to all 4 nodes. Downgraded issue #22 `blocker` → `degraded` with an explicit exit criterion (no watchdog reset through ~2026-10-03 incl. ≥2 Helm rollouts → close), and split the node-lifecycle taint side finding into its own issue (#39).
