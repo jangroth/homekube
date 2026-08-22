@@ -26,10 +26,12 @@ Cross-repo entries reference commits as `repo@sha` (e.g. `homekube-main@e77a322`
 - `homekube-main@37013d8`: `argocd-application-controller` OOMKilled 23 times over 31 days on pi1 — its 512Mi limit (set by issue #6 off a July 12 baseline) no longer covered actual usage as the managed-Applications count grew to 18. Raised to 768Mi (requests 128Mi → 192Mi). Root-caused issue #26; a separate historical `argocd-repo-server` OOM pattern on pi2 (pre-issue-#6, no recurrence) was also investigated and closed as resolved. See decision 055.
 
 ### Decisions
+- [056](DECISIONS.md#056--root-cause-kubelet-memory-leak-issue-40-restart-as-interim-mitigation-upgrade-tracked-separately-2026-08-22): root-caused kubelet memory leak (issue #40) to a known upstream v1.36 regression, fixed in v1.36.3+.
 - [055](DECISIONS.md#055--raise-argocd-application-controller-memory-limit-512mi--768mi-2026-08-22): raised argocd-application-controller memory limit, root-causing issue #26's OOM investigation.
 - [053](DECISIONS.md#053--fix-prometheus-argocd-app-sealed-grafana-admin-secret--cert-manager-admission-webhook-2026-08-22): sealed Grafana admin secret + cert-manager admission webhook, root-causing the `prometheus` app's stuck sync.
 
 ### Operational
+- Restarted `kubelet` on pi1/pi2/pi3 to reclaim leaked memory (1483MB/806MB/1439MB → ~50MB each) — interim mitigation for issue #40's kubelet memory leak, pending the v1.36.4 upgrade. All nodes stayed `Ready`, no pods disrupted.
 - pi0 (control-plane, sole node) hit its 4th BCM2835 hardware-watchdog reset (issue #22): journal silent from 14:56 AEST, apiserver outage confirmed 16:40 UTC Aug 21 through manual power-cycle ~08:00 AEST Aug 22. No self-recovery; required physical power-cycle. Hermes's concurrent chart stabilization (0.1.1→0.1.8) investigated as a possible trigger and ruled out as direct cause — correctly excluded from pi0 by the control-plane taint. Commented on issue #22 with full timeline (4th occurrence).
 
 ## 2026-08-21

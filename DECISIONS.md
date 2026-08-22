@@ -2,6 +2,16 @@
 
 ---
 
+## 056 — Root-cause kubelet memory leak (issue #40); restart as interim mitigation, upgrade tracked separately (2026-08-22)
+
+**Decision:** Root-caused issue #40 (kubelet ~1.47Gi RSS on pi1) as a known upstream kubelet regression, not a config issue. Restarted `kubelet` on pi1/pi2/pi3 live (`systemctl restart kubelet`) to reclaim memory immediately; verified all nodes stayed `Ready` and no pods were disrupted. Opened a follow-up issue to bump `kubernetes_version` (`homekube-main/ansible/group_vars/all.yml`) 1.36.1 → 1.36.4, which is the actual fix.
+
+**Rationale:** `ps` RSS was corroborated against the kubelet cgroup's `memory.current`/`memory.stat` (`anon` matched RSS almost exactly), ruling out a `ps` measurement artifact. Comparing `MemoryCurrent` against each node's `ActiveEnterTimestamp` across all 4 nodes showed a near-uniform ~22 MB/day growth rate independent of each node's pod count (pi1: 65d/1483MB/22.8 MB/day; pi2: 37d/806MB/21.8 MB/day; pi3: 65d/1439MB/22.1 MB/day; pi0 freshly restarted at 112MB) — a signature pointing at a time-based leak in kubelet itself rather than per-pod overhead. This matches [kubernetes/kubernetes#139823](https://github.com/kubernetes/kubernetes/issues/139823): a `context.cancelCtx` leaked on every `startPodSync` in kubelet, introduced as a v1.36 regression, fixed and backported into the `release-1.36` branch, first shipped in v1.36.3 (2026-07-23). This cluster runs v1.36.1, predating the fix. The upgrade is scoped as a separate issue rather than done inline here since it touches kubelet/kubeadm/kubectl versions across all 4 live nodes and warrants its own rollout plan, not a same-session change.
+
+**Trade-offs accepted:** The leak will resume at ~22 MB/day on pi1/pi2/pi3 until the version bump lands — acceptable short-term given decision 055 already gave pi1 headroom, and pre-restart levels (~1.4-1.5Gi) took ~2 months to accumulate.
+
+---
+
 ## 055 — Raise argocd-application-controller memory limit 512Mi → 768Mi (2026-08-22)
 
 **Decision:** Raised `controller.resources` in `argocd-helm-values.yaml` (`homekube-main@37013d8`): requests 128Mi → 192Mi, limits 512Mi → 768Mi. Applied live via `task 50-gitops`. Closes issue #26.
