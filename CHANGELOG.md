@@ -17,6 +17,9 @@ Cross-repo entries reference commits as `repo@sha` (e.g. `homekube-main@e77a322`
 
 ## 2026-08-22
 
+### Changed
+- `homekube-main@d965291`: systemd runtime watchdog timeout raised 1min → 10min on all 4 nodes (new `configure_watchdog.yml` task in `k8s-node` role, drop-in `/etc/systemd/system.conf.d/50-homekube-watchdog.conf`). The vendor 1min timeout has fired four times under pod-churn load stalls and the reset never self-recovered a node (issue #22); the kernel pets the BCM2835 beyond its hardware window, so the longer timeout still guards real hangs. Applied live via ad-hoc copy + `daemon-reexec`, verified `RuntimeWatchdogUSec=10min` on all nodes.
+
 ### Fixed
 - `homekube-apps@83fc330` (+ prior commit): `prometheus` ArgoCD app stuck `OutOfSync`/`Sync failed` since 2026-07-22. Grafana admin password was being regenerated every reconcile (Helm `lookup` unusable under ArgoCD's `helm template` rendering) — now pinned via a sealed `existingSecret`. The resulting selfHeal re-sync churn was racing the chart's Job-based admission-webhook cert hook, which ArgoCD misreported as failed even though the Job always succeeded — switched to `prometheusOperator.admissionWebhooks.certManager.enabled: true` to remove the Job/hook mechanism entirely. See decision 053.
 - `homekube-main@b81897b` + `homekube-main@22b8768`: pi0's `netplan-eth0` NetworkManager profile had no interface-name restriction, so NetworkManager was also fighting Cilium's `cilium_host`/`lxc*` veths with endless failed DHCP activations (22,292 occurrences over one 31-day boot) — a chronic background tax contributing to the pi0 watchdog crash (issue #22). Marked `cilium*`/`lxc*`/`veth*` unmanaged via a NetworkManager `conf.d` drop-in; applied to source and all 4 live nodes.
