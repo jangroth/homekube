@@ -2,6 +2,16 @@
 
 ---
 
+## 054 — Raise systemd runtime watchdog timeout 1min → 10min; downgrade issue #22 with an exit criterion (2026-08-22)
+
+**Decision:** Override the Raspberry Pi OS vendor watchdog drop-in (`/usr/lib/systemd/system.conf.d/40-rpi-enable-watchdog.conf`, `RuntimeWatchdogSec=1m`) with an Ansible-managed `/etc/systemd/system.conf.d/50-homekube-watchdog.conf` setting `RuntimeWatchdogSec=10min`, deployed by a new `configure_watchdog.yml` task in the `k8s-node` role (`homekube-main@d965291`) and applied live to all 4 nodes. Downgraded issue #22 `blocker` → `degraded` with an explicit exit criterion (no watchdog reset through ~2026-10-03 incl. ≥2 Helm rollouts → close), and split the node-lifecycle taint side finding into its own issue (#39).
+
+**Rationale:** All four watchdog crashes were transient load stalls that tripped the vendor's 60-second deadline, and the resulting hardware reset **never self-recovered a node** — every occurrence ended in a manual power-cycle. So the fast timeout delivered zero recovery value while converting recoverable stalls into hard crashes; its cost/benefit was strictly negative in practice. Raising it is safe because sysfs reports `max_timeout: 0`: the kernel watchdog core pets the BCM2835 itself beyond the chip's short hardware window and enforces the userspace timeout in software, so a 10-minute setting still guards genuine kernel/systemd hangs. 10min over 5min because the 4th occurrence showed stall windows can run long, and per above there's no recovery benefit to firing early. The exit criterion exists so the issue doesn't linger as an unfalsifiable investigation: for this cluster, "the 1-minute vendor timeout was the operative bug" is an acceptable conclusion if the trigger profile (Helm-churn rollouts) stops producing resets.
+
+**Trade-offs accepted:** A genuinely hung node now takes up to 10 minutes to hardware-reset instead of 1 (moot in practice — observed resets ended in a hang requiring manual power-cycle anyway). The deeper root-cause threads (reboot-hang via `reboot=w`, load-stall mechanism, contradictory `cgroup_disable=memory`/`cgroup_enable=memory` cmdline flags) intentionally close with #22 if the exit criterion is met, unproven.
+
+---
+
 ## 053 — Fix prometheus ArgoCD app: sealed Grafana admin secret + cert-manager admission webhook (2026-08-22)
 
 **Decision:** Two independent fixes to `homekube-apps/applications/wave-01-apps/kube-prometheus.yaml`, both committed and pushed (`homekube-apps@83fc330` + prior commit):
