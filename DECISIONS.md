@@ -2,6 +2,16 @@
 
 ---
 
+## 057 — Route severity=info alerts to null receiver instead of disabling or resizing (2026-08-23)
+
+**Decision:** Added a `severity=info` sub-route to the `null` receiver in the alertmanager config (`homekube-apps/applications/wave-01-apps/kube-prometheus.yaml`, `homekube-apps@ba50b7b`). Closes issue #3.
+
+**Rationale:** Issue #3 was unscoped — "the alert rule set needs review" with no specific rule identified. Queried the live cluster (`/api/v1/alerts`, `/api/v2/silences`) rather than guessing: 7 alerts active, 5 of them `CPUThrottlingHigh` (severity=info) firing continuously across all 4 node-exporter pods plus the grafana-sc-dashboard sidecar since 2026-08-21/22; `Watchdog` and `InfoInhibitor` (severity=none) accounted for the rest and are expected/by-design; zero silences configured. `CPUThrottlingHigh` compares usage against CPU *limits*, and node-exporter (100m) / grafana sidecar (50m) limits are deliberately tight for the Pi-scale resource budget, so brief bursts trip it constantly with no actual degradation. The alertmanager route had no severity split, so this info-level noise went to Telegram same as anything critical. Chose severity-based routing over the two alternatives considered: disabling the rule outright (matches the existing `defaultRules.disabled: KubeProxyDown` pattern but loses the signal from Grafana/Prometheus entirely) or raising the CPU limits (spends real budget on a constrained cluster to silence a rule that's arguably miscalibrated for this scale, not fixing anything real). Routing preserves the rule's value as a Grafana/Prometheus signal while stopping the page.
+
+**Trade-offs accepted:** Any future genuinely-informational alert tagged `severity=info` will also route to `null` rather than Telegram — acceptable since the whole point is that info-severity was never meant to page; anything actionable should be tagged at a higher severity.
+
+---
+
 ## 056 — Root-cause kubelet memory leak (issue #40); restart as interim mitigation, upgrade tracked separately (2026-08-22)
 
 **Decision:** Root-caused issue #40 (kubelet ~1.47Gi RSS on pi1) as a known upstream kubelet regression, not a config issue. Restarted `kubelet` on pi1/pi2/pi3 live (`systemctl restart kubelet`) to reclaim memory immediately; verified all nodes stayed `Ready` and no pods were disrupted. Opened a follow-up issue to bump `kubernetes_version` (`homekube-main/ansible/group_vars/all.yml`) 1.36.1 → 1.36.4, which is the actual fix.

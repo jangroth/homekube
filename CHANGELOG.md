@@ -15,6 +15,16 @@ Cross-repo entries reference commits as `repo@sha` (e.g. `homekube-main@e77a322`
 
 ---
 
+## 2026-08-23
+
+### Fixed
+- `homekube-apps@ba50b7b`: `CPUThrottlingHigh` (severity=info) was firing continuously on all 4 node-exporter pods plus the grafana-sc-dashboard sidecar — their CPU limits are intentionally tight for the Pi-scale budget, so brief bursts tripped the default threshold with no actual degradation, and the alertmanager route had no severity split so it paged Telegram same as anything critical. Added a `severity=info` sub-route to the `null` receiver; alert stays visible in Prometheus/Grafana, stops paging. Closes issue #3. See decision 057.
+
+### Decisions
+- [057](DECISIONS.md#057--route-severityinfo-alerts-to-null-receiver-instead-of-disabling-or-resizing-2026-08-23): scoped issue #3 via the live cluster's active alerts, routed info-severity noise away from Telegram instead of disabling the rule or resizing CPU limits.
+
+---
+
 ## 2026-08-22
 
 ### Changed
