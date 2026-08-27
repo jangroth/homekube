@@ -46,6 +46,7 @@ Hardware: Raspberry Pi 5 (8GB), Raspberry Pi OS Lite 64-bit (aarch64), 1TB NVMe 
 | Monitoring | Prometheus + Grafana + Loki |
 | Load Balancer | Cilium LB-IPAM + L2 |
 | Provisioning | Ansible + Task |
+| Cloud IaC | Terraform (AWS-account resources — decision 058) |
 
 ---
 

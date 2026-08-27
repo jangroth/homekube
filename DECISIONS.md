@@ -2,6 +2,16 @@
 
 ---
 
+## 058 — Adopt Terraform for AWS/cloud-account-level infrastructure (2026-08-24)
+
+**Decision:** Terraform becomes the standard tool for infrastructure that lives in an AWS account rather than on the Pi cluster itself, starting with spec 008 (S3 backup bucket + IAM user, issue #20). Committed under `homekube-main/terraform/<resource>/`, one subdirectory per logical resource group, state local and gitignored, applied by hand rather than automated — these are rare, high-blast-radius changes that need a human AWS identity to bootstrap from. Terraform's ownership stops at the AWS/cloud boundary: Ansible still owns the Pi fleet, ArgoCD still owns in-cluster resources.
+
+**Rationale:** Ansible provisions the physical fleet and ArgoCD reconciles in-cluster manifests, but neither reaches AWS-account-level resources — spec 008 hit that gap directly. Considered and rejected as a blanket policy, not just for the one bucket: Crossplane, which would run an AWS-provider controller in-cluster indefinitely and need its own sealed AWS credentials for what's likely to stay a handful of rarely-changed resources — wrong weight class, and it recreates the secret-bootstrapping problem this decision exists to avoid; ad-hoc `aws` CLI scripts, versioned but with no state tracking, drift detection, or `destroy`; and manual console changes, which violate "source reflects runtime" outright. Terraform's footprint at this project's scale is small — a local binary, no server component, gitignored state — so the cost of a second IaC tool in the repo is low relative to what it buys: every future AWS resource gets provisioned the same reproducible way instead of a fresh judgment call each time.
+
+**Trade-offs accepted:** Local Terraform state is the source of truth for AWS resources and lives only on the operator's machine (darth) — no remote backend, so if that machine's state is lost, resources need re-import rather than re-apply. Acceptable for a single-operator homelab with a small, slow-changing resource set; revisit if the AWS footprint grows enough to justify a remote backend. This also commits future AWS-facing work to Terraform by default — a resource whose shape genuinely fits Crossplane's reconciliation model better would need its own explicit exception, not a silent drift back to console/CLI.
+
+---
+
 ## 057 — Route severity=info alerts to null receiver instead of disabling or resizing (2026-08-23)
 
 **Decision:** Added a `severity=info` sub-route to the `null` receiver in the alertmanager config (`homekube-apps/applications/wave-01-apps/kube-prometheus.yaml`, `homekube-apps@ba50b7b`). Closes issue #3.
