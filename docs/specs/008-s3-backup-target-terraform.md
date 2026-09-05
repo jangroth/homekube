@@ -1,6 +1,6 @@
 # Spec 008 — S3 Backup Target via Terraform
 
-**Status:** Draft
+**Status:** Done (2026-09-01)
 **Closes:** issue #20 (`homekube`)
 **Unblocks:** issue #21 (Velero + Longhorn backup target), issue #19 (Longhorn scheduled backups)
 **Related decisions:** [Decision 058](../../DECISIONS.md) — Terraform adopted as the standard tool for AWS/cloud-account-level infrastructure (wider policy, logged ahead of implementation). A second, bucket-specific DECISIONS.md entry (storage class choice) still gets added on completion per §5 Step 5.

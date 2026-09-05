@@ -15,6 +15,17 @@ Cross-repo entries reference commits as `repo@sha` (e.g. `homekube-main@e77a322`
 
 ---
 
+## 2026-09-01
+
+### Added
+- `homekube-main/terraform/bootstrap-identity/`: two IAM Identity Center permission sets (`homekube-terraform` least-privilege, `homekube-readonly` AWS-managed `ReadOnlyAccess`) and two attribution-only IAM roles (`homekube-agent-terraform`/`homekube-agent-readonly`) Claude assumes on top of Jan's SSO session for CloudTrail-distinguishable, non-standing access. Applied with Jan's admin SSO profile (one-time, privileged bootstrap step).
+- `homekube-main/terraform/backup-target/`: S3 bucket (`homekube-backups-010316939032-ap-southeast-2-an`, account-regional namespace), public-access block, 30-day lifecycle safety net, and IAM user `homekube-backup` with bucket-scoped credentials for Longhorn/Velero. Applied under the `homekube-terraform` SSO profile. Closes issue #20, unblocks #19/#21.
+
+### Decisions
+- [059](DECISIONS.md#059--apply-spec-008-s3-backup-target--scoped-terraform-identity-2026-09-01): applied spec 008 — storage-class rationale, tagging as first-class, and the IAM Identity Center permission-set reprovisioning gotcha.
+
+---
+
 ## 2026-08-23
 
 ### Fixed
