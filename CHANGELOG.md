@@ -13,6 +13,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Entries
 
 Cross-repo entries reference commits as `repo@sha` (e.g. `homekube-main@e77a322`). Where a change has an associated decision or spec, link it inline.
 
+Current quarter only. Prior quarters: [2026 Q2](CHANGELOG-2026-Q2.md).
+
 ---
 
 ## 2026-09-01

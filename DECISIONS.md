@@ -1,5 +1,7 @@
 # Decision Log
 
+Current quarter only. Prior quarters: [2026 Q2](DECISIONS-2026-Q2.md).
+
 ---
 
 ## 059 — Apply spec 008: S3 backup target + scoped Terraform identity (2026-09-01)
