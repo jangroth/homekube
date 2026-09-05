@@ -77,8 +77,9 @@ After the physical step, ansible handles the rest:
 ## Working Approach
 
 - **Spec-driven**: write a spec in `docs/specs/NNN-title.md` before any significant implementation. Specs define the problem, acceptance criteria, and approach.
-- **Decision log**: record key decisions in `DECISIONS.md`, newest decision first. Decisions capture **why**.
+- **Decision log**: record key decisions in `DECISIONS.md`, newest decision first. Decisions capture **why**. Every entry gets a `**Area:**` tag matching the GitHub issue `area:*` taxonomy (`observability`, `networking`, `storage`, `security`, `identity`, `workload`, `service-mesh`, `platform-engineering`, `process`, `cloud`) — lets a search narrow to one area without reading the whole file.
 - **Change log**: append every material change to `CHANGELOG.md` (top-level, reverse-chronological, [Keep a Changelog](https://keepachangelog.com) format). Captures **what was done**: additions, version bumps, removals, fixes, operational interventions. Distinct from `DECISIONS.md`.
+- **Quarterly archiving**: at the close of each quarter, split both `DECISIONS.md` and `CHANGELOG.md` — move that quarter's entries into `DECISIONS-YYYY-QN.md`/`CHANGELOG-YYYY-QN.md`, leave the live file holding only the new quarter onward. Old content stays retrievable via context-mode search (`ctx_index`/`ctx_search`) regardless of which archive file it landed in — the split is for read-cost, not for losing history.
 - **Todo**: open tasks tracked as GitHub Issues on `jangroth/homekube` (single tracker for all three repos). Labelled `area:*` (component), `criticality:blocker`/`degraded`/`polish` (workload-readiness impact), `repo:*` (which repo the fix lands in — `homekube`/`homekube-main`/`homekube-apps`), and `agent-safe` where an unambiguous, reversible, PR-only fix exists with no open design decision or physical/external-account step. `agent-safe` issues in `homekube-apps` and `homekube-main` are picked up nightly by scheduled routines that open a PR for human review — don't assume an open `agent-safe` issue is still unclaimed without checking for an in-flight `auto/issue-<n>-*` PR first.
 - **Trust**: Claude proposes, human approves for destructive/irreversible operations (this policy evolves over time as trust is established)
 - **Source reflects runtime**: when a change is made to a running cluster (static pod manifest, sysctl, Ansible variable), always propagate it back to the canonical source file (`kubeadm-config.yaml`, Ansible role, Helm values) in the same piece of work. The source must be sufficient to rebuild the cluster from scratch.
@@ -88,6 +89,6 @@ After the physical step, ansible handles the rest:
 ## Key Files
 
 - Open tasks — GitHub Issues on `jangroth/homekube`, not a file (see Working Approach)
-- `DECISIONS.md` — decision log (why)
-- `CHANGELOG.md` — change log (what was done), top-level, spans all three repos
+- `DECISIONS.md` — decision log (why), current quarter only; prior quarters in `DECISIONS-YYYY-QN.md`
+- `CHANGELOG.md` — change log (what was done), top-level, spans all three repos, current quarter only; prior quarters in `CHANGELOG-YYYY-QN.md`
 - `docs/specs/` — specs for significant work items
