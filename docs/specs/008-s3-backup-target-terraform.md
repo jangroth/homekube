@@ -333,14 +333,14 @@ Per `feedback_ansible_execution` / `feedback_implementation_pace`: show each com
 
 ## 6. Validation / acceptance criteria
 
-- [ ] `homekube-terraform` SSO permission set exists, is assigned to Jan, and `backup-target`'s apply in Step 3 ran under it (not the admin profile) — check `aws sts get-caller-identity --profile homekube-terraform` before/after.
-- [ ] `terraform plan` after apply shows no diff (state matches reality).
-- [ ] `aws s3api get-bucket-lifecycle-configuration --bucket <name>` shows the 30-day expiry rule.
-- [ ] `aws s3api get-public-access-block --bucket <name>` shows all four block flags `true`.
-- [ ] IAM user `homekube-backup` can `PutObject`/`GetObject`/`DeleteObject` + multipart actions on objects, `ListBucket`/`GetBucketLocation` on the bucket, and nothing else (spot-check with `aws s3 cp` using the generated access key, or `aws iam simulate-principal-policy`).
-- [ ] `aws sts assume-role --role-arn <homekube-agent-terraform ARN> --role-session-name claude-session --profile homekube-terraform` succeeds, and the resulting `GetCallerIdentity` ARN shows `assumed-role/homekube-agent-terraform/claude-session` — confirms attribution works and the role is scoped identically to the permission set it layers onto.
-- [ ] Outputs captured and available for issue #21 — not committed anywhere in git.
-- [ ] `homekube-main/.gitignore` already covers `.terraform/` and `*.tfstate*` — confirm no state or secret material got staged (`git status` before any commit in this directory).
+- [x] `homekube-terraform` SSO permission set exists, is assigned to Jan, and `backup-target`'s apply in Step 3 ran under it (not the admin profile) — confirmed via `terraform state list` showing both stacks fully applied (2026-09-08); re-confirm live `aws sts get-caller-identity --profile homekube-terraform` next SSO login.
+- [ ] `terraform plan` after apply shows no diff (state matches reality) — pending: SSO token expired 2026-09-08, needs `aws sso login --profile homekube-terraform` to re-check.
+- [ ] `aws s3api get-bucket-lifecycle-configuration --bucket <name>` shows the 30-day expiry rule — pending live AWS check (SSO login required).
+- [ ] `aws s3api get-public-access-block --bucket <name>` shows all four block flags `true` — pending live AWS check (SSO login required).
+- [ ] IAM user `homekube-backup` can `PutObject`/`GetObject`/`DeleteObject` + multipart actions on objects, `ListBucket`/`GetBucketLocation` on the bucket, and nothing else (spot-check with `aws s3 cp` using the generated access key, or `aws iam simulate-principal-policy`) — pending live AWS check (SSO login required).
+- [ ] `aws sts assume-role --role-arn <homekube-agent-terraform ARN> --role-session-name claude-session --profile homekube-terraform` succeeds, and the resulting `GetCallerIdentity` ARN shows `assumed-role/homekube-agent-terraform/claude-session` — confirms attribution works and the role is scoped identically to the permission set it layers onto. Pending live AWS check (SSO login required).
+- [x] Outputs captured and available for issue #21 — not committed anywhere in git (state/lockfile-secrets remain gitignored; only `.tf`/README/lockfile source was committed, `homekube-main@431505f`).
+- [x] `homekube-main/.gitignore` already covers `.terraform/` and `*.tfstate*` — confirmed via `git add -n` dry-run before commit (2026-09-08): only source files, `.terraform.lock.hcl`, and `README.md` staged, no state or secret material.
 
 ## 7. Rollback
 

@@ -17,6 +17,13 @@ Current quarter only. Prior quarters: [2026 Q2](CHANGELOG-2026-Q2.md).
 
 ---
 
+## 2026-09-08
+
+### Added
+- `homekube-main@431505f`: committed the Terraform source for spec 008's `bootstrap-identity` and `backup-target` stacks (both applied 2026-09-01 per decision 059, but the source itself hadn't been committed yet — state/secrets stay gitignored, only `.tf`/README/lockfile files landed). Closes issue #20 for real this time (original `Closes #20` reference didn't cross repos from `homekube-main`).
+
+---
+
 ## 2026-09-01
 
 ### Added
