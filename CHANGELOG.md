@@ -17,6 +17,19 @@ Current quarter only. Prior quarters: [2026 Q2](CHANGELOG-2026-Q2.md).
 
 ---
 
+## 2026-09-12
+
+### Added
+- `homekube-apps@62af188`: merged Renovate (issue #28, PR #67) — automates future chart/image bumps for all ArgoCD-managed apps under `applications/*.yaml`. Requires a `RENOVATE_TOKEN` repo secret to actually run (manual step, not yet confirmed done).
+
+### Fixed
+- `homekube-apps@70410ad`: `sealed-secrets` `targetRevision` bumped `2.19.1` → `2.20.0`. Root cause was a wrong-repo check during the version audit (`charts.bitnami.com/bitnami`, the paid catalog, instead of `bitnami.github.io/sealed-secrets`, the project's own chart — explicitly exempt from Bitnami's Aug 2025 paywall changes). `2.19.1` was never actually broken; first attempted fix (PR #74) mistakenly repinned to `2.5.19`, a version that doesn't exist in the correct repo, before being corrected. ArgoCD synced cleanly, controller pod healthy.
+
+### Removed
+- Closed PR #69 (`homekube-apps`) and PR #13 (`homekube-main`) as redundant re-implementations of issue #29, already satisfied by the top-level `.claude/commands/check-versions.md`. Closed issue #29 as done.
+
+---
+
 ## 2026-09-08
 
 ### Added
