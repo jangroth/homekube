@@ -182,36 +182,34 @@ Cilium (CNI + LB) · Longhorn · ArgoCD · Prometheus · Grafana · Loki
 
 ### Base system (Ansible-installed)
 
-| Component | Package | Version |
-|-|-|-|
-| Kubernetes | `k8s` | 1.36.1 |
-| CRI | `containerd` | 2.3.0 |
-| | `runc` | apt-provided, unpinned |
-| CNI | `cilium` | 1.19.4 |
-| | `containernetworking-plugins` | apt-provided, unpinned |
+| Component | Package |
+|-|-|
+| Kubernetes | `k8s` |
+| CRI | `containerd`, `runc` |
+| CNI | `cilium`, `containernetworking-plugins` |
 
 ### ArgoCD-deployed workloads
 
 > ArgoCD itself is installed via Ansible (`homekube-main`), not managed here.
 
-| Component | Namespace | Wave | Chart Version | Access |
-|-----------|-----------|------|---------------|--------|
-| Cilium LB-IPAM + L2 | `kube-system` | -1 | — (CRs only) | VIP pool `192.168.86.241–251` |
-| ArgoCD config | `argocd` | -1 | — | `192.168.86.241:80` |
-| metrics-server | `kube-system` | -1 | 3.12.2 | `kubectl top` |
-| sealed-secrets | `kube-system` | -1 | 2.19.1 | `kubeseal` CLI |
-| cert-manager | `cert-manager` | -1 | 1.20.2 | `ClusterIssuer/homekube-ca` |
-| kubelet-csr-approver | `kube-system` | -1 | 1.2.14 | automatic CSR approval |
-| Longhorn | `longhorn-system` | -1 | 1.11.2 | `192.168.86.242:80` |
-| kube-prometheus-stack (Prometheus + Alertmanager) | `observability` | 01 | 87.0.1 | Prometheus `:30002`, Alertmanager `:30004` |
-| Loki | `observability` | 01 | 7.0.0 | internal (`observability` svc) |
-| Alloy | `observability` | 01 | 1.8.1 | DaemonSet log shipper |
-| Grafana | `observability` | 01 | (kube-prometheus subchart) | `192.168.86.243:443` |
-| Dex | `dex` | 02 | 0.24.1 | `192.168.86.244:5556` (LAN), `https://pi0.taild13083.ts.net/dex` (browser/OIDC) |
-| Homepage | `homepage` | 03 | — (raw manifests, image v1.13.2) | `192.168.86.245:80` |
-| Hermes | `hermes` | 03 | 0.1.8 (herminator chart) | `192.168.86.246:443` (Dex OIDC) |
+| Component | Namespace | Wave | Access |
+|-----------|-----------|------|--------|
+| Cilium LB-IPAM + L2 | `kube-system` | -1 | VIP pool `192.168.86.241–251` |
+| ArgoCD config | `argocd` | -1 | `192.168.86.241:80` |
+| metrics-server | `kube-system` | -1 | `kubectl top` |
+| sealed-secrets | `kube-system` | -1 | `kubeseal` CLI |
+| cert-manager | `cert-manager` | -1 | `ClusterIssuer/homekube-ca` |
+| kubelet-csr-approver | `kube-system` | -1 | automatic CSR approval |
+| Longhorn | `longhorn-system` | -1 | `192.168.86.242:80` |
+| kube-prometheus-stack (Prometheus + Alertmanager) | `observability` | 01 | Prometheus `:30002`, Alertmanager `:30004` |
+| Loki | `observability` | 01 | internal (`observability` svc) |
+| Alloy | `observability` | 01 | DaemonSet log shipper |
+| Grafana | `observability` | 01 | `192.168.86.243:443` |
+| Dex | `dex` | 02 | `192.168.86.244:5556` (LAN), `https://pi0.taild13083.ts.net/dex` (browser/OIDC) |
+| Homepage | `homepage` | 03 | `192.168.86.245:80` |
+| Hermes | `hermes` | 03 | `192.168.86.246:443` (Dex OIDC) |
 
-Keep both tables current in the same piece of work as any version bump, new component, or resize — see "source reflects runtime" in `CLAUDE.md`.
+Pinned versions live only in source (`homekube-main/ansible/group_vars/all.yml`, `homekube-apps/applications/*.yaml`) — run `/check-versions` for current vs. latest. Keep both tables current when adding/removing a component — see "source reflects runtime" in `CLAUDE.md`.
 
 ## Resource Budget
 

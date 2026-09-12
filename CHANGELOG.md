@@ -22,6 +22,10 @@ Current quarter only. Prior quarters: [2026 Q2](CHANGELOG-2026-Q2.md).
 ### Added
 - `homekube-apps@62af188`: merged Renovate (issue #28, PR #67) — automates future chart/image bumps for all ArgoCD-managed apps under `applications/*.yaml`. Requires a `RENOVATE_TOKEN` repo secret to actually run (manual step, not yet confirmed done).
 
+### Changed
+- `homekube-main@7cc19c0`: merged Renovate PRs #18 (minor/patch group) and #19 (argo-cd major) — `containerd` 2.3.0→2.3.5, `cilium` 1.19.4→1.20.1, `etcdctl` 3.6.4→3.7.1, `kube-bench` 0.13.0→0.16.0, `longhornctl` 1.11.2→1.12.1, ArgoCD Helm chart 9.5.15→10.9.0 (major; #19 superseded #18's `9.7.1` for this variable on merge). Rolled out cluster-wide via `task update-darth 22-k8s-nodes 30-k8s-control-plane 40-cni 50-gitops`, no issues.
+- `README.md`: dropped the `Version`/`Chart Version` columns from both "Components & Versions" tables — they duplicated `group_vars/all.yml`/`applications/*.yaml` and went stale between bumps; `/check-versions` is now the single source for current-vs-latest.
+
 ### Fixed
 - `homekube-apps@70410ad`: `sealed-secrets` `targetRevision` bumped `2.19.1` → `2.20.0`. Root cause was a wrong-repo check during the version audit (`charts.bitnami.com/bitnami`, the paid catalog, instead of `bitnami.github.io/sealed-secrets`, the project's own chart — explicitly exempt from Bitnami's Aug 2025 paywall changes). `2.19.1` was never actually broken; first attempted fix (PR #74) mistakenly repinned to `2.5.19`, a version that doesn't exist in the correct repo, before being corrected. ArgoCD synced cleanly, controller pod healthy.
 
