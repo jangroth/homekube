@@ -20,14 +20,25 @@ Current quarter only. Prior quarters: [2026 Q2](CHANGELOG-2026-Q2.md).
 ## 2026-09-12
 
 ### Added
-- `homekube-apps@62af188`: merged Renovate (issue #28, PR #67) — automates future chart/image bumps for all ArgoCD-managed apps under `applications/*.yaml`. Requires a `RENOVATE_TOKEN` repo secret to actually run (manual step, not yet confirmed done).
+- `homekube-apps@62af188`: merged Renovate (issue #28, PR #67) — automates future chart/image bumps for all ArgoCD-managed apps under `applications/*.yaml`.
+- `homekube-main@0dd21df`: Renovate `customManagers` added for the Ansible-pinned versions (`argocd_helm_chart_version`, `cilium_version`, `containerd_version`, `etcdctl_version`, `kube_bench_version`, `longhorn_version` in `group_vars/all.yml`), mirroring homekube-apps' existing convention — this is what surfaced PRs #18/#19 below.
+- `homekube-main@d7cdf6b`: `workflow_dispatch` trigger added to the `ansible-lint` CI workflow for manual re-runs.
+- `homekube-apps@76009cb`: Renovate `github-actions` manager enabled so Renovate also tracks the pinned action versions in its own workflow.
 
 ### Changed
-- `homekube-main@7cc19c0`: merged Renovate PRs #18 (minor/patch group) and #19 (argo-cd major) — `containerd` 2.3.0→2.3.5, `cilium` 1.19.4→1.20.1, `etcdctl` 3.6.4→3.7.1, `kube-bench` 0.13.0→0.16.0, `longhornctl` 1.11.2→1.12.1, ArgoCD Helm chart 9.5.15→10.9.0 (major; #19 superseded #18's `9.7.1` for this variable on merge). Rolled out cluster-wide via `task update-darth 22-k8s-nodes 30-k8s-control-plane 40-cni 50-gitops`, no issues.
+- `homekube-main@7cc19c0`: merged Renovate PRs #18 (minor/patch group) and #19 (argo-cd major) — `containerd` 2.3.0→2.3.5, `cilium` 1.19.4→1.20.1, `etcdctl` 3.6.4→3.7.1, `kube-bench` 0.13.0→0.16.0, `longhornctl` 1.11.2→1.12.1, ArgoCD Helm chart 9.5.15→10.9.0 (major; #19 superseded #18's `9.7.1` for this variable on merge). Rolled out cluster-wide via `task update-darth 22-k8s-nodes 30-k8s-control-plane 40-cni 50-gitops`, no issues. Closes issues #45–#50 (the manual version-bump tracking issues these Renovate PRs made redundant).
+- `homekube-apps@eee6de3` (PR #76): Helm chart minor/patch bumps — `cert-manager`, `kubelet-csr-approver`, `longhorn`, `metrics-server`, `alloy`, `loki`.
+- `homekube-apps@7c36d9a` (PR #78): `kube-prometheus-stack` chart bumped to v90.
+- `homekube-apps@07a844a` (PR #77): `homepage` image bumped to v2 (see Fixed for the probe breakage this caused).
+- Renovate's `RENOVATE_TOKEN` confirmed working end-to-end in both repos — PRs #18/#19 (homekube-main) and #76/#77/#78 (homekube-apps) were opened and merged automatically.
 - `README.md`: dropped the `Version`/`Chart Version` columns from both "Components & Versions" tables — they duplicated `group_vars/all.yml`/`applications/*.yaml` and went stale between bumps; `/check-versions` is now the single source for current-vs-latest.
+- `homekube-main` README: added a "Renovate PAT setup (human step)" runbook section (moved from `CLAUDE.md` — belongs with the other human-step runbooks, not the agent instructions file). `homekube-apps` README: noted Renovate's Dependency Dashboard issue is always created in the scanned repo itself, an exception to the single-tracker-on-`homekube` convention.
 
 ### Fixed
 - `homekube-apps@70410ad`: `sealed-secrets` `targetRevision` bumped `2.19.1` → `2.20.0`. Root cause was a wrong-repo check during the version audit (`charts.bitnami.com/bitnami`, the paid catalog, instead of `bitnami.github.io/sealed-secrets`, the project's own chart — explicitly exempt from Bitnami's Aug 2025 paywall changes). `2.19.1` was never actually broken; first attempted fix (PR #74) mistakenly repinned to `2.5.19`, a version that doesn't exist in the correct repo, before being corrected. ArgoCD synced cleanly, controller pod healthy.
+- `homekube-main@6602f93`: ansible-lint `command-instead-of-module` violation — swapped a raw `systemctl` call for `ansible.builtin.systemd` `daemon_reexec` in the `k8s-node` watchdog handler.
+- `homekube-apps@5db135b`: Homepage v2 validates the Host header on every path (v1 only checked `/api/*`), so kubelet's pod-IP probe Host header started failing and the new pod never went ready. Pinned live/readiness probes to an already-allowed Host (the LB VIP).
+- `homekube-apps@2ca924e` + `55ffd2a` + `674768b`: Renovate's own GitHub Action workflow needed three follow-up fixes to actually run — pin to a real `renovatebot/github-action` release tag (floating majors aren't published), set `RENOVATE_REPOSITORIES` (the action doesn't infer its target repo), and move the workflow's own cron into `schedule:weekly`'s actual window (02:00 UTC, not 06:00) so runs stop deferring forever.
 
 ### Removed
 - Closed PR #69 (`homekube-apps`) and PR #13 (`homekube-main`) as redundant re-implementations of issue #29, already satisfied by the top-level `.claude/commands/check-versions.md`. Closed issue #29 as done.
