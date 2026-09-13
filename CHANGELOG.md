@@ -17,6 +17,25 @@ Current quarter only. Prior quarters: [2026 Q2](CHANGELOG-2026-Q2.md).
 
 ---
 
+## 2026-09-13
+
+### Added
+- `homekube-main@422a7d5`: new `32-k8s-upgrade.yml` orchestrated kubeadm upgrade playbook — cordon/drain/`kubeadm upgrade`/uncordon per node, control plane first then workers one at a time. Also swapped the deprecated `apt_repository` module for `deb822_repository` in the shared apt-repo-retarget task (extracted into `retarget_kube_apt_repo.yml`, reused by both the existing update flow and the new playbook).
+
+### Changed
+- `kubernetes_version` `1.36.1` → `1.37.0`, rolled out live to all 4 nodes via the new playbook. Closes issue #44. Supersedes #41 (1.37.0 already carries the kubelet-leak fix from decision 056). See decision 060.
+
+### Operational
+- pi0 crashed hard mid-rollout (~14:43, zero kernel/OOM/panic log lines beforehand) and auto-rebooted (~3 min) on its own. pi2 also went dark at roughly the same time and needed a manual power-cycle; came back with clean dpkg/kubelet/containerd state, no half-applied upgrade. See decision 061; logged as a new occurrence against issue #22.
+- Recovery blocker: pi2's kubelet had a stale CSI plugin-registration cache after reboot (fixed with a kubelet restart), and Longhorn refused to relaunch pi2's `hermes-data` volume replica while the node stayed cordoned from the interrupted drain — an indefinite auto-salvage retry loop. Uncordoning pi2 resolved it in ~90s.
+- pi3's drain separately blocked on `alertmanager-prometheus-kube-prometheus-alertmanager-0`'s PodDisruptionBudget (`minAvailable: 1`, single replica — structurally can never permit eviction). Deleted the pod directly; its StatefulSet recreated it on pi1 within seconds.
+
+### Decisions
+- [061](DECISIONS.md#061--pi0--pi2-correlated-crash-during-the-1370-rollout-longhorn-blocks-instance-managers-on-cordoned-nodes-2026-09-13): pi0/pi2 correlated crash, unexplained; Longhorn-cordon-blocks-instance-manager gotcha.
+- [060](DECISIONS.md#060--add-orchestrated-kubeadm-upgrade-playbook-kubernetes-1361--1370-2026-09-13): orchestrated kubeadm upgrade playbook design, why the existing package-bump flow wasn't sufficient.
+
+---
+
 ## 2026-09-12
 
 ### Added

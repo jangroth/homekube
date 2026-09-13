@@ -4,6 +4,32 @@ Current quarter only. Prior quarters: [2026 Q2](DECISIONS-2026-Q2.md).
 
 ---
 
+## 061 — pi0 + pi2 correlated crash during the 1.37.0 rollout; Longhorn blocks instance-managers on cordoned nodes (2026-09-13)
+
+**Area:** platform-engineering
+
+**Decision:** Logged as a new occurrence against issue #22 (pi0's watchdog-crash pattern) rather than opening a new issue; pi2's crash is treated as part of the same incident window rather than a second independent problem, pending further evidence. Remediation was live-only (kubelet restart on pi2, then uncordon) — no ansible/config change made in response.
+
+**Rationale:** Mid-rollout, while pi2 was being drained via `kubectl` calls delegated to pi0, pi0 stopped logging entirely at 14:43:52 — zero kernel warnings, zero OOM, zero panic messages beforehand — then rebooted itself roughly 3 minutes later. pi2 went dark at about the same time and stayed unreachable (Tailscale + SSH) for several minutes, needing a manual power-cycle to come back. The gap is too short for a clean 10-minute watchdog-timeout stall (decision 054), so this doesn't cleanly match the known single-node pattern; two nodes dropping together in the same short window points more toward a shared power/environmental event than two independent watchdog fires, but nothing in the software logs confirms either way. Recorded here as a data point for #22 rather than root-caused.
+
+Once pi2 rebooted (clean dpkg/kubelet/containerd state — no half-applied upgrade), two further problems surfaced downstream. First, pi2's kubelet had a stale CSI plugin-registration cache: the Longhorn CSI driver's own logs showed a successful registration handshake, but kubelet's mount calls kept failing with "driver not found" regardless; a kubelet restart resolved it. Second, and more generally useful: **Longhorn's node controller refuses to run an `instance-manager` (and therefore any replica) on a node it considers cordoned** (`Node pi2 is cordoned` / `KubernetesNodeCordoned` in the Longhorn Node CR's `Schedulable` condition). Because pi2 never reached the upgrade playbook's uncordon step before the crash interrupted it, its `hermes-data` volume replica sat in an indefinite auto-salvage retry loop ("instance manager is unable to launch the replica") no matter how long we waited. Uncordoning pi2 resolved it within ~90 seconds. The generalizable lesson: any interrupted drain that leaves a node cordoned will also block Longhorn from healing volumes on that node, independent of whatever caused the interruption.
+
+**Trade-offs accepted:** The pi0/pi2 correlated crash itself remains unexplained — no physical/power investigation was done, since that requires hands-on inspection. If it recurs, check for shared power/PoE wiring between pi0 and pi2 specifically. Separately (and unrelated to the crash), pi3's own drain hit an expected, different blocker: `alertmanager-prometheus-kube-prometheus-alertmanager-0`'s PodDisruptionBudget (`minAvailable: 1`, single replica) structurally can never permit eviction. Resolved by deleting the pod directly (bypasses eviction, not data-bearing) so its StatefulSet recreated it on pi1. No playbook change made for this — it's a general single-replica-PDB limitation, not specific to this upgrade, and not worth special-casing into `32-k8s-upgrade.yml`.
+
+---
+
+## 060 — Add orchestrated kubeadm upgrade playbook; Kubernetes 1.36.1 → 1.37.0 (2026-09-13)
+
+**Area:** platform-engineering
+
+**Decision:** New `homekube-main/ansible/32-k8s-upgrade.yml` runs the actual kubeadm upgrade sequence (`kubeadm upgrade apply` on the control plane, `kubeadm upgrade node` on workers) with a proper cordon/drain/uncordon cycle per node — control plane first, then workers one at a time (`serial: 1`). Bumped `kubernetes_version` to `1.37.0` and rolled it out live to all 4 nodes. Closes issue #44; supersedes #41 (`1.37.0` already carries the kubelet-leak fix root-caused in decision 056). Swapped the deprecated `apt_repository` module for `deb822_repository` while touching the apt-repo-retarget task the new playbook shares with the existing package-bump flow.
+
+**Rationale:** The existing package hold/unhold flow (used for issues #45–50's Renovate-driven bumps) only ensures `kubelet`/`kubeadm`/`kubectl` are *present* — with `apt: state: present` that's a no-op once a package is already installed, so it would silently skip the intended bump entirely. But even fixing that (`state: latest`) would still miss the actual point of a minor-version upgrade: kubeadm writes the control-plane static pod manifests (apiserver/etcd/controller-manager/scheduler) once at init time with hardcoded image tags, and only `kubeadm upgrade apply`/`node` ever rewrites them. A real minor-version bump needs the full drain-based orchestration, not a package-only refresh.
+
+**Trade-offs accepted:** Found and flagged (not fixed) a pre-existing latent bug along the way — `install_kube_packages.yml`'s `apt: state: present` means the routine `task update-k8s-nodes` path has likely never actually force-upgraded `kubelet`/`kubeadm`/`kubectl` either; out of scope here, needs its own follow-up. Also: a Longhorn PDB pre-flight check was written, tested, and then removed from the playbook — `instance-manager` PDBs always read `disruptionsAllowed: 0` on a schedulable node (`minAvailable: 1` on a singleton pod is mathematically always 0, before Longhorn's cordon-triggered relaxation ever kicks in), so the check would have failed on every single run regardless of actual cluster health. `kubectl drain`'s own eviction retry (bounded by `--timeout=300s`) is the correct mechanism instead — see decision 061 for what that mechanism depends on.
+
+---
+
 ## 059 — Apply spec 008: S3 backup target + scoped Terraform identity (2026-09-01)
 
 **Area:** cloud
