@@ -17,6 +17,22 @@ Current quarter only. Prior quarters: [2026 Q2](CHANGELOG-2026-Q2.md).
 
 ---
 
+## 2026-09-14
+
+### Fixed
+- `homekube-main@2c2e497`: `32-k8s-upgrade.yml` now re-copies `kubeadm-config.yaml` and runs `kubeadm init phase upload-config kubeadm` right before `kubeadm upgrade apply` — the live `kubeadm-config` ConfigMap had been missing the `bind-address`/`listen-metrics-urls` `extraArgs` this file specifies, so yesterday's 1.37.0 upgrade silently reverted kube-scheduler/kube-controller-manager/etcd to loopback-only, breaking Prometheus scraping. Also fixes the file's stale `kubernetesVersion: 1.36.1`. See decision 062.
+- `homekube-apps@5acf13b`: `networkPolicies.restrictInternalTraffic: false` added to Longhorn's Helm values — the 1.11.2→1.12.1 chart bump (PR #76, 2026-09-12) turned this on by default, adding a same-namespace-only `NetworkPolicy` on `longhorn-manager` that blocked Prometheus from scraping it. See decision 063.
+
+### Operational
+- Diagnosed a full day of repeating Slack alerts (`TargetDown`, `KubeSchedulerInstanceUnreachable`, `KubeControllerManagerInstanceUnreachable`, `etcdInsufficientMembers`, `etcdMembersDown`, Longhorn `TargetDown`) as two never-resolved incidents re-surfaced by Alertmanager's repeat_interval, not new failures — both traced and fixed same-day (decisions 062, 063).
+- Live-patched the `kubeadm-config` ConfigMap in `kube-system` and edited `/etc/kubernetes/manifests/{kube-scheduler,kube-controller-manager,etcd}.yaml` on pi0 directly to restore `bind-address=0.0.0.0`/`listen-metrics-urls=http://0.0.0.0:2381`; kubelet restarted each static pod in turn with no apiserver interruption. Verified all three Prometheus targets returned to `up`.
+
+### Decisions
+- [063](DECISIONS.md#063--disable-longhorn-networkpoliciesrestrictinternaltraffic-2026-09-14): disable Longhorn's `restrictInternalTraffic` NetworkPolicy default.
+- [062](DECISIONS.md#062--kube-schedulerkube-controller-manageretcd-bind-address-reverted-to-loopback-by-the-1370-upgrade-live-patched--guarded-2026-09-14): kube-scheduler/controller-manager/etcd bind-address drift, live fix + ansible guard.
+
+---
+
 ## 2026-09-13
 
 ### Added

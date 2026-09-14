@@ -4,6 +4,30 @@ Current quarter only. Prior quarters: [2026 Q2](DECISIONS-2026-Q2.md).
 
 ---
 
+## 063 — Disable Longhorn `networkPolicies.restrictInternalTraffic` (2026-09-14)
+
+**Area:** storage
+
+**Decision:** Set `networkPolicies.restrictInternalTraffic: false` in the Longhorn Helm values (`homekube-apps/applications/wave-00-init/longhorn.yaml`).
+
+**Rationale:** Renovate's chart bump 1.11.2→1.12.1 (2026-09-12, PR #76) introduced `restrictInternalTraffic` as a new default-`true` setting that ships a same-namespace-only ingress `NetworkPolicy` on `longhorn-manager`. Prometheus (namespace `observability`) was silently blocked from scraping `longhorn-manager:9500` cross-namespace from that point on — the `TargetDown` alert for `longhorn-system` had been firing continuously since the bump, surfaced when investigating the broader 2026-09-13 alert storm. Verified: the manager process was listening fine on 9500 (confirmed via the pod's own `/proc/net/tcp`); the failure was purely the chart-added `NetworkPolicy`, unrelated to the Kubernetes 1.37.0 upgrade or the pi0/pi2 crash (decision 061).
+
+**Trade-offs accepted:** Longhorn's internal components (instance-manager, webhook, backing-image-manager, recovery-backend) are no longer restricted to same-namespace traffic — same posture as before the 1.12.1 bump. Revisit if/when the deferred ingress/NetworkPolicy story (DECISION-043) lands cluster-wide.
+
+---
+
+## 062 — kube-scheduler/kube-controller-manager/etcd bind-address reverted to loopback by the 1.37.0 upgrade; live-patched + guarded (2026-09-14)
+
+**Area:** platform-engineering
+
+**Decision:** Restored `--bind-address=0.0.0.0` on kube-scheduler and kube-controller-manager, and etcd's `--listen-metrics-urls=http://0.0.0.0:2381`, both live (patched the `kubeadm-config` ConfigMap in `kube-system`, then edited the three static pod manifests on pi0 directly) and in `32-k8s-upgrade.yml`, which now runs `kubeadm init phase upload-config kubeadm --config kubeadm-config.yaml` immediately before `kubeadm upgrade apply` on every future upgrade.
+
+**Rationale:** `kubeadm upgrade apply`/`node` regenerates static pod manifests strictly from the `ClusterConfiguration` stored in the live `kubeadm-config` ConfigMap — never from this repo's `kubeadm-config.yaml`. That ConfigMap's `controllerManager`, `scheduler`, and `etcd.local` entries were empty (no `extraArgs`), even though the repo's file has always specified `bind-address: "0.0.0.0"` / `listen-metrics-urls: "http://0.0.0.0:2381"`. Yesterday's 1.36.1→1.37.0 upgrade (decision 060) silently rewrote all three static pods back to kubeadm's loopback-only defaults, breaking Prometheus scraping cluster-wide (`KubeSchedulerInstanceUnreachable`, `KubeControllerManagerInstanceUnreachable`, `etcdInsufficientMembers`, `etcdMembersDown`, plus the associated `TargetDown`s) — firing continuously from ~2026-09-13 05:00 UTC, invisible as a "new" incident because Alertmanager's repeat_interval just kept re-sending the same never-resolved alerts every ~12h. How the ConfigMap first lost these `extraArgs` (vs. the file) is unresolved — plausibly they were only ever applied to the original `kubeadm init` and the file's customization was added afterward without re-uploading. `kubeadm-config.yaml`'s `kubernetesVersion` was also found stale at `1.36.1` (unrelated `copy`-not-`template` drift) and bumped to `1.37.0` alongside this fix.
+
+**Trade-offs accepted:** None — this restores the previously-working configuration. The new `upload-config` step makes the ConfigMap authoritative-by-repo on every upgrade going forward, closing the drift vector for good.
+
+---
+
 ## 061 — pi0 + pi2 correlated crash during the 1.37.0 rollout; Longhorn blocks instance-managers on cordoned nodes (2026-09-13)
 
 **Area:** platform-engineering
