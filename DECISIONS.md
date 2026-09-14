@@ -4,6 +4,18 @@ Current quarter only. Prior quarters: [2026 Q2](DECISIONS-2026-Q2.md).
 
 ---
 
+## 064 — Renovate is the source of truth for dependency versions; drop manual display/evaluate tasks from Ansible runbooks (2026-09-15)
+
+**Area:** process
+
+**Decision:** Removed `ansible/roles/k8s-node/tasks/display_dependencies.yml` (`homekube-main`) and its `import_tasks` under the `update-only` tag. Audited all other Ansible roles for similar "display dependencies" / "check for newer upstream version" tasks — found none; the remaining `version`-named tasks (`install_kube_bench.yml`, `install_etcdctl.yml`, `install_container_runtime.yml`) are pinned-version idempotency checks ("is the group_vars version already installed"), not version-tracking, and are unaffected.
+
+**Rationale:** This task predates Renovate. Its earlier form hit `api.github.com` on every node on every run to fetch containerd's latest release (already removed in PR #11 for unrelated correctness reasons — see the `homekube-main` PR history). What remained after #11 was a plain `apt-cache policy` / `containerd --version` printout of installed-vs-configured versions — not read operationally, and duplicating ground Renovate already covers: its `custom.regex` managers in `homekube-main/renovate.json` watch `containerd_version`, `cilium_version`, `argocd_helm_chart_version`, `etcdctl_version`, `kube_bench_version`, and `longhorn_version` directly in `group_vars/all.yml` and open a PR when upstream moves. Version tracking is now Renovate's job end to end; Ansible runbooks install what's pinned, they don't evaluate what's available.
+
+**Trade-offs accepted:** None. The apt-managed k8s packages (`kubeadm`/`kubectl`/`kubelet`/`runc`/`containernetworking-plugins`) aren't individually pinned by Renovate the way the `group_vars`-tracked components are — they float with the apt repo — so there's no direct Renovate equivalent for *those* five specifically, but the task's printout of their installed versions was informational only and not a version-drift alert.
+
+---
+
 ## 063 — Disable Longhorn `networkPolicies.restrictInternalTraffic` (2026-09-14)
 
 **Area:** storage

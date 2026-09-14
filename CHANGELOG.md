@@ -17,6 +17,19 @@ Current quarter only. Prior quarters: [2026 Q2](CHANGELOG-2026-Q2.md).
 
 ---
 
+## 2026-09-15
+
+### Removed
+- `homekube-main@c440bdf`: dropped `display_dependencies.yml` from the `k8s-node` role and its `update-only`-tagged import in `main.yml` — Renovate's `custom.regex` managers already track every version this task printed; see decision 064.
+
+### Fixed
+- `homekube-main@1a8d32e` (PR #11): `display_dependencies.yml` no longer shadowed the `containerd_version` group_var with a command-result dict, no longer used the `.index()` loop anti-pattern, and no longer hit `api.github.com` for containerd's "latest" release on every node/run. Superseded same-day by its removal above.
+
+### Decisions
+- [064](DECISIONS.md#064--renovate-is-the-source-of-truth-for-dependency-versions-drop-manual-displayevaluate-tasks-from-ansible-runbooks-2026-09-15): Renovate owns dependency-version tracking; drop manual display/evaluate Ansible tasks.
+
+---
+
 ## 2026-09-14
 
 ### Fixed
