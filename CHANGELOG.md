@@ -17,6 +17,20 @@ Current quarter only. Prior quarters: [2026 Q2](CHANGELOG-2026-Q2.md).
 
 ---
 
+## 2026-10-02
+
+### Changed
+- `homekube-main@1550472` (PR #22): Renovate-proposed Ansible-pinned version bumps — `argocd_helm_chart_version` 10.9.0→10.9.2, `cilium_version` 1.20.1→1.20.2, `containerd_version` 2.3.5→2.4.1, `etcdctl_version` 3.7.1→3.7.2. Merged and rolled out live to all 4 nodes (`task 50-gitops`, `task 40-cni`, `task 22-k8s-nodes`); pi0's containerd restart (static-pod-impacting) completed cleanly.
+- `homekube-main@405bf76`: added `update_repo_cache: true` to the `gitops` role's ArgoCD Helm install/upgrade task, matching the `cni` role's existing Cilium task — without it, a stale local Helm index on darth can reject a chart version released after the last `helm repo update`, as happened on this rollout's first `task 50-gitops` attempt.
+
+### Operational
+- `task 40-cni`'s Cilium 1.20.2 upgrade applied cleanly to all 4 agents/operator, but the Helm release itself is stuck `failed` (revision 7): `hubble-relay`/`hubble-ui` can't get a CNI endpoint on pi3 — the Cilium agent's `cil_sock4/6_*` eBPF programs (required by `kubeProxyReplacement: true`'s socket-level LB) fail to load with "no BTF found for kernel version 6.18.29+rpt-rpi-2712: not supported". Confirmed cluster-wide (pi0/pi1/pi3 all lack `/sys/kernel/btf/vmlinux`). Restarting the agent doesn't help — re-enters the same loop and additionally forces all of that node's existing endpoints into `restoring`/`regenerating` (no actual workload impact observed: ArgoCD/Longhorn pods on pi3 stayed `Running`/`Healthy` throughout via already-programmed datapath rules). Root cause and proposed fix (`socketLB.enabled: false`) filed as [issue #51](https://github.com/jangroth/homekube/issues/51).
+
+### Decisions
+- None — the gitops role fix and the socketLB root-cause analysis didn't rise to a standalone decision; captured here and in issue #51 instead.
+
+---
+
 ## 2026-09-15
 
 ### Removed
