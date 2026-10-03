@@ -4,6 +4,50 @@ Current quarter only. Prior quarters: [2026 Q2](DECISIONS-2026-Q2.md), [2026 Q3]
 
 ---
 
+## 068 — The node crashes are power starvation, not the watchdog; supersedes the premise of 054 (2026-10-03)
+
+**Area:** platform-engineering
+
+**Decision:** Treat issue #22 as a **power-delivery fault**, not a watchdog or software fault, and fix it by replacing the shared USB charging station with a supply capable of 5V/5A per node — one official Raspberry Pi 27W USB-C PSU each, or PoE+ HATs. Until that is done, no reboot automation runs unattended: any pod-churn event can brown out a node. This supersedes the premise of [decision 054](DECISIONS-2026-Q3.md), which raised `RuntimeWatchdogSec` 1min→10min on the belief that a 60-second watchdog deadline was the operative bug. The 10min setting stays (it is harmless and still guards genuine hangs), but it was never going to fix this.
+
+**Rationale:** All four nodes report `max_current=3000` in `/proc/device-tree/chosen/power/` with `usb_max_current_enable=0` — they negotiated **5V/3A (15W)** against a Pi 5 with an NVMe drive, which is specced for **5V/5A (27W)**. The supply is a 268W 8-port charging station (1×PD100W + 4×PD30W + USB-A). That 268W is an aggregate delivered at 20V; at the 5V a Pi actually draws, a PD30W port tops out at 3A, which is exactly what the firmware reports on every node.
+
+The decisive evidence is pi1 as a witness. On 2026-10-03 pi0 stopped logging at 16:17:04 and pi2 at 16:17:41 — 37 seconds apart, pi2 having been alive only 75 seconds after its planned reboot. At **16:18:08 pi1 logged `hwmon hwmon4: Undervoltage detected!`**, normalising at 16:18:10. A third machine on the same supply independently recorded the voltage sag that killed the other two. pi1 still carries `throttled=0x50000` (bit 16 under-voltage occurred, bit 18 throttling occurred). pi2's own undervoltage history lines up with prior occurrences: Jul 21 15:59 (occurrence 3, during `task 50-gitops`), Sep 12 15:40 and 15:42, Sep 14 17:00 — each inside a window where a node was crashing or restarting.
+
+Everything the watchdog theory could never explain follows from this: no watchdog fire, OOM or panic is ever present because the supply is pulled rather than software failing; logs stop mid-line; **nodes never self-recover and have always needed a manual power-cycle**, which is what power loss looks like and precisely not what a watchdog reset looks like (that reboots the board); multiple nodes die together because they share the supply; and occurrences correlate with Helm rollouts, pod churn and reboots because those are current spikes. Today's rolling reboot did not cause the outage — it generated the spike that an undersized supply could not survive.
+
+**Trade-offs accepted:** Four new PSUs and more outlets, against a cluster that has lost nodes unpredictably for five months. Rejected `usb_max_current_enable=1` in `config.txt` — the common search result for this symptom — because it does not make the supply deliver 5A; it only disables the firmware's self-protection so the board stops limiting itself and browns out harder. Also accepted that the 2026-09-13 event (decision 061), recorded as unattributed, is retrospectively explained by this and needs no separate investigation.
+
+**Note:** this does not change [decision 065](DECISIONS.md) — the Cilium hold is a kernel-BTF problem, unrelated.
+
+## 067 — Reboot Longhorn nodes by cordon-and-rebuild, not drain (2026-10-03)
+
+**Area:** storage
+
+**Decision:** `homekube-main/ansible/23-rolling-reboot.yml` (`task 23-rolling-reboot`) reboots nodes into their installed kernel one at a time — data plane first, pi0 last — by **cordoning rather than draining**. Per node: assert no Longhorn volume is `degraded` or `faulted`, cordon, reboot (900s timeout), wait for `/readyz` then node `Ready`, uncordon, assert the running kernel now matches the installed one, then block until every volume is healthy again before advancing. Without `-e confirm_reboot=yes` it runs as a preview and changes nothing. Shared per-node logic lives in `roles/k8s-node/tasks/reboot_node.yml`.
+
+**Rationale:** `kubectl drain` cannot complete on a data-plane node in this cluster. Longhorn creates one PDB per `instance-manager` pod with `minAvailable: 1` against a selector matching exactly that pod, so allowed disruptions is **0** whenever that instance-manager hosts a live engine or replica — the Eviction API rejects the request and `drain` retries until it times out. Measured: all three `instance-manager-*` PDBs in `longhorn-system` currently report 0 allowed disruptions. `--ignore-daemonsets` does not help, because instance-manager is not a DaemonSet — Longhorn manages those pods directly. This is the most plausible mechanism behind the drain that hung during the 2026-09-13 incident (decision 061), and `32-k8s-upgrade.yml:12-16` still carries the same invocation.
+
+The alternative — setting Longhorn's cluster-wide `node-drain-policy` to `block-for-eviction` so replicas migrate off before eviction is permitted — was rejected here. It costs a full replica copy per node before that node may reboot, and with only three data-plane nodes holding two replicas per volume it additionally requires confirming the remaining two can absorb the migration. Cordon-and-rebuild instead lets the replica die with the node and rebuild from its surviving pair on return, which is fast and needs no mutable cluster-wide setting.
+
+**Trade-offs accepted:** each affected volume runs on a **single replica** from the moment the node goes down until its rebuild finishes; losing the surviving replica's node inside that window loses the volume. Accepted because all three volumes are healthy, the play refuses to start — and refuses to advance to the next node — while anything is degraded or faulted, and this is a homelab rather than a production store. Monitoring also gaps during each reboot: the Prometheus and Alertmanager PDBs are likewise at 0 allowed disruptions, but under cordon-only nothing evicts them, so they go down with the node and reschedule. pi0 is rebooted last and takes the API server with it for the duration; a node that fails to return needs physical access (issue #22).
+
+## 066 — Drift detection belongs in IaC; kernel reboots are deliberate, never a side effect (2026-10-03)
+
+**Area:** platform-engineering
+
+**Decision:** Added `homekube-main/ansible/90-verify-drift.yml` (`task verify-drift`) — a read-only playbook that compares runtime against `group_vars/all.yml` and checks the four nodes agree with each other, exiting non-zero on drift. Kernel staleness is derived from `dpkg-query -W -f='${Depends}' linux-image-rpi-2712` rather than `/var/run/reboot-required`, in a reusable `roles/k8s-node/tasks/check_pending_reboot.yml`. The routine update path now reports a pending kernel reboot but never acts on it; the `reboot:` task in the `raspberry-pi` role is gated behind `-e allow_reboot=true`. Versions were removed from the root `CLAUDE.md` stack table, which now points at the files Renovate owns. Actually rebooting into the staged kernel is a separate, explicitly-invoked play — see decision 067.
+
+**Rationale:** All four nodes were running stale kernels — pi0/pi2 on 6.18.39, pi1/pi3 on 6.18.29, with 6.18.50 installed on every node — and nothing anywhere reported it. Two independent gaps produced that: `roles/k8s-node/tasks/update_system.yml` runs `upgrade: dist` and pulls kernels but has no reboot check at all, and the check that does exist in the `raspberry-pi` role stats `/var/run/reboot-required`, which is never written on RPi OS Lite because `update-notifier-common` is not installed. So the only thing that ever rebooted a node into a new kernel was an incidental event — a k8s upgrade, or a crash. pi1 and pi3 had not rebooted since provisioning (2026-06-16, 2026-05-27), which is why they sat two kernel versions back.
+
+Detection rather than automatic remediation, because a reboot here is not cheap: pi0 is a single control plane, and per issue #22 every watchdog reset to date needed a manual power-cycle, so a node that fails to come back costs physical access. Auto-rebooting from `task update-all` would make that a surprise. Reporting makes the state visible at the moment the kernel is staged, and leaves the scheduling to a human.
+
+Docs stopped duplicating versions because decision 064 gave Renovate ownership of the `group_vars` pins. A hand-maintained second copy can then only be right between bumps — and in fact all three versions in the `CLAUDE.md` table (k8s, Cilium, Longhorn) were simultaneously wrong when checked. The audit also confirmed `group_vars/all.yml` itself matches runtime exactly on every pin, so the source of truth was never the problem.
+
+**Trade-offs accepted:** `task verify-drift` is a manual invocation, not a scheduled check, so drift is still only noticed when someone looks or runs an update — a cron/CI hook is the obvious follow-up. The kernel check hard-codes the `linux-image-rpi-2712` meta-package, so it is Pi-5-specific and would need adjusting for other hardware. Gating the `raspberry-pi` reboot behind `allow_reboot` means provisioning no longer reboots on its own; since that task had never once fired, this changes nothing in practice but does mean a fresh build may need an explicit reboot pass. Reading the effective watchdog value needs `systemctl show`, so the playbook carries one `command-instead-of-module` lint exemption.
+
+**Note:** rebooting into 6.18.50 does **not** unlock Cilium 1.20.2 — per decision 065, no 6.18.x RPi kernel ships BTF. The reboot is hygiene, not an escape route from the Cilium hold.
+
 ## 065 — Hold Cilium at 1.20.1; kernel BTF is becoming a hard Cilium requirement that Raspberry Pi OS does not satisfy (2026-10-03)
 
 **Area:** networking

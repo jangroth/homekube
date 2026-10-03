@@ -39,14 +39,16 @@ Hardware: Raspberry Pi 5 (8GB), Raspberry Pi OS Lite 64-bit (aarch64), 1TB NVMe 
 
 | Layer | Component |
 |-------|-----------|
-| Kubernetes | kubeadm (vanilla), v1.36.1 |
-| CNI | Cilium 1.19.4 |
-| CSI | Longhorn 1.11 |
+| Kubernetes | kubeadm (vanilla) |
+| CNI | Cilium — **held**, do not bump (decision 065) |
+| CSI | Longhorn |
 | GitOps | ArgoCD (App-of-Apps) |
 | Monitoring | Prometheus + Grafana + Loki |
 | Load Balancer | Cilium LB-IPAM + L2 |
 | Provisioning | Ansible + Task |
 | Cloud IaC | Terraform (AWS-account resources — decision 058) |
+
+**Versions are not recorded here** — they live in `homekube-main/ansible/group_vars/all.yml` (Renovate-owned, decision 064) and `homekube-apps/applications/**/*.yaml` → `targetRevision`. Renovate bumps those automatically, so any copy kept here could only be correct between bumps. Run `task verify-drift` in `homekube-main` to check runtime against them (decision 066).
 
 ---
 
