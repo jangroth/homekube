@@ -20,6 +20,10 @@ Everything the watchdog theory could never explain follows from this: no watchdo
 
 **Note:** this does not change [decision 065](DECISIONS.md) — the Cilium hold is a kernel-BTF problem, unrelated.
 
+**Strengthened 2026-10-04.** A second event the same evening removes the remaining doubt. pi2 stopped at 16:59:23 and pi0 at 16:59:25 — **2 seconds apart** — two minutes after pi3 finished rebooting, and pi1 logged `Undervoltage detected!` at 16:59:43, normalising at 16:59:45. Two independent software failures 2 seconds apart are not plausible; a shared electrical event is. That is two separate witness events from pi1 in one day, each within 20–30s of a pi0+pi2 death.
+
+The per-node pattern across every multi-node occurrence is consistent and is the next thing to act on: **pi0 and pi2 always die together; pi1 sags and survives; pi3 has never logged an undervoltage and has never died.** This points at port-level rail sharing within the charger rather than uniform undersizing — record which Pi occupies which physical port before rewiring, because that evidence is destroyed by the fix. Also worth noting the cluster is stable at idle (11h unbroken after the 21:15 restarts) and fails only on load spikes, which is why five months of investigation kept landing on whatever workload happened to be running.
+
 ## 067 — Reboot Longhorn nodes by cordon-and-rebuild, not drain (2026-10-03)
 
 **Area:** storage
