@@ -17,6 +17,11 @@ Current quarter only. Prior quarters: [2026 Q2](CHANGELOG-2026-Q2.md), [2026 Q3]
 
 ---
 
+## 2026-10-17
+
+### Operational
+- **Replaced the shared 8-port USB charging station with four per-node official Raspberry Pi 27W PSUs**, fixing the power starvation root-caused in [decision 068](DECISIONS.md) ([#52](https://github.com/jangroth/homekube/issues/52)). Before the swap the cluster was in a bad state with heaps of Prometheus alerts. After the nodes came back up (~16:48), all four report `max_current=5000` (was 3000) and `get_throttled=0x0`. The kernel logs since boot show no undervoltage or NVMe errors, all ArgoCD apps are Synced/Healthy and Longhorn volumes rebuilt to healthy. Only `CPUThrottlingHigh` (info) alerts remained, from the post-boot startup burst. #52 stays open pending a load test (`task 23-rolling-reboot`) and turning the drift check into an assertion.
+
 ## 2026-10-03
 
 ### Added
