@@ -17,6 +17,15 @@ Current quarter only. Prior quarters: [2026 Q2](CHANGELOG-2026-Q2.md), [2026 Q3]
 
 ---
 
+## 2026-10-18
+
+### Added
+- `homekube-main` — `-e force_reboot=yes` for `ansible/23-rolling-reboot.yml`: reboots every node even when none has a pending kernel (`_reboot_node` fact in `roles/k8s-node/tasks/reboot_node.yml`). Without it the play skips all four nodes now that they are on 6.18.50, so it cannot serve as a power load test.
+
+### Operational
+- **Rolling reboot as a load test of the new PSUs ([#52](https://github.com/jangroth/homekube/issues/52)):** `task 23-rolling-reboot -- -e confirm_reboot=yes -e force_reboot=yes` rebooted pi1, pi2, pi3, pi0 (07:01–07:20) with `failed=0` and the Longhorn rebuild wait passing between nodes. No node dropped, including pi0 and pi2. Afterwards `get_throttled=0x0` and no undervoltage or NVMe lines in any kernel log; all volumes healthy. pi3 logged `Buffer I/O error on dev sda`, which is the iSCSI-attached 50Gi Longhorn volume reattaching, not hardware. The first run without `force_reboot` changed nothing (every node already on the installed kernel).
+- Deleted 46 stale `Completed`/`Error` pods left by the node shutdowns (`kubectl delete pods -A --field-selector=status.phase=Failed` / `Succeeded`); every one already had a running replacement. The ArgoCD `prometheus` app showed `Unknown/Missing` while pi0 was down and recovered after a refresh.
+
 ## 2026-10-17
 
 ### Operational
