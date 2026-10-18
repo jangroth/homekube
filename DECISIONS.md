@@ -4,6 +4,16 @@ Current quarter only. Prior quarters: [2026 Q2](DECISIONS-2026-Q2.md), [2026 Q3]
 
 ---
 
+## 069 — No CI access to the cluster; verify-drift stays manual (2026-10-18)
+
+**Area:** security
+
+**Decision:** Do not run `verify-drift` from GitHub Actions, and do not give CI any network or SSH path into the cluster. `task verify-drift` stays a manual check; PR `homekube-main#26` and issue #54 are closed as won't-do.
+
+**Rationale:** A scheduled workflow would be the first CI-to-cluster path. It needs a root-capable SSH credential in GitHub secrets (the playbook runs `become: true`), a `tag:ci` grant in the tailnet ACL, and a cross-repo token to file issues in this repo (`GITHUB_TOKEN` is scoped to `homekube-main`). Both repos are public, which raises the cost of any leak. The benefit is a daily run of a check that is one command locally, against a cluster whose nodes are patched by hand and drift slowly. The draft also assumed `10.0.0.0/24` is routed over Tailscale; only `192.168.86.240/28` is advertised, so it would not have connected as written.
+
+**Trade-offs accepted:** Drift is only noticed when someone runs the check. Rejected a systemd timer on darth for now; revisit if drift recurs unnoticed. If CI access is ever reconsidered: dedicated revocable key, ACL limited to port 22 on the four pis, pinned host keys, and exit-code 4 (unreachable) kept separate from drift.
+
 ## 068 — The node crashes are power starvation, not the watchdog; supersedes the premise of 054 (2026-10-03)
 
 **Area:** platform-engineering
