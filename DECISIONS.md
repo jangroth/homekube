@@ -4,6 +4,16 @@ Current quarter only. Prior quarters: [2026 Q2](DECISIONS-2026-Q2.md), [2026 Q3]
 
 ---
 
+## 070 — Disable Tailscale node key expiry instead of adding a Tailscale widget (2026-10-18)
+
+**Area:** security
+
+**Decision:** Key expiry is disabled on darth and pi0–pi3 in the Tailscale admin console. The Homepage Tailscale widget (item 1 of [#10](https://github.com/jangroth/homekube/issues/10)) is not built.
+
+**Rationale:** The widget's only information that nothing else provides is node-key expiry; node liveness is already covered by Prometheus/Alertmanager. Tailscale keys expire after 180 days by default, and an expired key silently cuts the management path (SSH, ansible, kubectl) to a node. Removing the expiry removes the failure itself, whereas the widget would only display it, and would need a long-lived tailnet API key sealed into `homepage-widget-secrets` and rotated.
+
+**Trade-offs accepted:** A node key that never expires stays valid if a device is lost or compromised, so revocation becomes a manual step (remove the device in the admin console, or tighten the ACL). Accepted for a four-node home cluster whose management plane is reachable only over the tailnet.
+
 ## 069 — No CI access to the cluster; verify-drift stays manual (2026-10-18)
 
 **Area:** security

@@ -23,9 +23,21 @@ Current quarter only. Prior quarters: [2026 Q2](CHANGELOG-2026-Q2.md), [2026 Q3]
 - `homekube-main` — `ansible/90-verify-drift.yml` now asserts `max_current` is 5000mA on every node (was reported only), closing the last acceptance item on [#52](https://github.com/jangroth/homekube/issues/52). `task verify-drift` passes on all four nodes.
 - `homekube-main` — `-e force_reboot=yes` for `ansible/23-rolling-reboot.yml`: reboots every node even when none has a pending kernel (`_reboot_node` fact in `roles/k8s-node/tasks/reboot_node.yml`). Without it the play skips all four nodes now that they are on 6.18.50, so it cannot serve as a power load test.
 
+### Changed
+- `homekube-apps@5e042bc` (PR #70) — `gethomepage.dev/*` discovery annotations on the Longhorn Service and, via Helm values, Grafana and Dex; their static entries removed from `homepage/configmap.yaml`. ArgoCD stays a static entry (its widget key is a `HOMEPAGE_VAR` placeholder; substitution in discovered annotations unverified). Closes [#10](https://github.com/jangroth/homekube/issues/10); its Tailscale-widget item is won't-do (see [decision 070](DECISIONS.md)).
+- `CLAUDE.md` — changelog scope: version bumps are logged only for manual/risky rollouts, deliberate holds or pin changes, or breaking changes; routine Renovate bumps are not.
+
+### Fixed
+- `homekube-main@8ee6c60` (PR #24) — `ansible/32-k8s-upgrade.yml` no longer drains: it asserts Longhorn volumes healthy, cordons, upgrades, then waits for three consecutive healthy samples before the next node, matching [decision 067](DECISIONS-2026-Q3.md). Removes the drain deadlock on Longhorn instance-manager PDBs ([#53](https://github.com/jangroth/homekube/issues/53)). Syntax-checked only; first live run is the next Kubernetes upgrade ([#56](https://github.com/jangroth/homekube/issues/56)).
+
 ### Operational
+- Disabled Tailscale node key expiry on darth and pi0–pi3 in the admin console ([decision 070](DECISIONS.md)).
+- Rewrote `homekube-main` `main` history once: PR #24's merge was redone on a branch rebased onto `main` (`065fdc7` → `8ee6c60`, force-push with lease); tree identical. Closed PR #26 (CI verify-drift workflow) and [#54](https://github.com/jangroth/homekube/issues/54) as won't-do per [decision 069](DECISIONS.md).
 - **Rolling reboot as a load test of the new PSUs ([#52](https://github.com/jangroth/homekube/issues/52)):** `task 23-rolling-reboot -- -e confirm_reboot=yes -e force_reboot=yes` rebooted pi1, pi2, pi3, pi0 (07:01–07:20) with `failed=0` and the Longhorn rebuild wait passing between nodes. No node dropped, including pi0 and pi2. Afterwards `get_throttled=0x0` and no undervoltage or NVMe lines in any kernel log; all volumes healthy. pi3 logged `Buffer I/O error on dev sda`, which is the iSCSI-attached 50Gi Longhorn volume reattaching, not hardware. The first run without `force_reboot` changed nothing (every node already on the installed kernel).
 - Deleted 46 stale `Completed`/`Error` pods left by the node shutdowns (`kubectl delete pods -A --field-selector=status.phase=Failed` / `Succeeded`); every one already had a running replacement. The ArgoCD `prometheus` app showed `Unknown/Missing` while pi0 was down and recovered after a refresh.
+
+### Decisions
+- [069](DECISIONS.md) — no CI access to the cluster; verify-drift stays manual. [070](DECISIONS.md) — disable Tailscale key expiry instead of a Tailscale widget.
 
 ## 2026-10-17
 
