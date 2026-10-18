@@ -20,6 +20,7 @@ Current quarter only. Prior quarters: [2026 Q2](CHANGELOG-2026-Q2.md), [2026 Q3]
 ## 2026-10-18
 
 ### Added
+- `homekube-main` — `ansible/90-verify-drift.yml` now asserts `max_current` is 5000mA on every node (was reported only), closing the last acceptance item on [#52](https://github.com/jangroth/homekube/issues/52). `task verify-drift` passes on all four nodes.
 - `homekube-main` — `-e force_reboot=yes` for `ansible/23-rolling-reboot.yml`: reboots every node even when none has a pending kernel (`_reboot_node` fact in `roles/k8s-node/tasks/reboot_node.yml`). Without it the play skips all four nodes now that they are on 6.18.50, so it cannot serve as a power load test.
 
 ### Operational
