@@ -4,6 +4,16 @@ Current quarter only. Prior quarters: [2026 Q2](DECISIONS-2026-Q2.md), [2026 Q3]
 
 ---
 
+## 072 — No Velero; Longhorn backups plus git cover recovery (2026-10-20)
+
+**Area:** storage
+
+**Decision:** Velero is not adopted. [#21](https://github.com/jangroth/homekube/issues/21) and `homekube-apps` PR #73 are closed as won't-do.
+
+**Rationale:** Cluster manifests live in git and ArgoCD, so a rebuild reproduces them; PV data is backed up by Longhorn directly (decision 071). Velero would add no restore capability, and would need the VolumeSnapshot CRDs and snapshot controller (not installed), another controller on four Pis and a second S3 credential path. The one gap a rebuild cannot close from git is the sealed-secrets private key, tracked as [#58](https://github.com/jangroth/homekube/issues/58).
+
+**Trade-offs accepted:** No cluster-state snapshot, so objects created outside git (manual `kubectl apply`) are lost on a rebuild. Revisit if workloads appear whose state lives in Kubernetes objects rather than volumes.
+
 ## 071 — Longhorn owns backup retention; no S3 object expiry (2026-10-20)
 
 **Area:** storage
