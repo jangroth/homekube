@@ -4,6 +4,16 @@ Current quarter only. Prior quarters: [2026 Q2](DECISIONS-2026-Q2.md), [2026 Q3]
 
 ---
 
+## 073 — Remove kube-bench (2026-10-20)
+
+**Area:** security
+
+**Decision:** The kube-bench install task, its `kube_bench_version` pin, its Renovate rule and its doc references are removed from `homekube-main`. [#12](https://github.com/jangroth/homekube/issues/12) is closed.
+
+**Rationale:** It was installed on pi0 but nothing ran it on a schedule and nothing reviewed its output. A CIS scan of a single-operator, tailnet-only kubeadm cluster would mostly flag defaults accepted by design; an unreviewed scan is not a control. It also cost a version pin and Renovate churn.
+
+**Trade-offs accepted:** No CIS benchmark baseline. If a hardening pass is wanted later, run a one-off scan from a Job or a downloaded binary rather than a standing install.
+
 ## 072 — No Velero; Longhorn backups plus git cover recovery (2026-10-20)
 
 **Area:** storage

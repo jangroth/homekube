@@ -23,10 +23,11 @@ Current quarter only. Prior quarters: [2026 Q2](CHANGELOG-2026-Q2.md), [2026 Q3]
 - `homekube-main` — `terraform/backup-target`: removed the 30-day object expiry from the bucket lifecycle (rule renamed `abort-incomplete-multipart`, which keeps only the 7-day multipart abort). Applied by hand; plan showed one in-place update. See [decision 071](DECISIONS.md).
 
 ### Removed
+- `homekube-main` — kube-bench: `install_kube_bench.yml` and its import, `kube_bench_version`, the Renovate rule and doc references ([#12](https://github.com/jangroth/homekube/issues/12), [decision 073](DECISIONS.md)). The binary installed on pi0 is not removed by this change.
 - Closed `homekube-apps` PR #73 (Velero) and [#21](https://github.com/jangroth/homekube/issues/21) as won't-do. Opened [#58](https://github.com/jangroth/homekube/issues/58) for backing up the sealed-secrets key.
 
 ### Decisions
-- [071](DECISIONS.md) — Longhorn owns backup retention; no S3 object expiry. [072](DECISIONS.md) — no Velero.
+- [071](DECISIONS.md) — Longhorn owns backup retention; no S3 object expiry. [072](DECISIONS.md) — no Velero. [073](DECISIONS.md) — remove kube-bench.
 
 ## 2026-10-19
 
