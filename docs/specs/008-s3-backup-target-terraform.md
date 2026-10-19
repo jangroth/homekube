@@ -1,6 +1,7 @@
 # Spec 008 — S3 Backup Target via Terraform
 
 **Status:** Done (2026-09-01)
+**Amended 2026-10-20:** the 30-day object expiry was removed from the bucket; Longhorn owns retention. See [decision 071](../../DECISIONS.md). §2, §4b and the lifecycle acceptance item below describe the original design. Issue #21 (Velero) was closed as won't-do, [decision 072](../../DECISIONS.md).
 **Closes:** issue #20 (`homekube`)
 **Unblocks:** issue #21 (Velero + Longhorn backup target), issue #19 (Longhorn scheduled backups)
 **Related decisions:** [Decision 058](../../DECISIONS.md) — Terraform adopted as the standard tool for AWS/cloud-account-level infrastructure (wider policy, logged ahead of implementation). A second, bucket-specific DECISIONS.md entry (storage class choice) still gets added on completion per §5 Step 5.
@@ -22,7 +23,7 @@ No backup target exists for the cluster (confirmed live 2026-07-12 — `backup-t
 
 At realistic homelab PVC volumes (tens of GB), the absolute cost is low regardless of class — e.g. 50 GB on Standard ≈ $1.15/month — so this decision is about not overpaying via the minimum-duration trap, not about a materially large saving.
 
-**Lifecycle safety net**: add a bucket lifecycle rule expiring objects after 30 days regardless of prefix. Longhorn/Velero retention policies are the primary cleanup mechanism (issues #19/#21 scope); this is a backstop in case a retention policy misconfiguration leaves orphaned objects accumulating cost unnoticed.
+**Lifecycle safety net** *(removed 2026-10-20, decision 071)*: add a bucket lifecycle rule expiring objects after 30 days regardless of prefix. Longhorn/Velero retention policies are the primary cleanup mechanism (issues #19/#21 scope); this is a backstop in case a retention policy misconfiguration leaves orphaned objects accumulating cost unnoticed.
 
 **One bucket, one IAM user, prefix-separated**, not two buckets/users — `s3://homekube-backups/longhorn/…` and `s3://homekube-backups/velero/…`. Simpler blast radius for a single-operator homelab; the IAM policy is scoped to the bucket ARN regardless.
 
@@ -335,7 +336,7 @@ Per `feedback_ansible_execution` / `feedback_implementation_pace`: show each com
 
 - [x] `homekube-terraform` SSO permission set exists, is assigned to Jan, and `backup-target`'s apply in Step 3 ran under it (not the admin profile) — confirmed live 2026-09-08: `aws sts get-caller-identity --profile homekube-terraform` resolves to `assumed-role/AWSReservedSSO_homekube-terraform_.../jansso`, not the admin profile.
 - [x] `terraform plan` after apply shows no diff (state matches reality) — confirmed live 2026-09-08, both stacks: "No changes. Your infrastructure matches the configuration."
-- [x] `aws s3api get-bucket-lifecycle-configuration --bucket <name>` shows the 30-day expiry rule — confirmed live 2026-09-08: `safety-net-expiry` rule, `Expiration.Days=30`, `AbortIncompleteMultipartUpload.DaysAfterInitiation=7`.
+- [x] *(superseded 2026-10-20, decision 071: expiry removed)* `aws s3api get-bucket-lifecycle-configuration --bucket <name>` shows the 30-day expiry rule — confirmed live 2026-09-08: `safety-net-expiry` rule, `Expiration.Days=30`, `AbortIncompleteMultipartUpload.DaysAfterInitiation=7`.
 - [x] `aws s3api get-public-access-block --bucket <name>` shows all four block flags `true` — confirmed live 2026-09-08.
 - [x] IAM user `homekube-backup` can `PutObject`/`GetObject`/`DeleteObject` + multipart actions on objects, `ListBucket`/`GetBucketLocation` on the bucket, and nothing else — confirmed live 2026-09-08 via `aws iam get-user-policy`: exactly the two statements from `main.tf`, no broader access. (`iam:SimulatePrincipalPolicy`/`ListUserPolicies` aren't in `homekube-terraform`'s own scope, so "nothing else" is confirmed by the policy's own content rather than a broader IAM audit call — consistent with least-privilege.)
 - [x] `aws sts assume-role --role-arn <homekube-agent-terraform ARN> --role-session-name claude-session --profile homekube-terraform` succeeds, and the resulting `GetCallerIdentity` ARN shows `assumed-role/homekube-agent-terraform/claude-session` — confirmed live 2026-09-08.
