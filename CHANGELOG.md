@@ -17,6 +17,25 @@ Current quarter only. Prior quarters: [2026 Q2](CHANGELOG-2026-Q2.md), [2026 Q3]
 
 ---
 
+## 2026-10-20
+
+### Changed
+- `homekube-main` — `terraform/backup-target`: removed the 30-day object expiry from the bucket lifecycle (rule renamed `abort-incomplete-multipart`, which keeps only the 7-day multipart abort). Applied by hand; plan showed one in-place update. See [decision 071](DECISIONS.md).
+
+### Decisions
+- [071](DECISIONS.md) — Longhorn owns backup retention; no S3 object expiry.
+
+## 2026-10-19
+
+### Added
+- Longhorn → S3 backups ([#19](https://github.com/jangroth/homekube/issues/19)): `BackupTarget` `default` pointing at the Terraform-created bucket with a SealedSecret `longhorn-backup-s3` (static IAM user keys; role-based access is not supported by Longhorn, hardening tracked in [#57](https://github.com/jangroth/homekube/issues/57)), and RecurringJob `hermes-daily-backup` (daily 16:00 UTC, retain 7, Hermes only) in `homekube-apps/applications/wave-01-apps/longhorn-extras`. The `hermes-data` PVC in `jangroth/herminator` carries the recurring-job labels declaratively.
+
+### Operational
+- Backup and restore verified: a manual backup of the Hermes volume completed and restored into a scratch volume; scratch volume and backup removed afterwards. The first scheduled backup completed at 16:00 UTC (1.5 GB), `BackupTarget` `AVAILABLE=true`.
+- Found that the bucket's 30-day expiry would delete blocks still referenced by newer incremental backups; fixed on 2026-10-20 (above).
+
+---
+
 ## 2026-10-18
 
 ### Added

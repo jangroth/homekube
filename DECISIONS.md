@@ -4,6 +4,16 @@ Current quarter only. Prior quarters: [2026 Q2](DECISIONS-2026-Q2.md), [2026 Q3]
 
 ---
 
+## 071 — Longhorn owns backup retention; no S3 object expiry (2026-10-20)
+
+**Area:** storage
+
+**Decision:** The backup bucket has no object-expiry lifecycle rule. Retention is Longhorn's `retain: 7` on the `hermes-daily-backup` RecurringJob; the bucket keeps only an abort-incomplete-multipart rule (7 days). This amends spec 008, which carried a 30-day `safety-net-expiry` as a backstop.
+
+**Rationale:** Longhorn backups are incremental and share blocks, so an age-based S3 expiry deletes blocks that newer backups still reference, corrupting them. The first blocks written on 2026-10-19 would have expired around 2026-11-18. Longhorn reference-counts blocks and removes only unreferenced ones when a backup ages out, which S3 cannot know.
+
+**Trade-offs accepted:** Nothing expires orphans: backups of a deleted volume and manually created backups stay in S3 until removed (delete the BackupVolume when retiring a volume). No safety net against a Longhorn GC bug; at ~1.5 GB the cost of either is cents per month. No periodic full backup, so a corrupted block is not repaired; `full-backup-interval: "30"` is the cheap fix if that is wanted. Bucket versioning with noncurrent-version expiry is deferred to [#57](https://github.com/jangroth/homekube/issues/57).
+
 ## 070 — Disable Tailscale node key expiry instead of adding a Tailscale widget (2026-10-18)
 
 **Area:** security
