@@ -24,6 +24,7 @@ Current quarter only. Prior quarters: [2026 Q2](CHANGELOG-2026-Q2.md), [2026 Q3]
 
 ### Removed
 - `homekube-main` — kube-bench: `install_kube_bench.yml` and its import, `kube_bench_version`, the Renovate rule and doc references ([#12](https://github.com/jangroth/homekube/issues/12), [decision 073](DECISIONS.md)). The binary installed on pi0 is not removed by this change.
+- Closed `homekube-apps` PRs #80, #81 and #84 unmerged, and [#15](https://github.com/jangroth/homekube/issues/15), [#16](https://github.com/jangroth/homekube/issues/16), [#55](https://github.com/jangroth/homekube/issues/55) as not planned: the L2 announcement policy was removed in `homekube-apps@b924efa` (Tailscale-only LB access), so the failover and Wi-Fi diagnostic scripts had nothing to test, and no stale pods remain.
 - Closed `homekube-apps` PR #73 (Velero) and [#21](https://github.com/jangroth/homekube/issues/21) as won't-do. Opened [#58](https://github.com/jangroth/homekube/issues/58) for backing up the sealed-secrets key.
 
 ### Decisions
