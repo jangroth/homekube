@@ -25,6 +25,9 @@ Current quarter only. Prior quarters: [2026 Q2](CHANGELOG-2026-Q2.md), [2026 Q3]
 ### Changed
 - `homekube-main` — `renovate.json` now tracks `kubernetes_version` against `kubernetes/kubernetes` releases, patch updates only, one PR per release (minor/major disabled; excluded from the grouped Ansible-pins PR). Merging one means running `task 32-k8s-upgrade`; `verify-drift` flags the gap until then. README's stale "excluded (see #44)" line corrected.
 
+### Operational
+- **Kubernetes 1.37.0 → 1.37.1 on all four nodes via `task 32-k8s-upgrade`, the first live run of the Longhorn-gated, cordon-only play from PR #24 ([#56](https://github.com/jangroth/homekube/issues/56) closed).** pi0 was staged alone with `--limit pi0`, then pi1–pi3 ran one at a time. All volumes stayed healthy and `verify-drift` passed afterwards. The pin was bumped by hand: a manual Renovate dispatch on a Tuesday created no PR because `schedule:weekly` only opens branches before 4am UTC Monday; the lookup itself resolved 1.37.1 correctly. The token's missing issues scope is [#59](https://github.com/jangroth/homekube/issues/59).
+
 ### Removed
 - `homekube-main` — kube-bench: `install_kube_bench.yml` and its import, `kube_bench_version`, the Renovate rule and doc references ([#12](https://github.com/jangroth/homekube/issues/12), [decision 073](DECISIONS.md)). The binary installed on pi0 is not removed by this change.
 - Closed `homekube-apps` PRs #80, #81 and #84 unmerged, and [#15](https://github.com/jangroth/homekube/issues/15), [#16](https://github.com/jangroth/homekube/issues/16), [#55](https://github.com/jangroth/homekube/issues/55) as not planned: the L2 announcement policy was removed in `homekube-apps@b924efa` (Tailscale-only LB access), so the failover and Wi-Fi diagnostic scripts had nothing to test, and no stale pods remain.
