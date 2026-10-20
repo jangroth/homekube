@@ -22,6 +22,9 @@ Current quarter only. Prior quarters: [2026 Q2](CHANGELOG-2026-Q2.md), [2026 Q3]
 ### Changed
 - `homekube-main` — `terraform/backup-target`: removed the 30-day object expiry from the bucket lifecycle (rule renamed `abort-incomplete-multipart`, which keeps only the 7-day multipart abort). Applied by hand; plan showed one in-place update. See [decision 071](DECISIONS.md).
 
+### Changed
+- `homekube-main` — `renovate.json` now tracks `kubernetes_version` against `kubernetes/kubernetes` releases, patch updates only, one PR per release (minor/major disabled; excluded from the grouped Ansible-pins PR). Merging one means running `task 32-k8s-upgrade`; `verify-drift` flags the gap until then. README's stale "excluded (see #44)" line corrected.
+
 ### Removed
 - `homekube-main` — kube-bench: `install_kube_bench.yml` and its import, `kube_bench_version`, the Renovate rule and doc references ([#12](https://github.com/jangroth/homekube/issues/12), [decision 073](DECISIONS.md)). The binary installed on pi0 is not removed by this change.
 - Closed `homekube-apps` PRs #80, #81 and #84 unmerged, and [#15](https://github.com/jangroth/homekube/issues/15), [#16](https://github.com/jangroth/homekube/issues/16), [#55](https://github.com/jangroth/homekube/issues/55) as not planned: the L2 announcement policy was removed in `homekube-apps@b924efa` (Tailscale-only LB access), so the failover and Wi-Fi diagnostic scripts had nothing to test, and no stale pods remain.
