@@ -17,6 +17,14 @@ Current quarter only. Prior quarters: [2026 Q2](CHANGELOG-2026-Q2.md), [2026 Q3]
 
 ---
 
+## 2026-10-21
+
+### Added
+- `homekube-main` — `docs/restore-sealed-secrets-key.md`: export and restore procedure for the sealed-secrets controller keys ([#58](https://github.com/jangroth/homekube/issues/58)).
+
+### Operational
+- Exported all 5 `sealed-secrets-key*` secrets from `kube-system` to a secure note in the password manager, outside the cluster and git. Re-export after each 30-day rotation (next about 2026-10-22).
+
 ## 2026-10-20
 
 ### Changed
