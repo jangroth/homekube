@@ -4,6 +4,16 @@ Current quarter only. Prior quarters: [2026 Q2](DECISIONS-2026-Q2.md), [2026 Q3]
 
 ---
 
+## 074 — Homepage services are static entries; no annotation discovery (2026-10-21)
+
+**Area:** platform-engineering
+
+**Decision:** Longhorn, Grafana and Dex are static entries in the homepage `services.yaml`, and the `gethomepage.dev/*` annotations on their Services are removed.
+
+**Rationale:** Homepage discovers services only from Ingress (and, if enabled, Traefik IngressRoute and Gateway API HTTPRoute) annotations, never from Services. The cluster has no Ingress controller; everything is a `LoadBalancer` VIP. The annotations added in `homekube-apps` PR #70 matched nothing, so the three cards disappeared once the pod restarted.
+
+**Trade-offs accepted:** A new service needs an edit to the homepage configmap as well as its own manifest. Adding an ingress controller just for discovery is not worth it. Supersedes the discovery part of [#10](https://github.com/jangroth/homekube/issues/10) item 2.
+
 ## 073 — Remove kube-bench (2026-10-20)
 
 **Area:** security

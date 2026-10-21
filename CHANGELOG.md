@@ -19,7 +19,11 @@ Current quarter only. Prior quarters: [2026 Q2](CHANGELOG-2026-Q2.md), [2026 Q3]
 
 ## 2026-10-21
 
+### Fixed
+- `homekube-apps` — homepage lost its Longhorn, Grafana and Dex cards: PR #70 (2026-10-18) moved them to `gethomepage.dev/*` Service annotations, but homepage only discovers Ingress annotations, so nothing matched. Restored the static entries in `services.yaml` and removed the annotations from the Longhorn Service and the Grafana and Dex Helm values ([decision 074](DECISIONS.md)).
+
 ### Added
+- `homekube-apps` — homepage bookmark for `jangroth/herminator`.
 - `homekube-main` — `docs/restore-sealed-secrets-key.md`: export and restore procedure for the sealed-secrets controller keys ([#58](https://github.com/jangroth/homekube/issues/58)).
 
 ### Operational
