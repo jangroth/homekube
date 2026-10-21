@@ -4,6 +4,16 @@ Current quarter only. Prior quarters: [2026 Q2](DECISIONS-2026-Q2.md), [2026 Q3]
 
 ---
 
+## 075 — Hermes image versions are pinned in homekube-apps and bumped by Renovate (2026-10-21)
+
+**Area:** platform-engineering
+
+**Decision:** The `hermes` Application in `homekube-apps` pins the Hermes and Tailscale image tags under `helm.valuesObject` (`v0.22.2`, `v1.104.2`). A regex custom manager in `renovate.json` tracks them, limited to plain `vX.Y.Z` tags (no `rc.*`, per-arch or `-desktop`). The herminator chart no longer defaults to `latest`.
+
+**Rationale:** The chart's `latest` with `IfNotPresent` left the running version to node image caches: the pod ran Hermes v0.20.4 and Tailscale 1.104.1 while `latest` was v0.22.2 and v1.104.2, and nothing recorded it. Renovate already runs in `homekube-apps`, and the built-in `argocd` manager does not read `valuesObject` (verified by dry run), hence the custom manager. Full reasoning in herminator [DECISIONS.md #012](https://github.com/jangroth/herminator/blob/main/DECISIONS.md) and `openspec/changes/pin-hermes-image-via-renovate/`.
+
+**Trade-offs accepted:** The first pin upgraded Hermes two minor versions in one step, behind the nightly Longhorn backup. Digest pinning did not work with the custom manager and is deferred. The `nginx:stable` init container in the herminator chart is not tracked.
+
 ## 074 — Homepage services are static entries; no annotation discovery (2026-10-21)
 
 **Area:** platform-engineering

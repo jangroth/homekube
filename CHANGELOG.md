@@ -26,8 +26,14 @@ Current quarter only. Prior quarters: [2026 Q2](CHANGELOG-2026-Q2.md), [2026 Q3]
 - `homekube-apps` — homepage bookmark for `jangroth/herminator`.
 - `homekube-main` — `docs/restore-sealed-secrets-key.md`: export and restore procedure for the sealed-secrets controller keys ([#58](https://github.com/jangroth/homekube/issues/58)).
 
+### Changed
+- `homekube-apps` — `hermes` Application pins `hermes-agent` `v0.22.2` and `tailscale` `v1.104.2` under `helm.valuesObject`; `renovate.json` gains a regex custom manager and a plain-semver filter for them (PR #91, `homekube-apps@34e892e`). Rolled out as a real upgrade from Hermes v0.20.4 / Tailscale 1.104.1. See [decision 075](DECISIONS.md).
+
 ### Operational
 - Exported all 5 `sealed-secrets-key*` secrets from `kube-system` to a secure note in the password manager, outside the cluster and git. Re-export after each 30-day rotation (next about 2026-10-22).
+
+### Decisions
+- [075](DECISIONS.md) — Hermes image versions are pinned in homekube-apps and bumped by Renovate.
 
 ## 2026-10-20
 
