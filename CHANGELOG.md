@@ -19,6 +19,9 @@ Current quarter only. Prior quarters: [2026 Q2](CHANGELOG-2026-Q2.md), [2026 Q3]
 
 ## 2026-10-25
 
+### Added
+- `homekube-apps` — homepage bookmark for `jangroth/herminator-state`.
+
 ### Changed
 - `homekube-apps` — sealed-secrets: automatic key renewal disabled (`keyrenewperiod: "0"`). `homekube-main/docs/restore-sealed-secrets-key.md` updated to match. See [decision 076](DECISIONS.md).
 
