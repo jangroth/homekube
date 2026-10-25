@@ -21,6 +21,7 @@ Current quarter only. Prior quarters: [2026 Q2](CHANGELOG-2026-Q2.md), [2026 Q3]
 
 ### Added
 - `homekube-apps` — homepage bookmark for `jangroth/herminator-state`.
+- `homekube-apps` — `hermes` Application pins `stateExport.betterleaks.tag: v1.9.0` for herminator's new state-export sidecar, tracked by Renovate and limited to plain `vX.Y.Z` (homekube-apps@4040640, [homekube-apps#92](https://github.com/jangroth/homekube-apps/pull/92), [herminator#9](https://github.com/jangroth/herminator/issues/9)).
 
 ### Changed
 - `homekube-apps` — sealed-secrets: automatic key renewal disabled (`keyrenewperiod: "0"`). `homekube-main/docs/restore-sealed-secrets-key.md` updated to match. See [decision 076](DECISIONS.md).
