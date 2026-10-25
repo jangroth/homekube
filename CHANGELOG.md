@@ -17,6 +17,17 @@ Current quarter only. Prior quarters: [2026 Q2](CHANGELOG-2026-Q2.md), [2026 Q3]
 
 ---
 
+## 2026-10-25
+
+### Changed
+- `homekube-apps` — sealed-secrets: automatic key renewal disabled (`keyrenewperiod: "0"`). `homekube-main/docs/restore-sealed-secrets-key.md` updated to match. See [decision 076](DECISIONS.md).
+
+### Operational
+- Re-exported all six sealed-secrets keys (including `sealed-secrets-key8hhrf`, renewed 2026-10-22) to the password-manager note, replacing the five-key export from 2026-10-21 ([#60](https://github.com/jangroth/homekube/issues/60)).
+
+### Decisions
+- [076](DECISIONS.md) — Disable automatic sealed-secrets key renewal.
+
 ## 2026-10-21
 
 ### Fixed

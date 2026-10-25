@@ -4,6 +4,16 @@ Current quarter only. Prior quarters: [2026 Q2](DECISIONS-2026-Q2.md), [2026 Q3]
 
 ---
 
+## 076 — Disable automatic sealed-secrets key renewal (2026-10-25)
+
+**Area:** security
+
+**Decision:** The sealed-secrets controller runs with `keyrenewperiod: "0"`. The six keys created by the 30-day renewals stay in the cluster, and the password-manager export taken on 2026-10-25 holds all six. Rotation becomes a manual step, followed by a re-export.
+
+**Rationale:** Renewal adds a key and never removes old ones or re-seals existing SealedSecrets, so a cluster compromise still exposes every key. It only limits the damage from one key leaking on its own, and only for secrets sealed after it. In exchange it required a manual export of private keys every month ([#60](https://github.com/jangroth/homekube/issues/60)), and a missed export left newly sealed secrets unrecoverable after a rebuild.
+
+**Trade-offs accepted:** No periodic rotation. The active key's certificate is valid for the chart default of 10 years (from 2026-10-22). Alternatives: an automated encrypted export to S3 (more moving parts and another static credential, see [#57](https://github.com/jangroth/homekube/issues/57)), or a key generated offline and loaded into the cluster, which may come with [#13](https://github.com/jangroth/homekube/issues/13).
+
 ## 075 — Hermes image versions are pinned in homekube-apps and bumped by Renovate (2026-10-21)
 
 **Area:** platform-engineering
