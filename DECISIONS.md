@@ -4,6 +4,16 @@ Current quarter only. Prior quarters: [2026 Q2](DECISIONS-2026-Q2.md), [2026 Q3]
 
 ---
 
+## 077 — Longhorn default replica count is 3 (2026-10-26)
+
+**Area:** storage
+
+**Decision:** `defaultReplicaCount` and `defaultClassReplicaCount` are 3 in `homekube-apps/applications/wave-00-init/longhorn.yaml`, so the default `longhorn` StorageClass creates one replica per data-plane node. This replaces the 2 replicas set in spec 005.
+
+**Rationale:** The three existing volumes were patched to 3 by hand on 2026-10-03 to keep two replicas running through the rolling reboot. They stayed at 3 because pi0 and pi2 failed together twice that day ([decision 068](DECISIONS.md)), and with 2 replicas, two nodes failing at once can take a volume offline. The source still said 2, so new PVCs and any rebuilt or restored volumes would have been created with only 2 replicas.
+
+**Trade-offs accepted:** About 50% more disk per volume (roughly 58Gi in total today, against 1TB NVMe per node) and one extra replica write per I/O. With three data-plane nodes, a node that is drained or down leaves each volume degraded until it returns, rather than rebuilding elsewhere.
+
 ## 076 — Disable automatic sealed-secrets key renewal (2026-10-25)
 
 **Area:** security

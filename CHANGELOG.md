@@ -17,6 +17,20 @@ Current quarter only. Prior quarters: [2026 Q2](CHANGELOG-2026-Q2.md), [2026 Q3]
 
 ---
 
+## 2026-10-26
+
+### Removed
+- `homekube-main` — Cilium L2 announcements: `l2announcements` block removed from `cilium-helm-values.yaml` and the docs table (PR #28, [#61](https://github.com/jangroth/homekube/issues/61)). No `CiliumL2AnnouncementPolicy` has existed since LB access became Tailscale-only.
+
+### Changed
+- `homekube-apps` — Longhorn `defaultReplicaCount` and `defaultClassReplicaCount` 2 → 3, matching the three volumes patched by hand on 2026-10-03. See [decision 077](DECISIONS.md).
+
+### Operational
+- **Cilium rolled out with `task 40-cni` (helm rev 9, chart still 1.20.1), then the agents were restarted.** The agents still started with `--enable-l2-announcements='true'`: a `kubectl patch` on 2026-06-22 had made `kubectl-patch` a field manager of that `cilium-config` key, and Helm's server-side apply does not remove fields another manager also owns. Removed the key by hand and restarted the agents again; all four now report `false`, `cilium-dbg status` is OK, and all LoadBalancer VIPs answer over Tailscale. The patch's other three keys (`devices`, `k8s-client-qps`, `k8s-client-burst`) match the Helm values. The cluster-wide scan for hand-owned fields is now [#62](https://github.com/jangroth/homekube/issues/62).
+
+### Decisions
+- [077](DECISIONS.md) — Longhorn default replica count is 3.
+
 ## 2026-10-25
 
 ### Added
