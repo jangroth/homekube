@@ -17,6 +17,11 @@ Current quarter only. Prior quarters: [2026 Q2](CHANGELOG-2026-Q2.md), [2026 Q3]
 
 ---
 
+## 2026-10-28
+
+### Added
+- `homekube-main` — `task verify-drift` now reports resource fields owned by hand-run `kubectl` (`patch`, `edit`, client-side `apply`, `replace`, `create`, `set`) under a separate "Hand-owned fields" heading (PR #30, [#62](https://github.com/jangroth/homekube/issues/62)). Report-only, doesn't affect the exit code. Covers every top-level field except `metadata`/`status`. Current hits are argocd-cm, cilium-config and the three Longhorn volumes, all values matching GitOps.
+
 ## 2026-10-26
 
 ### Removed
