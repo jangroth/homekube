@@ -19,6 +19,15 @@ Current quarter only. Prior quarters: [2026 Q2](CHANGELOG-2026-Q2.md), [2026 Q3]
 
 ## 2026-10-29
 
+### Added
+- `homekube-apps` — The nightly routine's instructions and settings now live in `.claude/routines/nightly-todo.md`, and its cloud setup script in `scripts/cloud/setup.sh` (PR #95, [#64](https://github.com/jangroth/homekube/issues/64)). The prompt now uses `gh api` instead of `gh issue list`/`gh pr list` (GraphQL is blocked in cloud sessions), attaches the tracker repo with `add_repo` before querying it, and must not edit its own instruction files. `setup.sh` installs `kubectl` for the `kubectl kustomize applications/` check, reading the version at runtime from `kubernetes_version` in homekube-main.
+
+### Operational
+- **"homekube-apps - nightly todo" routine (`trig_01P852NPoKhaxLW2pNwLoinN`) moved to its own cloud environment, `claude-code-homekube-apps`**, which runs the repo's setup script. `claude-code-homekube` stays with homekube-main, because a homekube-apps setup script would fail on homekube-main runs. The prompt was reduced to a pointer to the repo file and the model changed to `claude-opus-5-5`. A manual run succeeded but had no eligible issue, so the `kubectl` install is still untested ([#66](https://github.com/jangroth/homekube/issues/66)).
+
+### Decisions
+- [078](DECISIONS.md) — One cloud environment per routine repo, setup script in the repo.
+
 ### Fixed
 - `homekube-apps` — Alertmanager routes `alertname = InfoInhibitor` to the `null` receiver (PR #96). InfoInhibitor carries `severity=none`, so the `severity = info` route missed it, and because the rule matches *pending* info alerts it sent a Telegram FIRING/RESOLVED pair on every short `CPUThrottlingHigh` pending window: about 10 messages a day instead of about 2. The rise started on 2026-10-25, when Hermes' `state-export` sidecar began throttling on each hourly run. `state-export`'s 500m CPU limit is kept as it is: the throttling comes from short multi-threaded bursts (peak about 54m, average under 1m), the job has no deadline, and the limit caps a runaway export.
 

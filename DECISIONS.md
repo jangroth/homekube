@@ -4,6 +4,16 @@ Current quarter only. Prior quarters: [2026 Q2](DECISIONS-2026-Q2.md), [2026 Q3]
 
 ---
 
+## 078 — One cloud environment per routine repo, setup script in the repo (2026-10-29)
+
+**Area:** process
+
+**Decision:** Each nightly routine runs in a cloud environment for its own repo (`claude-code-homekube-apps`, `claude-code-homekube` for homekube-main, `claude-code-dotfiles`). The environment's setup script is one line that runs `scripts/cloud/setup.sh` from that repo, and the routine prompt only points to `.claude/routines/nightly-todo.md`. Settings that can only live in the routine config (trigger, schedule, model, tools, environment name) are documented in that file.
+
+**Rationale:** Only the routine's own repo is cloned, so a setup script path from one repo fails setup for every routine sharing the environment. Keeping the prompt and setup script in the repo puts them under review and lets them be rebuilt from source.
+
+**Trade-offs accepted:** One extra environment per repo to create and keep in sync by hand on claude.ai (network settings aren't in source). The routine settings table can drift from the live config, since nothing checks it.
+
 ## 077 — Longhorn default replica count is 3 (2026-10-26)
 
 **Area:** storage
