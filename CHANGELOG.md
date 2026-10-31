@@ -22,10 +22,18 @@ Current quarter only. Prior quarters: [2026 Q2](CHANGELOG-2026-Q2.md), [2026 Q3]
 ### Added
 - `homekube-main` — The nightly routine's instructions, settings and cloud environment now live in `.claude/routines/nightly-todo.md` and `.claude/routines/cloud-environment.md`, with the setup script in `scripts/cloud/setup.sh` (PR #31, [#63](https://github.com/jangroth/homekube/issues/63)). They match the homekube-apps routine except for repo-specific steps; the verification step is `ansible-playbook --syntax-check` plus `ansible-lint`. `setup.sh` runs `uv sync` and installs the Ansible collections. `cloud-environment.md` records the environment name, network allowlist and setup script.
 - `homekube-apps` — `.claude/routines/cloud-environment.md` added and the schedule shown in AEST as well as UTC, matching homekube-main (PR #97).
+- `homekube` — The quarterly archive routine's instructions and settings now live in `.claude/routines/quarterly-archive.md`, and its cloud environment in `.claude/routines/cloud-environment.md` (PR #67, [#65](https://github.com/jangroth/homekube/issues/65)). The layout matches the nightly routines. The PR is opened and assigned through `gh api` because GraphQL is blocked in cloud sessions, and the run stops if files other than the CHANGELOG/DECISIONS files change. No setup script is needed, since `archive_quarter.py` only uses the standard library.
 
 ### Operational
 - **"homekube-main - nightly todo" routine (`trig_01TrV6VfMXKVEGr9cdMVw4EL`) moved to its own cloud environment, `claude-code-homekube-main`**, with the prompt reduced to a pointer to the repo file and the model changed to `claude-opus-5-5`. A manual run succeeded: setup installed the Python dependencies and collections through the allowlist, and the agent exited cleanly with no eligible issue. Decision [078](DECISIONS.md) updated to name the new environment.
 - **homekube-apps routine setup verified.** A manual run's setup output showed `kubectl` v1.37.1 installed in `claude-code-homekube-apps`, so the version lookup, allowlist and download work ([#66](https://github.com/jangroth/homekube/issues/66) closed).
+- **"homekube - quarterly changelog/decisions archive" routine (`trig_01PyasKTeDUn91Vfumf91FYr`) updated via `RemoteTrigger`:**
+  - The prompt is now a pointer to `quarterly-archive.md`.
+  - The schedule changed from `17 9 2 1,4,7,10 *` to `0 14 1 1,4,7,10 *` (00:00 AEST on the 2nd). It stays on the 2nd AEST because the script's cutoff uses the container's UTC date.
+  - The model changed from `claude-sonnet-5` to `claude-opus-5-5`.
+  - Unused connectors were removed (Claude Docs, Gmail, Google Drive, Google Calendar).
+
+  It stays on `claude-code-homekube`, which only this routine now uses. A manual run did a dry run, found nothing to archive and exited without a branch or PR. The PR steps are first tested on 2027-01-01 14:00 UTC.
 
 ## 2026-10-29
 
