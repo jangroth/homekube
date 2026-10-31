@@ -7,7 +7,7 @@ Run quarterly by the "homekube - quarterly changelog/decisions archive" Claude C
 | Setting       | Value                                                                 |
 |---------------|-----------------------------------------------------------------------|
 | Trigger       | `trig_01PyasKTeDUn91Vfumf91FYr`                                       |
-| Schedule      | `17 9 2 1,4,7,10 *`: 09:17 UTC on 2 Jan/Apr/Jul/Oct (19:17 AEST, same day) |
+| Schedule      | `0 14 1 1,4,7,10 *`: 14:00 UTC on 1 Jan/Apr/Jul/Oct (00:00 AEST on the 2nd) |
 | Model         | claude-sonnet-5                                                       |
 | Allowed tools | Bash, Read, Write, Edit, Glob, Grep, WebFetch, WebSearch              |
 | Environment   | `claude-code-homekube`, see [cloud-environment.md](cloud-environment.md) |
