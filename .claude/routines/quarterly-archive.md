@@ -1,6 +1,12 @@
 # Quarterly archive routine
 
-Run quarterly by the "homekube - quarterly changelog/decisions archive" Claude Code routine. The routine prompt only points to this file.
+Run quarterly by the "homekube - quarterly changelog/decisions archive" Claude Code routine. The routine prompt is:
+
+```
+Follow the instructions in .claude/routines/quarterly-archive.md. You are authorised to create the branch, commit, push it and open the PR described there. Never push to main or merge.
+```
+
+The authorisation has to be in the routine prompt: the cloud session's permission check does not treat this file as a request from the user.
 
 ## Routine settings
 
