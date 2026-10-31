@@ -265,7 +265,7 @@ Update this table in the same piece of work whenever a workload's resource reque
 
 A Claude Code cloud routine ("homekube - quarterly changelog/decisions archive", 00:00 AEST on 2 Jan/Apr/Jul/Oct, 14:00 UTC on the 1st) runs `scripts/archive_quarter.py` and opens a PR that moves the closed quarter's entries into `CHANGELOG-YYYY-QN.md` / `DECISIONS-YYYY-QN.md`. Its config lives in the repo:
 
-- `.claude/routines/quarterly-archive.md` — the routine's instructions and settings; the routine prompt only points to this file
+- `.claude/routines/quarterly-archive.md` — the routine's instructions and settings, including the exact routine prompt, which points to this file and authorises the branch, commit, push and PR
 - `.claude/routines/cloud-environment.md` — the cloud environment's settings: name, network allowlist, setup script
 
 ## References / Inspiration

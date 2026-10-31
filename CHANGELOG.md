@@ -34,6 +34,7 @@ Current quarter only. Prior quarters: [2026 Q2](CHANGELOG-2026-Q2.md), [2026 Q3]
   - Unused connectors were removed (Claude Docs, Gmail, Google Drive, Google Calendar).
 
   It stays on `claude-code-homekube`, which only this routine now uses. A manual run did a dry run, found nothing to archive and exited without a branch or PR. The PR steps are first tested on 2027-01-01 14:00 UTC.
+- **All four routine prompts (homekube-main, homekube-apps, homekube quarterly, dotfiles) now explicitly authorise the branch, commit, push and PR** and forbid pushing to `main` or merging. A dotfiles run that fixed dotfiles#139 was blocked at `git commit` (`[Unrequested Commit in a Connected App]`): the cloud session's permission check doesn't treat instructions in a repo file as a request from the user, so a prompt that only points to the file authorises nothing. No routine had committed since the prompts became pointers on 2026-10-28. Each repo's routine file now records the exact prompt, and dotfiles' CLAUDE.md exempts the routine's `auto/issue-*` branches from its no-push rule.
 
 ## 2026-10-29
 
