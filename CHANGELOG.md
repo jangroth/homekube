@@ -17,6 +17,14 @@ Current quarter only. Prior quarters: [2026 Q2](CHANGELOG-2026-Q2.md), [2026 Q3]
 
 ---
 
+## 2026-10-31
+
+### Added
+- `homekube-main` — The nightly routine's instructions, settings and cloud environment now live in `.claude/routines/nightly-todo.md` and `.claude/routines/cloud-environment.md`, with the setup script in `scripts/cloud/setup.sh` (PR #31, [#63](https://github.com/jangroth/homekube/issues/63)). They match the homekube-apps routine except for repo-specific steps; the verification step is `ansible-playbook --syntax-check` plus `ansible-lint`. `setup.sh` runs `uv sync` and installs the Ansible collections. `cloud-environment.md` records the environment name, network allowlist and setup script.
+
+### Operational
+- **"homekube-main - nightly todo" routine (`trig_01TrV6VfMXKVEGr9cdMVw4EL`) moved to its own cloud environment, `claude-code-homekube-main`**, with the prompt reduced to a pointer to the repo file and the model changed to `claude-opus-5-5`. A manual run succeeded: setup installed the Python dependencies and collections through the allowlist, and the agent exited cleanly with no eligible issue. Decision [078](DECISIONS.md) updated to name the new environment.
+
 ## 2026-10-29
 
 ### Added
