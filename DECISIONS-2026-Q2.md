@@ -215,6 +215,8 @@ Of the three options in DECISION-030, this is the only one that **both** keeps C
 
 **Area:** security
 
+**Amended 2026-11-01:** sealed-secrets is no longer the only mechanism. Infisical becomes the secret store, and sealed-secrets is kept for the bootstrap tier. See [decision 079](DECISIONS.md).
+
 **Decision:** Use `bitnami-labs/sealed-secrets` (controller in `kube-system`, `kubeseal` CLI on darth) as the only mechanism for committing Kubernetes Secrets to git. No plaintext secrets in any repo. external-secrets + AWS Secrets Manager and SOPS+age were considered and rejected.
 
 **Rationale:** Solo home-lab with a small number of secrets (MinIO root, Telegram bot, Google OAuth, AWS S3 creds) — a controller that round-trips sealed YAML in git is the simplest workflow with no external dependency. external-secrets adds an external store plus controller pods; SOPS+age requires ArgoCD plugin configuration that is fragile to maintain. The `bitnami-labs/sealed-secrets` project is the upstream maintainer repo and is unaffected by the Bitnami catalog changes (DECISION-022). Trade-off accepted: if the controller's signing key is lost without backup, every committed secret becomes unrecoverable; mitigation is exporting `kubeseal --fetch-cert` and the private key to the password manager immediately after first install.

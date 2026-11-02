@@ -4,6 +4,16 @@ Current quarter only. Prior quarters: [2026 Q2](DECISIONS-2026-Q2.md), [2026 Q3]
 
 ---
 
+## 079 — Self-hosted Infisical as the secret store, sealed-secrets kept for bootstrap (2026-11-01)
+
+**Area:** security
+
+**Decision:** Infisical, self-hosted in-cluster, becomes the store for cluster and operator secrets, rolled out in four phases: install ([spec 009](docs/specs/009-infisical-phase-1.md)), External Secrets Operator, migrating app secrets, then Ansible and Terraform on darth. sealed-secrets stays, but only for the bootstrap tier that has to exist before Infisical: Infisical's own keys and DB credentials, and later ESO's credentials. This amends [decision 020](DECISIONS-2026-Q2.md), which made sealed-secrets the only mechanism. Postgres and Redis run from the official `postgres` and `redis` images, not the chart's Bitnami subcharts. Login is a local admin with 2FA.
+
+**Rationale:** Today's roughly ten static secrets don't need it on their own. The planned Coder and Hermes setup will, since every workspace needs its own scoped and revocable set of secrets, which hand-sealed YAML can't provide. Self-hosted over Infisical Cloud keeps 020's "no external dependency" and fits the study goal. The chart's subcharts use `bitnamilegacy/*` images, frozen since August 2025 with no security fixes (decision 022). OIDC SSO, and with it login through Dex, needs a paid licence on self-hosted.
+
+**Trade-offs accepted:** Three more stateful pods on the Pis and a new single point of failure. Losing `ENCRYPTION_KEY` makes the database unreadable, so it is kept in the password manager alongside the sealed-secrets keys. A rebuild now has to bring up sealed-secrets, then Infisical, then the apps in that order. Ansible can never read from Infisical on the bootstrap path, because Infisical runs on the cluster Ansible builds. Free-tier limits on self-hosted (identity count in particular) are unconfirmed and could constrain the Coder/Hermes plan.
+
 ## 078 — One cloud environment per routine repo, setup script in the repo (2026-10-29)
 
 **Area:** process
