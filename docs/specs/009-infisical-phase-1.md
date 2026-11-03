@@ -25,9 +25,10 @@ Phase 1 installs Infisical and nothing else, so it can be explored before anythi
 
 - **Official Infisical chart (`infisical-standalone`), its bundled subcharts off.** The chart bundles Postgres and Redis as Bitnami subcharts using `bitnamilegacy/*` images, frozen since August 2025 (newest `bitnamilegacy/postgresql` tag: `17.6.0-debian-12-r4`, 2025-08-28). Set `postgresql.enabled: false`, `redis.enabled: false`, `ingress.enabled: false`, `ingress.nginx.enabled: false`.
 - **Official `postgres:17` and `redis` images**, as plain manifests next to the chart. No operator (CloudNativePG considered, rejected as too heavy for one small database).
-- **Postgres on Longhorn; Redis without persistence.** Infisical uses Redis only for cache and job queues.
+- **Postgres and Redis both on Longhorn.** Infisical's requirements treat Redis as a persistent store (`appendonly yes`, `maxmemory-policy noeviction`, included in backups), so it is a StatefulSet with a 1Gi PVC in the `daily` backup group.
+- **TLS via nginx sidecar.** The backend serves plain HTTP on :8080 only. An `nginx-unprivileged` sidecar (chart `extraContainers`) terminates TLS on :8443 with the homekube-ca cert; `HTTPS_ENABLED=true` for secure cookies (§8 Q1).
 - **Data-plane only.** Infisical, Postgres and Redis carry the `node-role.kubernetes.io/control-plane: DoesNotExist` node affinity used by Dex and Homepage.
-- **Exposed like the other UIs:** a `LoadBalancer` Service with LB-IPAM IP `192.168.86.247` (pool `.241–.251`, `.241–.246` taken), a homekube-ca `Certificate` with that IP as SAN, and a static homepage entry (decision 074). No ingress controller.
+- **Exposed like the other UIs:** a `LoadBalancer` Service `infisical-https` with LB-IPAM IP `192.168.86.247` (pool `.241–.251`, `.241–.246` taken), 443 → sidecar 8443, a homekube-ca `Certificate` with that IP as SAN, and a static homepage entry (decision 074). No ingress controller. The chart's own Service (port fixed at 8080) stays `ClusterIP`.
 - **Local admin login with 2FA.** OIDC SSO needs a paid licence on self-hosted ([Infisical docs](https://infisical.com/docs/documentation/platform/sso/general-oidc/overview)), so Dex can't be used.
 - **Bootstrap secrets via sealed-secrets.** Infisical can't hold its own credentials.
 - **Shared Longhorn backup job.** One `daily-backup` `RecurringJob` with `groups: [daily]`; PVCs opt in by label in their manifests. Avoids one job per app and fixes the drift found in #69.
@@ -41,7 +42,7 @@ Phase 1 installs Infisical and nothing else, so it can be explored before anythi
 - No ingress controller; UIs are `LoadBalancer` Services with fixed LB-IPAM IPs.
 - Longhorn has one `RecurringJob` (`hermes-daily-backup`, `0 16 * * *`, `retain: 7`, no `groups`). Volumes opt in through PVC labels with `recurring-job.longhorn.io/source=enabled`.
 - Velero is not deployed.
-- Node memory: 30–41% used; limits overcommitted on two nodes (107%, 109%). The new pods add 416Mi requests / 1.4Gi limits on data-plane nodes; limits overcommit is accepted, as for the other apps.
+- Node memory: 30–41% used; limits overcommitted on two nodes (107%, 109%). The new pods add 432Mi requests / 1.4Gi limits on data-plane nodes; limits overcommit is accepted, as for the other apps.
 
 ## 5. Target state
 
@@ -53,20 +54,23 @@ ArgoCD `Application` for the `infisical-standalone` chart, namespace `infisical`
 
 - subcharts and ingress disabled (§3)
 - `infisical.kubeSecretRef` → the sealed secret in 5b
-- `SITE_URL=https://192.168.86.247`
+- `extraEnv`: `SITE_URL=https://192.168.86.247`, `HTTPS_ENABLED=true`
 - resources: requests `256Mi` / `50m`, limits `768Mi` / `500m`
 - data-plane node affinity (§3)
-- `fullnameOverride: infisical`, so the Service is `infisical.infisical.svc` and matches the DNS SAN in 5c
-- Service `type: LoadBalancer`, annotation `io.cilium/lb-ipam-ips: "192.168.86.247"` (if the chart's Service can't take this, add a separate Service in 5b, as `argocd-extras/argocd-service.yaml` does)
+- `infisical.fullnameOverride: infisical` (the top-level `fullnameOverride` does not affect the Deployment/Service name)
+- `replicaCount: 1` (chart default 2), `rolloutOnEveryRender: false` (chart's advice for ArgoCD; restart by hand after changing `infisical-secrets`)
+- `tls-proxy` sidecar `nginxinc/nginx-unprivileged`, resources `16Mi` / `10m` → `64Mi` / `100m`, config from ConfigMap `infisical-nginx`, cert from `infisical-tls`
 
 ### 5b. `wave-02-apps/infisical-extras/`
 
 | File | Content |
 |---|---|
-| `infisical-sealedsecret.yaml` | `ENCRYPTION_KEY`, `AUTH_SECRET`, `DB_CONNECTION_URI`, `REDIS_URL` |
-| `postgres-sealedsecret.yaml` | `POSTGRES_PASSWORD` (plus user and DB name) |
-| `postgres.yaml` | StatefulSet (1 replica, `postgres:17`), headless Service, `volumeClaimTemplates` on `longhorn` with labels `recurring-job.longhorn.io/source: enabled` and `recurring-job-group.longhorn.io/daily: enabled`; resources `128Mi` / `25m` → `512Mi` / `500m`; data-plane node affinity (§3) |
-| `redis.yaml` | Deployment (1 replica, `redis`), ClusterIP Service, no PVC; resources `32Mi` / `10m` → `128Mi` / `200m`; data-plane node affinity (§3) |
+| `infisical-sealedsecret.yaml` | Secret `infisical-secrets`: `ENCRYPTION_KEY`, `AUTH_SECRET`, `DB_CONNECTION_URI`, `REDIS_URL` |
+| `postgres-sealedsecret.yaml` | Secret `postgres-credentials`: `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB` |
+| `postgres.yaml` | StatefulSet (1 replica, `postgres:17.x`, `PGDATA` in a subdirectory), headless Service, 5Gi `volumeClaimTemplates` on `longhorn` with labels `recurring-job.longhorn.io/source: enabled` and `recurring-job-group.longhorn.io/daily: enabled`; resources `128Mi` / `25m` → `512Mi` / `500m`; data-plane node affinity (§3) |
+| `redis.yaml` | StatefulSet (1 replica, `redis:7.4.x` — Infisical supports 6.x/7.x), ClusterIP Service, 1Gi PVC with the same backup labels, `--appendonly yes --maxmemory 96mb --maxmemory-policy noeviction`; resources `32Mi` / `10m` → `128Mi` / `200m`; data-plane node affinity (§3) |
+| `infisical-service.yaml` | `LoadBalancer` Service `infisical-https`, `.247`, 443 → 8443 |
+| `infisical-nginx.yaml` | ConfigMap with the sidecar's `default.conf` (TLS on 8443, proxy to `127.0.0.1:8080`) |
 
 Image tags pinned and tracked by Renovate, minor and patch only. `renovate.json` gains:
 
@@ -84,7 +88,7 @@ Image tags pinned and tracked by Renovate, minor and patch only. `renovate.json`
 
 ### 5c. TLS
 
-`wave-02-apps/infisical-extras/infisical-tls.yaml`, modelled on `wave-00-init/cert-manager/grafana-tls.yaml`: IP SAN `192.168.86.247`, DNS SAN `infisical.infisical.svc.cluster.local`, issued by the homekube CA. It lives in `infisical-extras/` rather than `wave-00-init/` because the `infisical` namespace doesn't exist at wave 0 on a fresh rebuild.
+`wave-02-apps/infisical-extras/infisical-tls.yaml`, modelled on `wave-00-init/cert-manager/grafana-tls.yaml`: IP SAN `192.168.86.247`, DNS SAN `infisical-https.infisical.svc.cluster.local`, issued by the homekube CA. It lives in `infisical-extras/` rather than `wave-00-init/` because the `infisical` namespace doesn't exist at wave 0 on a fresh rebuild.
 
 ### 5d. Longhorn shared backup job
 
@@ -113,7 +117,7 @@ Static entry in `wave-03-apps/homepage/configmap.yaml` (decision 074).
 
 ## 6. Execution plan
 
-0. **Verify:** latest chart version and its app version; the env var names the chart expects in `kubeSecretRef`; Postgres and Redis versions Infisical supports; whether the chart's Service accepts `type` and annotations, and honours `fullnameOverride` for its name; how TLS is served (§8 Q1); reclaim policy of the `longhorn` StorageClass; how DB migrations run (Helm hook Job or at backend startup).
+0. **Verify:** latest chart version and its app version; the env var names the chart expects in `kubeSecretRef`; Postgres and Redis versions Infisical supports; whether the chart's Service accepts `type` and annotations, and honours `fullnameOverride` for its name; how TLS is served (§8 Q1); reclaim policy of the `longhorn` StorageClass; how DB migrations run (Helm hook Job or at backend startup). **Done 2026-11-04:** chart 1.12.0 / app `v0.167.0` still latest; env names as in 5b (all via `envFrom`); Postgres ≥14, Redis 6.x/7.x; Service port fixed at 8080, name follows `infisical.fullnameOverride`; backend HTTP-only (→ sidecar); `longhorn` reclaim policy `Delete`; migrations run in-process at startup (no Helm hook), check backend logs in step 3.
 1. Generate secrets on darth, save them in the password manager, seal them with `kubeseal` for namespace `infisical`. *(human step)*
 2. PR to `homekube-apps`: 5a–5e. Review, merge, let ArgoCD sync.
 3. Check pods are Ready (Infisical restarting until Postgres is up is expected), the DB migrations completed (hook result or Infisical logs, per step 0), and the Postgres PVC carries the backup labels on the Longhorn volume.
@@ -137,12 +141,12 @@ Static entry in `wave-03-apps/homepage/configmap.yaml` (decision 074).
 
 ## 8. Open questions for Jan
 
-1. **TLS serving.** Grafana, ArgoCD and Dex serve TLS themselves. If Infisical's backend can't load a cert (to verify in step 0), the options are a small TLS-terminating sidecar in the Infisical pod, or plain HTTP on the LB IP. The sidecar keeps the cluster pattern; plain HTTP would put admin credentials on the LAN unencrypted.
+1. ~~**TLS serving.**~~ Resolved 2026-11-04: backend is HTTP-only; nginx TLS sidecar chosen (§3).
 2. **Identity limit.** The pricing page lists 5 identities (users + machine) on the free tier, apparently for Cloud. If self-hosted free has the same cap, phase 2 and the Coder/Hermes plan need re-thinking before they're specced.
 
 ## 9. Rollback
 
-Delete the `infisical` Application (its finalizer removes everything in both sources), then the `infisical` namespace, which takes the Postgres PVC with it. With the `longhorn` StorageClass's `Delete` reclaim policy (verified in step 0), the Longhorn volume goes too. Longhorn backups in S3 are kept; delete them in the Longhorn UI if no longer wanted. Remove the homepage entry. Nothing depends on Infisical in phase 1. The `daily-backup` job can stay, as it only affects labelled volumes.
+Delete the `infisical` Application (its finalizer removes everything in both sources), then the `infisical` namespace, which takes the Postgres and Redis PVCs with it. With the `longhorn` StorageClass's `Delete` reclaim policy (verified in step 0), the Longhorn volumes go too. Longhorn backups in S3 are kept; delete them in the Longhorn UI if no longer wanted. Remove the homepage entry. Nothing depends on Infisical in phase 1. The `daily-backup` job can stay, as it only affects labelled volumes.
 
 ## 10. Out of scope
 
