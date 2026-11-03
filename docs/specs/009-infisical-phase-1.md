@@ -42,7 +42,7 @@ Phase 1 installs Infisical and nothing else, so it can be explored before anythi
 - No ingress controller; UIs are `LoadBalancer` Services with fixed LB-IPAM IPs.
 - Longhorn has one `RecurringJob` (`hermes-daily-backup`, `0 16 * * *`, `retain: 7`, no `groups`). Volumes opt in through PVC labels with `recurring-job.longhorn.io/source=enabled`.
 - Velero is not deployed.
-- Node memory: 30–41% used; limits overcommitted on two nodes (107%, 109%). The new pods add 432Mi requests / 1.4Gi limits on data-plane nodes; limits overcommit is accepted, as for the other apps.
+- Node memory: 30–41% used; limits overcommitted on two nodes (107%, 109%). The new pods add 688Mi requests / 1.7Gi limits on data-plane nodes; limits overcommit is accepted, as for the other apps.
 
 ## 5. Target state
 
@@ -55,7 +55,7 @@ ArgoCD `Application` for the `infisical-standalone` chart, namespace `infisical`
 - subcharts and ingress disabled (§3)
 - `infisical.kubeSecretRef` → the sealed secret in 5b
 - `extraEnv`: `SITE_URL=https://192.168.86.247`, `HTTPS_ENABLED=true`
-- resources: requests `256Mi` / `50m`, limits `768Mi` / `500m`
+- resources: requests `512Mi` / `50m`, limits `1Gi` / `500m` (idle use after first login: ~720Mi)
 - data-plane node affinity (§3)
 - `infisical.fullnameOverride: infisical` (the top-level `fullnameOverride` does not affect the Deployment/Service name)
 - `replicaCount: 1` (chart default 2), `rolloutOnEveryRender: false` (chart's advice for ArgoCD; restart by hand after changing `infisical-secrets`)
