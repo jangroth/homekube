@@ -37,6 +37,7 @@ Current quarter only. Prior quarters: [2026 Q2](CHANGELOG-2026-Q2.md), [2026 Q3]
 - `homekube-apps` — The `hermes-daily-backup` RecurringJob (`homekube-apps@ab0add1`). Existing Hermes backups made by it are no longer pruned.
 
 ### Operational
+- **Manual run of `daily-backup`** (Job `daily-backup-manual-69`, made from the CronJob). It backed up all three `daily` volumes: `hermes-data` is `backup-b8515ed07427487c`, 1.6GiB, Completed. For Infisical Redis, this was the volume's first backup, and the cleanup step warned `backupList not available` because the backup volume didn't exist yet. The backup itself completed.
 - **Infisical backup and restore test passed:**
   - A manual Longhorn backup `infisical-pg-manual-20261104` (about 344MiB) of the Postgres volume completed to S3.
   - It was restored into a new volume in namespace `infisical-restore`. Postgres recovered cleanly, and Infisical decrypted the secrets created before the backup. A secret created after the backup was absent, as expected.
