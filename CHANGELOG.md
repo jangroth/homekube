@@ -26,11 +26,15 @@ Current quarter only. Prior quarters: [2026 Q2](CHANGELOG-2026-Q2.md), [2026 Q3]
   - The backend only serves HTTP, so an `nginx-unprivileged` sidecar terminates TLS with a homekube-ca certificate. The UI is at `https://192.168.86.247` through LB Service `infisical-https`.
   - The bootstrap secrets `infisical-secrets` and `postgres-credentials` are sealed secrets. The plaintext values are in the password manager.
   - Homepage has an entry for it, and Renovate no longer proposes major updates for `postgres` or `redis`.
-- `homekube-apps` — **Shared Longhorn `daily-backup` RecurringJob** (`groups: [daily]`, `0 16 * * *`, keeps 7). A PVC joins it with the label `recurring-job-group.longhorn.io/daily: enabled`; the Infisical Postgres and Redis volumes have it. `hermes-daily-backup` stays until [#69](https://github.com/jangroth/homekube/issues/69) moves Hermes over.
+- `homekube-apps` — **Shared Longhorn `daily-backup` RecurringJob** (`groups: [daily]`, `0 16 * * *`, keeps 7). A PVC joins it with the label `recurring-job-group.longhorn.io/daily: enabled`; the Infisical Postgres and Redis volumes have it. Hermes moved to it later the same day ([#69](https://github.com/jangroth/homekube/issues/69)).
 - `homekube-apps` — `manual/infisical-restore/` holds the restore-test manifests. They restore a Longhorn backup into a new volume, bind it in a throwaway namespace, and run Postgres, Redis and Infisical against it.
 
 ### Changed
 - `homekube-apps` — Infisical memory raised from 256Mi request / 768Mi limit to 512Mi / 1Gi (PR #101, `homekube-apps@f514071`). It used 719Mi right after the first login and settled at about 753Mi after the raise. A one-week check is tracked in [#72](https://github.com/jangroth/homekube/issues/72).
+- `herminator` — The `hermes-data` PVC now joins the shared `daily` backup group, `recurring-job-group.longhorn.io/daily: enabled` (herminator#19, `herminator@8905a58`). After the sync, the labels on the PVC and its Longhorn volume match this. The opt-in is declared in the chart, so a rebuild keeps Hermes backed up ([#69](https://github.com/jangroth/homekube/issues/69)).
+
+### Removed
+- `homekube-apps` — The `hermes-daily-backup` RecurringJob (`homekube-apps@ab0add1`). Existing Hermes backups made by it are no longer pruned.
 
 ### Operational
 - **Infisical backup and restore test passed:**
