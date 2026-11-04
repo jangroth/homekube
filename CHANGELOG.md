@@ -34,7 +34,7 @@ Current quarter only. Prior quarters: [2026 Q2](CHANGELOG-2026-Q2.md), [2026 Q3]
 - `herminator` — The `hermes-data` PVC now joins the shared `daily` backup group, `recurring-job-group.longhorn.io/daily: enabled` (herminator#19, `herminator@8905a58`). After the sync, the labels on the PVC and its Longhorn volume match this. The opt-in is declared in the chart, so a rebuild keeps Hermes backed up ([#69](https://github.com/jangroth/homekube/issues/69)).
 
 ### Removed
-- `homekube-apps` — The `hermes-daily-backup` RecurringJob (`homekube-apps@ab0add1`). Existing Hermes backups made by it are no longer pruned.
+- `homekube-apps` — The `hermes-daily-backup` RecurringJob (`homekube-apps@ab0add1`). Its 7 Hermes backups (2026-10-28 to 11-03, about 11GiB) were deleted by hand. `backup-b8515ed07427487c` from the group job is kept.
 
 ### Operational
 - **Manual run of `daily-backup`** (Job `daily-backup-manual-69`, made from the CronJob). It backed up all three `daily` volumes: `hermes-data` is `backup-b8515ed07427487c`, 1.6GiB, Completed. For Infisical Redis, this was the volume's first backup, and the cleanup step warned `backupList not available` because the backup volume didn't exist yet. The backup itself completed.
