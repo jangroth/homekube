@@ -1,8 +1,8 @@
 # Spec 009 — Infisical, phase 1: self-hosted install
 
-**Status:** Draft (2026-11-01)
+**Status:** Done (2026-11-04) — 2FA deferred; one-week memory check tracked in [#72](https://github.com/jangroth/homekube/issues/72)
 **Related decisions:** [Decision 079](../../DECISIONS.md) — Infisical adopted as the secret store, phased; amends [decision 020](../../DECISIONS-2026-Q2.md). [Decision 022](../../DECISIONS-2026-Q2.md) — caution on Bitnami images.
-**Related issues:** [#69](https://github.com/jangroth/homekube/issues/69) — Hermes backup label not in source (uses the shared backup job introduced here).
+**Related issues:** [#69](https://github.com/jangroth/homekube/issues/69) — Hermes backup label not in source (uses the shared backup job introduced here). [#72](https://github.com/jangroth/homekube/issues/72) — one-week memory check. [#73](https://github.com/jangroth/homekube/issues/73) — event-loop stats log noise.
 
 ---
 
@@ -128,21 +128,23 @@ Static entry in `wave-03-apps/homepage/configmap.yaml` (decision 074).
 8. Check the identity limit on self-hosted free (§8 Q2).
 9. CHANGELOG entry; set this spec to Done.
 
+**Outcome (2026-11-04):** steps 0–9 done except 2FA (deferred). Step 3: migrations ran at first boot, 0 restarts; Infisical used 719Mi of the original 768Mi limit after first login, so it was raised to 512Mi / 1Gi (homekube-apps#101), settling at ~753Mi. Step 6: backup `infisical-pg-manual-20261104` (~344MiB) completed to S3. Step 7: restored Postgres ran WAL crash recovery cleanly; restored Infisical decrypted and showed the pre-backup secrets, and a secret created after the backup was absent.
+
 ## 7. Acceptance criteria
 
-- [ ] `infisical`, `postgres` and `redis` pods Ready on arm64; no `bitnamilegacy` image in the namespace
-- [ ] UI reachable at `https://192.168.86.247` with a homekube-ca-trusted certificate
-- [ ] Admin login with 2FA works; test secret created and read back
-- [ ] `ENCRYPTION_KEY`, `AUTH_SECRET` and `POSTGRES_PASSWORD` are in the password manager
-- [ ] The Postgres Longhorn volume is in group `daily` and has at least one completed backup in S3
-- [ ] Measured memory stays within the limits in §5 over the first week
-- [ ] Homepage shows Infisical
-- [ ] **Restore test:** the Postgres backup is restored to a new Longhorn volume and bound to a PVC in a throwaway namespace (Longhorn UI → Create PV/PVC). Postgres, Redis and Infisical run there from plain Secrets built from password-manager values (sealed secrets are namespace-scoped). Infisical shows the test secret. Manifests used are committed to `homekube-apps/manual/infisical-restore/`. Throwaway namespace and restored volume deleted afterwards.
+- [x] `infisical`, `postgres` and `redis` pods Ready on arm64; no `bitnamilegacy` image in the namespace
+- [x] UI reachable at `https://192.168.86.247` with a homekube-ca-trusted certificate
+- [x] Admin login works; test secret created and read back — 2FA deferred
+- [x] `ENCRYPTION_KEY`, `AUTH_SECRET` and `POSTGRES_PASSWORD` are in the password manager
+- [x] The Postgres Longhorn volume is in group `daily` and has at least one completed backup in S3
+- [ ] Measured memory stays within the limits in §5 over the first week — [#72](https://github.com/jangroth/homekube/issues/72), revisit 2026-11-11
+- [x] Homepage shows Infisical
+- [x] **Restore test:** the Postgres backup is restored to a new Longhorn volume and bound to a PVC in a throwaway namespace (Longhorn UI → Create PV/PVC). Postgres, Redis and Infisical run there from plain Secrets built from password-manager values (sealed secrets are namespace-scoped). Infisical shows the test secret. Manifests used are committed to `homekube-apps/manual/infisical-restore/`. Throwaway namespace and restored volume deleted afterwards.
 
 ## 8. Open questions for Jan
 
 1. ~~**TLS serving.**~~ Resolved 2026-11-04: backend is HTTP-only; nginx TLS sidecar chosen (§3).
-2. **Identity limit.** The pricing page lists 5 identities (users + machine) on the free tier, apparently for Cloud. If self-hosted free has the same cap, phase 2 and the Coder/Hermes plan need re-thinking before they're specced.
+2. ~~**Identity limit.**~~ Resolved 2026-11-04: no cap on unlicensed self-hosted. At `v0.167.0`, `getDefaultOnPremFeatures()` (`backend/src/ee/services/license/license-fns.ts`) sets `memberLimit`, `identityLimit`, `workspaceLimit` and `environmentLimit` to `null`, and enforcement skips a `null` limit; the pricing page's 5 identities is the Free Cloud plan. The same defaults disable custom RBAC, audit logs, PITR, dynamic secrets and SSO.
 
 ## 9. Rollback
 

@@ -17,6 +17,29 @@ Current quarter only. Prior quarters: [2026 Q2](CHANGELOG-2026-Q2.md), [2026 Q3]
 
 ---
 
+## 2026-11-04
+
+### Added
+- `homekube-apps` — **Infisical installed** as the self-hosted secret store, phase 1 of [spec 009](docs/specs/009-infisical-phase-1.md), decision [079](DECISIONS.md) (PR #100, `homekube-apps@9c5cc15`):
+  - The `infisical-standalone` chart 1.12.0 (app `v0.167.0`) runs in namespace `infisical`, at sync wave 2, on data-plane nodes only. The chart's bundled Bitnami Postgres, Redis and ingress are disabled.
+  - Postgres runs from the official `postgres:17.11` image and Redis from `redis:7.4.12`, each as a StatefulSet on Longhorn: 5Gi for Postgres, 1Gi for Redis. Redis has append-only persistence and `noeviction`, as Infisical's requirements specify.
+  - The backend only serves HTTP, so an `nginx-unprivileged` sidecar terminates TLS with a homekube-ca certificate. The UI is at `https://192.168.86.247` through LB Service `infisical-https`.
+  - The bootstrap secrets `infisical-secrets` and `postgres-credentials` are sealed secrets. The plaintext values are in the password manager.
+  - Homepage has an entry for it, and Renovate no longer proposes major updates for `postgres` or `redis`.
+- `homekube-apps` — **Shared Longhorn `daily-backup` RecurringJob** (`groups: [daily]`, `0 16 * * *`, keeps 7). A PVC joins it with the label `recurring-job-group.longhorn.io/daily: enabled`; the Infisical Postgres and Redis volumes have it. `hermes-daily-backup` stays until [#69](https://github.com/jangroth/homekube/issues/69) moves Hermes over.
+- `homekube-apps` — `manual/infisical-restore/` holds the restore-test manifests. They restore a Longhorn backup into a new volume, bind it in a throwaway namespace, and run Postgres, Redis and Infisical against it.
+
+### Changed
+- `homekube-apps` — Infisical memory raised from 256Mi request / 768Mi limit to 512Mi / 1Gi (PR #101, `homekube-apps@f514071`). It used 719Mi right after the first login and settled at about 753Mi after the raise. A one-week check is tracked in [#72](https://github.com/jangroth/homekube/issues/72).
+
+### Operational
+- **Infisical backup and restore test passed:**
+  - A manual Longhorn backup `infisical-pg-manual-20261104` (about 344MiB) of the Postgres volume completed to S3.
+  - It was restored into a new volume in namespace `infisical-restore`. Postgres recovered cleanly, and Infisical decrypted the secrets created before the backup. A secret created after the backup was absent, as expected.
+  - The throwaway namespace, PV and restored volume were deleted. The backup in S3 is kept.
+- **Admin account created** in Infisical. 2FA is deferred.
+- **Spec 009 open question on the identity limit resolved:** self-hosted Infisical without a licence has no limit on users or machine identities. The Free plan's 5-identity limit applies to Infisical Cloud only.
+
 ## 2026-10-31
 
 ### Added
