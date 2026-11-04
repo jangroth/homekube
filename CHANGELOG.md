@@ -26,13 +26,18 @@ Current quarter only. Prior quarters: [2026 Q2](CHANGELOG-2026-Q2.md), [2026 Q3]
   - The backend only serves HTTP, so an `nginx-unprivileged` sidecar terminates TLS with a homekube-ca certificate. The UI is at `https://192.168.86.247` through LB Service `infisical-https`.
   - The bootstrap secrets `infisical-secrets` and `postgres-credentials` are sealed secrets. The plaintext values are in the password manager.
   - Homepage has an entry for it, and Renovate no longer proposes major updates for `postgres` or `redis`.
-- `homekube-apps` — **Shared Longhorn `daily-backup` RecurringJob** (`groups: [daily]`, `0 16 * * *`, keeps 7). A PVC joins it with the label `recurring-job-group.longhorn.io/daily: enabled`; the Infisical Postgres and Redis volumes have it. `hermes-daily-backup` stays until [#69](https://github.com/jangroth/homekube/issues/69) moves Hermes over.
+- `homekube-apps` — **Shared Longhorn `daily-backup` RecurringJob** (`groups: [daily]`, `0 16 * * *`, keeps 7). A PVC joins it with the label `recurring-job-group.longhorn.io/daily: enabled`; the Infisical Postgres and Redis volumes have it. Hermes moved to it later the same day ([#69](https://github.com/jangroth/homekube/issues/69)).
 - `homekube-apps` — `manual/infisical-restore/` holds the restore-test manifests. They restore a Longhorn backup into a new volume, bind it in a throwaway namespace, and run Postgres, Redis and Infisical against it.
 
 ### Changed
 - `homekube-apps` — Infisical memory raised from 256Mi request / 768Mi limit to 512Mi / 1Gi (PR #101, `homekube-apps@f514071`). It used 719Mi right after the first login and settled at about 753Mi after the raise. A one-week check is tracked in [#72](https://github.com/jangroth/homekube/issues/72).
+- `herminator` — The `hermes-data` PVC now joins the shared `daily` backup group, `recurring-job-group.longhorn.io/daily: enabled` (herminator#19, `herminator@8905a58`). After the sync, the labels on the PVC and its Longhorn volume match this. The opt-in is declared in the chart, so a rebuild keeps Hermes backed up ([#69](https://github.com/jangroth/homekube/issues/69)).
+
+### Removed
+- `homekube-apps` — The `hermes-daily-backup` RecurringJob (`homekube-apps@ab0add1`). Its 7 Hermes backups (2026-10-28 to 11-03, about 11GiB) were deleted by hand. `backup-b8515ed07427487c` from the group job is kept.
 
 ### Operational
+- **Manual run of `daily-backup`** (Job `daily-backup-manual-69`, made from the CronJob). It backed up all three `daily` volumes: `hermes-data` is `backup-b8515ed07427487c`, 1.6GiB, Completed. For Infisical Redis, this was the volume's first backup, and the cleanup step warned `backupList not available` because the backup volume didn't exist yet. The backup itself completed.
 - **Infisical backup and restore test passed:**
   - A manual Longhorn backup `infisical-pg-manual-20261104` (about 344MiB) of the Postgres volume completed to S3.
   - It was restored into a new volume in namespace `infisical-restore`. Postgres recovered cleanly, and Infisical decrypted the secrets created before the backup. A secret created after the backup was absent, as expected.
