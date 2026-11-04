@@ -206,6 +206,7 @@ Cilium (CNI + LB) · Longhorn · ArgoCD · Prometheus · Grafana · Loki
 | Alloy | `observability` | 01 | DaemonSet log shipper |
 | Grafana | `observability` | 01 | `192.168.86.243:443` |
 | Dex | `dex` | 02 | `192.168.86.244:5556` (LAN), `https://pi0.taild13083.ts.net/dex` (browser/OIDC) |
+| Infisical | `infisical` | 02 | `192.168.86.247:443` (local admin) |
 | Homepage | `homepage` | 03 | `192.168.86.245:80` |
 | Hermes | `hermes` | 03 | `192.168.86.246:443` (Dex OIDC) |
 
@@ -237,7 +238,8 @@ Rough RAM allocation, sized for 4×8 GiB = 32 GiB total. Numbers are `requests`;
 | 8 | Grafana | 384 MiB | includes sc-dashboard + sc-datasources sidecars, limit 192 MiB each (#9); download-dashboards init container not counted (transient, doesn't add to steady-state request) |
 | 9 | Dex | 128 MiB | |
 | 10 | Hermes (hermes + nginx + tailscale sidecar) | ~640 MiB | requests: hermes 512 MiB, nginx 64 MiB, tailscale sidecar 64 MiB (herminator chart `values.yaml`); limits 1Gi/128Mi/128Mi |
-| — | **Subtotal (deployed)** | **~9.2 GiB** | |
+| 1 | Infisical (infisical + tls-proxy sidecar, Postgres, Redis) | ~688 MiB | requests: infisical 512 MiB, tls-proxy 16 MiB, postgres 128 MiB, redis 32 MiB; limits 1Gi/64Mi/512Mi/128Mi (spec 009) |
+| — | **Subtotal (deployed)** | **~9.9 GiB** | |
 
 ### Planned
 
@@ -252,10 +254,10 @@ Rough RAM allocation, sized for 4×8 GiB = 32 GiB total. Numbers are `requests`;
 | | RAM |
 |---|---|
 | System reserved (4 nodes) | ~4 GiB |
-| Deployed workload subtotal | ~9.2 GiB |
-| **Current headroom** | **~18.8 GiB** |
+| Deployed workload subtotal | ~9.9 GiB |
+| **Current headroom** | **~18.1 GiB** |
 | Planned workload subtotal | ~1.25 GiB |
-| **Headroom after planned deploys** | **~17.55 GiB** |
+| **Headroom after planned deploys** | **~16.85 GiB** |
 
 Sidecar overhead is *not* in either subtotal — each opted-in namespace adds ~80–120 MiB per pod. Audit before enabling injection in a busy namespace.
 
