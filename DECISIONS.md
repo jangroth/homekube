@@ -4,6 +4,16 @@ Current quarter only. Prior quarters: [2026 Q2](DECISIONS-2026-Q2.md), [2026 Q3]
 
 ---
 
+## 080 — Infisical Agent Vault brokers Hermes's API credentials, ahead of ESO (2026-11-05)
+
+**Area:** security
+
+**Decision:** Phase 2 of decision 079 becomes Infisical Agent Vault for Hermes ([spec 010](docs/specs/010-agent-vault-hermes.md)); ESO, app-secret migration and darth integration move to phases 3–5. One proxy runs as its own Deployment in namespace `agent-vault`, its token sealed. Hermes sends all HTTPS through it via `HTTPS_PROXY`, with the traffic policy allowing all hosts and cluster/tailnet destinations in `NO_PROXY`. The session is created in the Infisical UI with TTL `never` and sealed into the `hermes` namespace as the proxy URL; no machine identity sits in the agent's pod. Tavily is the first brokered credential.
+
+**Rationale:** The Coder/Hermes goal behind 079 is about agents, and an agent that holds a credential can leak it through logs, messages or prompt injection. ESO and the Infisical operator deliver secrets into the pod; Agent Vault keeps them out, attaching them at the proxy. With agents holding no credentials, ESO is only needed for the platform's static secrets, which can wait. A fixed session TTL would force a reseal and restart on every expiry for a token that only works at an in-cluster proxy and for one bundle, while the brokered credentials rotate in Infisical without touching Hermes.
+
+**Trade-offs accepted:** Agent Vault is in Infisical's `ee/` directory, described as needing a licence, though nothing in `v0.167.0` gates it; acceptable for a study cluster. It is young (about one DB migration a week since 2026-09). The proxy decrypts all of Hermes's HTTPS and becomes a single point of failure for its web access. The session token is still a static secret in the pod, protected by scope, request logging and manual revocation rather than expiry. No egress NetworkPolicy yet, so Hermes can bypass the proxy, though only without credentials.
+
 ## 079 — Self-hosted Infisical as the secret store, sealed-secrets kept for bootstrap (2026-11-01)
 
 **Area:** security
@@ -12,7 +22,7 @@ Current quarter only. Prior quarters: [2026 Q2](DECISIONS-2026-Q2.md), [2026 Q3]
 
 **Rationale:** Today's roughly ten static secrets don't need it on their own. The planned Coder and Hermes setup will, since every workspace needs its own scoped and revocable set of secrets, which hand-sealed YAML can't provide. Self-hosted over Infisical Cloud keeps 020's "no external dependency" and fits the study goal. The chart's subcharts use `bitnamilegacy/*` images, frozen since August 2025 with no security fixes (decision 022). OIDC SSO, and with it login through Dex, needs a paid licence on self-hosted.
 
-**Trade-offs accepted:** Three more stateful pods on the Pis and a new single point of failure. Losing `ENCRYPTION_KEY` makes the database unreadable, so it is kept in the password manager alongside the sealed-secrets keys. A rebuild now has to bring up sealed-secrets, then Infisical, then the apps in that order. Ansible can never read from Infisical on the bootstrap path, because Infisical runs on the cluster Ansible builds. Free-tier limits on self-hosted (identity count in particular) are unconfirmed and could constrain the Coder/Hermes plan.
+**Trade-offs accepted:** Three more stateful pods on the Pis and a new single point of failure. Losing `ENCRYPTION_KEY` makes the database unreadable, so it is kept in the password manager alongside the sealed-secrets keys. A rebuild now has to bring up sealed-secrets, then Infisical, then the apps in that order. Ansible can never read from Infisical on the bootstrap path, because Infisical runs on the cluster Ansible builds. Unlicensed self-hosted has no identity, member, project or environment limit, but custom RBAC, audit logs, PITR, dynamic secrets and SSO are off ([spec 009](docs/specs/009-infisical-phase-1.md) §8).
 
 ## 078 — One cloud environment per routine repo, setup script in the repo (2026-10-29)
 
