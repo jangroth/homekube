@@ -1,7 +1,7 @@
 # Spec 010 — Infisical Agent Vault for Hermes
 
 **Status:** Draft (2026-11-04)
-**Related decisions:** [Decision 080](../../DECISIONS.md) — Agent Vault for Hermes, ahead of ESO; reorders the phases of [decision 079](../../DECISIONS.md). [Decision 075](../../DECISIONS.md) — Hermes image pins.
+**Related decisions:** [Decision 080](../../DECISIONS.md) — Agent Vault for Hermes, Infisical operator instead of ESO; reorders the phases of [decision 079](../../DECISIONS.md). [Decision 075](../../DECISIONS.md) — Hermes image pins.
 **Related specs:** [Spec 009](009-infisical-phase-1.md) — Infisical install. [herminator spec 001](https://github.com/jangroth/herminator/blob/main/docs/specs/001-deploy-hermes-to-homekube.md) — Hermes deployment.
 
 ---
@@ -18,7 +18,7 @@ Infisical Agent Vault is a forward proxy that attaches real credentials to an ag
 |---|---|---|
 | 1 | Infisical install | [009](009-infisical-phase-1.md), done |
 | **2** | Agent Vault proxy in-cluster; Hermes's Tavily key brokered | this spec |
-| 3 | External Secrets Operator, one test secret | later |
+| 3 | Infisical operator (Kubernetes Auth, auth per namespace, one project with a folder per app), one test secret | later |
 | 4 | Migrate app secrets, `pg_dump` backup | later |
 | 5 | Ansible + Terraform on darth read from Infisical | later |
 
@@ -127,4 +127,4 @@ Delete `HTTPS_PROXY` from Hermes (remove the values reference), put the real Tav
 
 ## 11. Out of scope
 
-Coder workspaces, egress NetworkPolicy, automated session minting, ESO, brokering non-HTTP credentials, moving `API_SERVER_KEY`/`TS_AUTHKEY`/state-export key out of sealed-secrets.
+Coder workspaces, egress NetworkPolicy, automated session minting, the Infisical operator, brokering non-HTTP credentials, moving `API_SERVER_KEY`/`TS_AUTHKEY`/state-export key out of sealed-secrets.
