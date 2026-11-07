@@ -109,7 +109,7 @@ Plain manifests (no chart exists), via an ArgoCD `Application` pointing at `appl
 - [ ] Hermes's general web access, Aperture LLM calls and Dex login unaffected
 - [ ] No proxy log line contains the real Telegram token
 - [ ] Proxy token and session token in the password manager
-- [ ] Rotation runbook (new session → reseal → restart → revoke old; CA change → fingerprint-checked `agentVault.caCert` in homekube-apps; `hermes auth reset` after an upstream 401) in the homekube-apps README
+- [x] Rotation runbook (new session → reseal → restart → revoke old; CA change → fingerprint-checked `agentVault.caCert` in homekube-apps; `hermes auth reset` after an upstream 401) in the homekube-apps README
 
 ## 8. Risks
 

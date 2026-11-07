@@ -19,6 +19,9 @@ Current quarter only. Prior quarters: [2026 Q2](CHANGELOG-2026-Q2.md), [2026 Q3]
 
 ## 2026-11-08
 
+### Changed
+- `homekube-apps` — **Agent Vault rotation runbook** in the README, step 7 of [spec 010](docs/specs/010-agent-vault-hermes.md). It covers brokered keys as `.env` placeholders and rotating a brokered key, the session and the proxy token. The **Infisical backend memory request** went from 512Mi to 768Mi; the limit stays 1Gi. Its working set had held at 730–760Mi for four days (PR #107, `homekube-apps@b8733a9`). The rolling update moved the pod from pi1 to pi3, and it was Healthy within about 2 minutes. Its only errors were two Redis connection errors at startup, and the Agent Vault proxy logged no warnings.
+
 ### Operational
 - **Tavily key moved out of Hermes**, step 5 of [spec 010](docs/specs/010-agent-vault-hermes.md). `TAVILY_API_KEY` in `/opt/data/.env` is now the placeholder `agent-vault-tavily`, and Hermes still picks `tavily` as its search and extract backend. A stale copy of `.env` (`backups/config/.env.pre-docker-migrate.20261021-062538`) was deleted. A Telegram web search produced three `brokered` lines on bundle `hermes`: `/search` 200, `/search` 400 (Tavily rejected a `site:` query with a path), and `/extract` 200. The old key is still in `state.db` and Longhorn backups until it is rotated at Tavily (step 8).
 - **Agent Vault revocation test**, step 6 of spec 010. A throwaway session `revoke-test` on bundle `hermes` sent a Tavily search through the proxy every 10s. It was revoked at 20:51:44Z. The last brokered request was at 20:52:09Z and the proxy blocked it from 20:52:19Z on, 35s after the revocation and within the 60s poll interval. Each refusal is a 403 on `CONNECT`, logged at warn as `blocked` with "the session is no longer valid", so the request never reaches Tavily. Hermes's own session was not touched.
