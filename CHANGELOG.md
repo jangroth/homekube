@@ -24,7 +24,7 @@ Current quarter only. Prior quarters: [2026 Q2](CHANGELOG-2026-Q2.md), [2026 Q3]
 
 ### Changed
 - `homekube-apps` — **Infisical server pinned to `v0.167.6`** (PR #104, `homekube-apps@ddf5250`). The chart's default `v0.167.0` only issues enrollment tokens, which `infisical/cli` 0.44.x can't use. Infisical held no data yet, so the upgrade needed no backup.
-- `homekube-apps` — **Hermes's HTTPS goes through the Agent Vault proxy**, step 4 of spec 010 (PR #106, `homekube-apps@879ebcf`; herminator chart 0.1.14, `herminator@11ac7ad`). Hermes's values set `agentVault.encryptedHttpsProxy` and the fingerprint-checked `agentVault.caCert`. Only the `hermes` container has `HTTPS_PROXY`. curl, Python and Node (with `NODE_USE_ENV_PROXY=1`) reach external hosts through it, with the certificate issued by `CN=Infisical Agent Vault Proxy`. Dex, Aperture and Telegram stay direct through `NO_PROXY`, and the Telegram gateway reconnected. Tavily still uses the real key in `.env` until step 5.
+- `homekube-apps` — **Hermes's HTTPS goes through the Agent Vault proxy**, step 4 of spec 010 (PR #106, `homekube-apps@879ebcf`; herminator chart 0.1.14, `herminator@11ac7ad`). Hermes's values set `agentVault.encryptedHttpsProxy` and the fingerprint-checked `agentVault.caCert`. Only the `hermes` container has `HTTPS_PROXY`. curl, Python and Node reach external hosts through it (Node since chart 0.1.15, `herminator@ffd00b7`, which sets `NODE_USE_ENV_PROXY=1`), with the certificate issued by `CN=Infisical Agent Vault Proxy`. Dex, Aperture and Telegram stay direct through `NO_PROXY`, and the Telegram gateway reconnected. Tavily still uses the real key in `.env` until step 5.
 
 ## 2026-11-04
 
