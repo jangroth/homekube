@@ -102,7 +102,7 @@ Plain manifests (no chart exists), via an ArgoCD `Application` pointing at `appl
 
 ## 7. Acceptance criteria
 
-- [ ] `agent-vault-proxy` Ready on arm64, connected to Infisical, reachable only from namespace `hermes`
+- [x] `agent-vault-proxy` Ready on arm64, connected to Infisical, reachable only from namespace `hermes`
 - [ ] No real Tavily key in the Hermes pod's env, `/opt/data/.env` or `config.yaml`; the key Hermes held before is rotated, covering copies in its history, state export and backups
 - [ ] Hermes web search works; the proxy log shows the request as `brokered` for service `tavily`
 - [ ] Revoking the session stops credential injection within one poll interval
