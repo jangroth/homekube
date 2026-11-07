@@ -55,10 +55,10 @@ Coder workspaces on Agent Vault are a separate spec once phase 2 is proven.
 - **Session token delivered as a Secret, not minted in the pod.** Running `infisical agent-vault run` inside the Hermes container would put a machine identity in the agent's environment, which can mint sessions. Instead the session is created in the Infisical UI and the full proxy URL (`http://x-agent-vault:<session-token>@agent-vault-proxy.agent-vault.svc:17323`; the token is the password, the username is fixed) is sealed into the `hermes` namespace and injected as `HTTPS_PROXY`. The token is still static in the pod, but it is scoped to one bundle, only works at the proxy, and is revocable in one click.
 - **Session TTL `never`, revoked by hand.** A fixed TTL would force a reseal and Hermes restart on every expiry, for a token that only works at an in-cluster proxy and for one bundle. Rotating the brokered credentials themselves happens in Infisical and doesn't touch Hermes. Short-lived, automatically minted sessions belong with the Coder work.
 - **Session rotation is make-before-break.** A revoked token is presumably rejected for every request the proxy handles, cutting off all proxied web access, not just search. Rotation creates the new session, reseals, restarts Hermes, then revokes the old session. Revoking first is the incident path.
-- **Hermes trusts the proxy CA through a new chart value `extraCaCerts`**, appended by `build-ca-bundle` to the combined bundle and to the `NODE_EXTRA_CA_CERTS` file. It is set in homekube-apps, not in the chart's defaults, so a CA change is one homekube-apps PR. The CA is public: Infisical issues it, the proxy serves it at `GET /_agent-vault/ca`, and it changes only when the proxy is re-enrolled with a new proxy token. The proxy's data dir is a fallback cache, so `emptyDir` is enough.
-- **`TAVILY_API_KEY` becomes a placeholder** (`agent-vault`) in `/opt/data/.env`, so Hermes still enables the tool; a bearer credential on the Tavily service overwrites the `Authorization` header the plugin sends. Hermes's ad-hoc scripts in `/opt/data/briefing/`, which read the key from `.env` and send it in the request body, are left to break. The real key moves to the access bundle and is removed from the PVC. The key is rotated at Tavily afterwards, since it has sat in plaintext on the PVC and its backups, and probably in Hermes's conversation history and state export, since it was entered through Hermes.
+- **Hermes trusts the proxy CA through a new chart value `extraCaCerts`**, appended by `build-ca-bundle` to the combined bundle and to the `NODE_EXTRA_CA_CERTS` file; `CURL_CA_BUNDLE` points at the combined bundle too, since curl honours `HTTPS_PROXY` but not `SSL_CERT_FILE`. It is set in homekube-apps, not in the chart's defaults, so a CA change is one homekube-apps PR. The CA is public: Infisical issues it, the proxy serves it at `GET /_agent-vault/ca`, and it changes only when the proxy is re-enrolled with a new proxy token. The endpoint is unauthenticated plain HTTP, so the PEM is fetched through `kubectl port-forward` and its SHA-256 fingerprint (`openssl x509 -noout -fingerprint -sha256`) is compared with the one on the Proxies page before it goes into `extraCaCerts`. The proxy's data dir is a fallback cache, so `emptyDir` is enough.
+- **`TAVILY_API_KEY` becomes a placeholder** (`agent-vault-tavily`; Hermes treats `dummy`, `placeholder`, `changeme`, `none` and all-`x` values as unset) in `/opt/data/.env`, so Hermes still enables the tool; a bearer credential on the Tavily service overwrites the `Authorization` header the plugin sends. Hermes's ad-hoc scripts in `/opt/data/briefing/`, which read the key from `.env` and send it in the request body, are left to break. The real key moves to the access bundle and is removed from the PVC. The key is rotated at Tavily afterwards, since it has sat in plaintext on the PVC and its backups, and probably in Hermes's conversation history and state export, since it was entered through Hermes.
 - **Ingress NetworkPolicy on `agent-vault`, no egress policy on Hermes.** The proxy accepts traffic from namespace `hermes` only, so a leaked session token can't be used from other pods. Egress isn't restricted: the real credential is no longer in the pod, so bypassing the proxy only means sending requests without it. Locking egress down needs allow-rules for the tailscale sidecar's WireGuard/DERP traffic and belongs with the Coder work, where untrusted code makes it essential.
-- **Chart changes land in herminator**: optional `extraEnvFrom` for `HTTPS_PROXY` and `extraEnv` for `NO_PROXY`, and `extraCaCerts`, all empty by default. homekube-apps only sets values.
+- **Chart changes land in herminator**: optional `extraEnvFrom` for `HTTPS_PROXY` and `extraEnv` for `NO_PROXY`, and `extraCaCerts`, all empty by default; `CURL_CA_BUNDLE` set alongside `SSL_CERT_FILE`. homekube-apps only sets values.
 
 ## 5. Target state
 
@@ -84,7 +84,7 @@ Plain manifests (no chart exists), via an ArgoCD `Application` pointing at `appl
 
 - herminator chart: optional `extraEnvFrom`, `extraEnv` and `extraCaCerts`, empty by default, with a `chart/tests` case that the chart renders unchanged without them; released by merging to herminator `main`, which the `hermes` Application tracks at `HEAD`
 - homekube-apps `wave-03-apps/hermes.yaml` values: `NO_PROXY` via `extraEnv`, `extraCaCerts` with the proxy CA, and `extraEnvFrom` referencing sealed secret `hermes-agent-vault` (key `HTTPS_PROXY`), sealed for namespace `hermes`
-- `/opt/data/.env`: `TAVILY_API_KEY=agent-vault`
+- `/opt/data/.env`: `TAVILY_API_KEY=agent-vault-tavily`
 
 ## 6. Execution plan
 
@@ -92,12 +92,12 @@ Plain manifests (no chart exists), via an ArgoCD `Application` pointing at `appl
 1. In Infisical: create the project, proxy, service, bundle and session (5b); this also confirms Agent Vault works on unlicensed self-hosted. Store the proxy token and session token in the password manager. *(human step)*
 2. Seal `agent-vault-proxy-token` (namespace `agent-vault`) and `hermes-agent-vault` (namespace `hermes`). *(human step)*
 3. PR to `homekube-apps`: 5a. Merge, sync, check the proxy shows as connected in the Infisical UI.
-4. PR to herminator: chart changes (5c). PR to `homekube-apps`: Hermes values. Merge herminator first.
-5. Set `TAVILY_API_KEY=agent-vault` in `/opt/data/.env`, restart Hermes. Ask Hermes for a web search. *(human step)*
+4. PR to herminator: chart changes (5c). PR to `homekube-apps`: Hermes values, with the CA fetched via port-forward and its fingerprint checked against the Proxies page (§4). Merge herminator first.
+5. Set `TAVILY_API_KEY=agent-vault-tavily` in `/opt/data/.env`, restart Hermes. Ask Hermes for a web search. *(human step)*
 6. Check: the proxy log in Loki shows a `brokered` request for service `tavily`; a non-Tavily HTTPS fetch works; Aperture and Dex calls still work (bypass); Telegram still works and no `api.telegram.org` line is in the proxy log; nothing Hermes reaches by IP fails on the proxy; a pod outside `hermes` can't connect to the proxy; proxy memory use.
-7. Rotation: create a new session, reseal `hermes-agent-vault`, restart Hermes, then revoke the old session; check searches keep working. Then revoke the new session and check all proxied web access gets `403` within one poll interval; create another session and reseal to recover. This is the rotation runbook.
-8. Rotate the Tavily key at Tavily, update the service in Infisical. *(human step)*
-9. Telegram: add a `telegram` service to the bundle (host `api.telegram.org`, path substitution of a placeholder bot token), set the placeholder as `TELEGRAM_BOT_TOKEN`, drop `api.telegram.org` from `NO_PROXY`, repeat 5–6.
+7. Rotation: create a new session, reseal `hermes-agent-vault`, restart Hermes, then revoke the old session; check searches keep working. Then revoke the new session and check all proxied web access gets `403` within one poll interval; create another session and reseal to recover. This is the rotation runbook. A CA change (proxy re-enrolment) repeats the fingerprint-checked fetch from step 4.
+8. Rotate the Tavily key at Tavily, update the service in Infisical. If Hermes saw a 401 in between, it has marked the key exhausted: `hermes auth reset <provider>` and restart. *(human step)*
+9. Telegram: add a `telegram` service to the bundle (host `api.telegram.org`, path substitution of a placeholder bot token), set the placeholder as `TELEGRAM_BOT_TOKEN`, drop `api.telegram.org` from `NO_PROXY`, repeat 5–6. The gateway exits instead of retrying when Telegram rejects its token, so a placeholder mismatch shows as a restarting pod.
 10. CHANGELOG entry; amend decision 080 with anything else that differs; set this spec to Done.
 
 ## 7. Acceptance criteria
@@ -109,12 +109,13 @@ Plain manifests (no chart exists), via an ArgoCD `Application` pointing at `appl
 - [ ] Hermes's general web access, Aperture LLM calls and Dex login unaffected
 - [ ] No proxy log line contains the real Telegram token
 - [ ] Proxy token and session token in the password manager
-- [ ] Rotation runbook (new session → reseal → restart → revoke old; CA change → `extraCaCerts` in homekube-apps) in the homekube-apps README
+- [ ] Rotation runbook (new session → reseal → restart → revoke old; CA change → fingerprint-checked `extraCaCerts` in homekube-apps; `hermes auth reset` after an upstream 401) in the homekube-apps README
 
 ## 8. Risks
 
 - **Licensing.** Agent Vault lives in Infisical's `ee/` directory, which the repo describes as "premium enterprise features requiring a Infisical license", yet nothing in `v0.167.0` gates it. Fine for a study cluster; recorded in the decision entry.
 - **Young feature.** Agent Vault has had roughly one DB migration a week since 2026-09. Infisical bumps are already backed up before merge (spec 009).
+- **No WebSockets.** The proxy doesn't carry them; Telegram long-polls over HTTP and Aperture bypasses the proxy, but a WebSocket-based platform or tool would break.
 - **Proxy as a single point of failure** for Hermes's brokered calls. Unbrokered HTTPS also flows through it, so a proxy outage breaks Hermes's web access too.
 - **Infisical as a dependency of Hermes's web access.** The proxy validates sessions and fetches credentials from Infisical. Cached sessions survive an Infisical or Postgres outage for 5 × poll interval (5 min), then all proxied requests fail; a fresh proxy pod doesn't start without Infisical.
 - **Decryption.** Every HTTPS request from Hermes outside `NO_PROXY` is decrypted by the proxy. Brokered and blocked requests are logged with method, host and path; passthrough only at `debug`, which must stay off.
@@ -137,7 +138,7 @@ Coder workspaces, egress NetworkPolicy, automated session minting, the Infisical
 
 ## 12. Step 0 findings (2026-11-05)
 
-From `infisical/cli` `0.44.15` (source tag `v0.44.15`, `packages/agentvault/`), Infisical backend `v0.167.0`, and the running `hermes-agent:v0.22.2` image. UI-side checks (proxy creation on unlicensed self-hosted) happen in step 1.
+From `infisical/cli` `0.44.15` (source tag `v0.44.15`, `packages/agentvault/`), Infisical backend `v0.167.0`, and the running `hermes-agent:v0.22.2` image. Cross-checked against Infisical's [Hermes gateway guide](https://infisical.com/docs/documentation/platform/agent-vault/guides/hermes-gateway). UI-side checks (proxy creation on unlicensed self-hosted) happen in step 1.
 
 ### Proxy
 
