@@ -38,7 +38,7 @@ Coder workspaces on Agent Vault are a separate spec once phase 2 is proven.
 
 - Hermes is Python; `SSL_CERT_FILE` and `REQUESTS_CA_BUNDLE` already point at a combined bundle built by the `build-ca-bundle` init container (system store + the chart's `caCert` value); `NODE_EXTRA_CA_CERTS` points at `caCert` alone.
 - Dex is reached as `https://pi0.taild13083.ts.net/dex`, Aperture as `http://ai.taild13083.ts.net`; both by hostname.
-- No `HTTPS_PROXY` is set. The herminator chart has no `extraEnv` value and no NetworkPolicy template.
+- No `HTTPS_PROXY` is set. The herminator chart has no proxy settings and no NetworkPolicy template.
 - The tailscale sidecar runs in kernel mode (`TS_USERSPACE=false`) in the pod's network namespace; Aperture resolves through a `hostAliases` pin to `100.126.29.31`. The sidecar also routes the `192.168.86.240/28` VIPs over the tailnet.
 - Agent Vault is present in Infisical `v0.167.0` (`backend/src/ee/services/agent-vault*`). The on-prem default features only disable session-log storage options; no licence check gates the proxy or sessions.
 - `infisical/cli` images are published for `arm64`.
@@ -55,10 +55,10 @@ Coder workspaces on Agent Vault are a separate spec once phase 2 is proven.
 - **Session token delivered as a Secret, not minted in the pod.** Running `infisical agent-vault run` inside the Hermes container would put a machine identity in the agent's environment, which can mint sessions. Instead the session is created in the Infisical UI and the full proxy URL (`http://x-agent-vault:<session-token>@agent-vault-proxy.agent-vault.svc:17323`; the token is the password, the username is fixed) is sealed into the `hermes` namespace and injected as `HTTPS_PROXY`. The token is still static in the pod, but it is scoped to one bundle, only works at the proxy, and is revocable in one click.
 - **Session TTL `never`, revoked by hand.** A fixed TTL would force a reseal and Hermes restart on every expiry, for a token that only works at an in-cluster proxy and for one bundle. Rotating the brokered credentials themselves happens in Infisical and doesn't touch Hermes. Short-lived, automatically minted sessions belong with the Coder work.
 - **Session rotation is make-before-break.** A revoked token is presumably rejected for every request the proxy handles, cutting off all proxied web access, not just search. Rotation creates the new session, reseals, restarts Hermes, then revokes the old session. Revoking first is the incident path.
-- **Hermes trusts the proxy CA through a new chart value `extraCaCerts`**, appended by `build-ca-bundle` to the combined bundle and to the `NODE_EXTRA_CA_CERTS` file; `CURL_CA_BUNDLE` points at the combined bundle too, since curl honours `HTTPS_PROXY` but not `SSL_CERT_FILE`. It is set in homekube-apps, not in the chart's defaults, so a CA change is one homekube-apps PR. The CA is public: Infisical issues it, the proxy serves it at `GET /_agent-vault/ca`, and it changes only when the proxy is re-enrolled with a new proxy token. The endpoint is unauthenticated plain HTTP, so the PEM is fetched through `kubectl port-forward` and its SHA-256 fingerprint (`openssl x509 -noout -fingerprint -sha256`) is compared with the one on the Proxies page before it goes into `extraCaCerts`. The proxy's data dir is a fallback cache, so `emptyDir` is enough.
+- **Hermes trusts the proxy CA through chart value `agentVault.caCert`**, appended by `build-ca-bundle` to the combined bundle and to the `NODE_EXTRA_CA_CERTS` file; `CURL_CA_BUNDLE` points at the combined bundle too, since curl honours `HTTPS_PROXY` but not `SSL_CERT_FILE`. It is set in homekube-apps, not in the chart's defaults, so a CA change is one homekube-apps PR. The CA is public: Infisical issues it, the proxy serves it at `GET /_agent-vault/ca`, and it changes only when the proxy is re-enrolled with a new proxy token. The endpoint is unauthenticated plain HTTP, so the PEM is fetched through `kubectl port-forward` and its SHA-256 fingerprint (`openssl x509 -noout -fingerprint -sha256`) is compared with the one on the Proxies page before it goes into `agentVault.caCert`. The proxy's data dir is a fallback cache, so `emptyDir` is enough.
 - **`TAVILY_API_KEY` becomes a placeholder** (`agent-vault-tavily`; Hermes treats `dummy`, `placeholder`, `changeme`, `none` and all-`x` values as unset) in `/opt/data/.env`, so Hermes still enables the tool; a bearer credential on the Tavily service overwrites the `Authorization` header the plugin sends. Hermes's ad-hoc scripts in `/opt/data/briefing/`, which read the key from `.env` and send it in the request body, are left to break. The real key moves to the access bundle and is removed from the PVC. The key is rotated at Tavily afterwards, since it has sat in plaintext on the PVC and its backups, and probably in Hermes's conversation history and state export, since it was entered through Hermes.
 - **Ingress NetworkPolicy on `agent-vault`, no egress policy on Hermes.** The proxy accepts traffic from namespace `hermes` only, so a leaked session token can't be used from other pods. Egress isn't restricted: the real credential is no longer in the pod, so bypassing the proxy only means sending requests without it. Locking egress down needs allow-rules for the tailscale sidecar's WireGuard/DERP traffic and belongs with the Coder work, where untrusted code makes it essential.
-- **Chart changes land in herminator**: optional `extraEnvFrom` for `HTTPS_PROXY` and `extraEnv` for `NO_PROXY`, and `extraCaCerts`, all empty by default; `CURL_CA_BUNDLE` set alongside `SSL_CERT_FILE`. homekube-apps only sets values.
+- **Chart changes land in herminator** as one optional `agentVault` block ([herminator change `agent-vault-proxy`](https://github.com/jangroth/herminator/tree/main/openspec/changes/agent-vault-proxy)): `encryptedHttpsProxy` (ciphertext; the chart renders SealedSecret `hermes-agent-vault`), `caCert` and `noProxy`, off by default. Only the `hermes` container gets `HTTPS_PROXY`, `NO_PROXY` and `CURL_CA_BUNDLE`, and a checksum annotation restarts Hermes when the ciphertext or CA changes. homekube-apps only sets values.
 
 ## 5. Target state
 
@@ -82,8 +82,8 @@ Plain manifests (no chart exists), via an ArgoCD `Application` pointing at `appl
 
 ### 5c. Hermes
 
-- herminator chart: optional `extraEnvFrom`, `extraEnv` and `extraCaCerts`, empty by default, with a `chart/tests` case that the chart renders unchanged without them; released by merging to herminator `main`, which the `hermes` Application tracks at `HEAD`
-- homekube-apps `wave-03-apps/hermes.yaml` values: `NO_PROXY` via `extraEnv`, `extraCaCerts` with the proxy CA, and `extraEnvFrom` referencing sealed secret `hermes-agent-vault` (key `HTTPS_PROXY`), sealed for namespace `hermes`
+- herminator chart 0.1.14: optional `agentVault` block, off by default, with `chart/tests/agent-vault-render.sh` checking the chart renders unchanged without it; released by merging to herminator `main`, which the `hermes` Application tracks at `HEAD`
+- homekube-apps `wave-03-apps/hermes.yaml` values: `agentVault.encryptedHttpsProxy` (key `HTTPS_PROXY` of `hermes-agent-vault`, sealed for namespace `hermes`) and `agentVault.caCert`; `noProxy` uses the chart defaults
 - `/opt/data/.env`: `TAVILY_API_KEY=agent-vault-tavily`
 
 ## 6. Execution plan
@@ -109,7 +109,7 @@ Plain manifests (no chart exists), via an ArgoCD `Application` pointing at `appl
 - [ ] Hermes's general web access, Aperture LLM calls and Dex login unaffected
 - [ ] No proxy log line contains the real Telegram token
 - [ ] Proxy token and session token in the password manager
-- [ ] Rotation runbook (new session → reseal → restart → revoke old; CA change → fingerprint-checked `extraCaCerts` in homekube-apps; `hermes auth reset` after an upstream 401) in the homekube-apps README
+- [ ] Rotation runbook (new session → reseal → restart → revoke old; CA change → fingerprint-checked `agentVault.caCert` in homekube-apps; `hermes auth reset` after an upstream 401) in the homekube-apps README
 
 ## 8. Risks
 
@@ -130,7 +130,7 @@ Plain manifests (no chart exists), via an ArgoCD `Application` pointing at `appl
 
 ## 10. Rollback
 
-Remove `extraEnvFrom`, `extraEnv` (`NO_PROXY`) and `extraCaCerts` from the Hermes values, put the real Tavily key back into `/opt/data/.env`, restart Hermes. Delete the `agent-vault` Application (finalizer removes the namespace contents), then the namespace. Delete the project in Infisical.
+Remove the `agentVault` block from the Hermes values, put the real Tavily key back into `/opt/data/.env`, restart Hermes. Delete the `agent-vault` Application (finalizer removes the namespace contents), then the namespace. Delete the project in Infisical.
 
 ## 11. Out of scope
 
