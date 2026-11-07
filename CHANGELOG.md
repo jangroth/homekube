@@ -21,6 +21,7 @@ Current quarter only. Prior quarters: [2026 Q2](CHANGELOG-2026-Q2.md), [2026 Q3]
 
 ### Operational
 - **Tavily key moved out of Hermes**, step 5 of [spec 010](docs/specs/010-agent-vault-hermes.md). `TAVILY_API_KEY` in `/opt/data/.env` is now the placeholder `agent-vault-tavily`, and Hermes still picks `tavily` as its search and extract backend. A stale copy of `.env` (`backups/config/.env.pre-docker-migrate.20261021-062538`) was deleted. A Telegram web search produced three `brokered` lines on bundle `hermes`: `/search` 200, `/search` 400 (Tavily rejected a `site:` query with a path), and `/extract` 200. The old key is still in `state.db` and Longhorn backups until it is rotated at Tavily (step 8).
+- **Agent Vault revocation test**, step 6 of spec 010. A throwaway session `revoke-test` on bundle `hermes` sent a Tavily search through the proxy every 10s. It was revoked at 20:51:44Z. The last brokered request was at 20:52:09Z and the proxy blocked it from 20:52:19Z on, 35s after the revocation and within the 60s poll interval. Each refusal is a 403 on `CONNECT`, logged at warn as `blocked` with "the session is no longer valid", so the request never reaches Tavily. Hermes's own session was not touched.
 
 ## 2026-11-07
 
