@@ -75,7 +75,7 @@ Plain manifests (no chart exists), via an ArgoCD `Application` pointing at `appl
 
 ### 5b. Infisical (UI, human step)
 
-- Agent Vault project; proxy `homekube` with traffic policy `any-host` and the default poll interval (60s)
+- The default Agent Vault project (the open-source edition can't create others); proxy `homekube` with traffic policy `any-host` and the default poll interval (60s)
 - Service `tavily`: host `api.tavily.com`, bearer credential (`Authorization`, prefix `Bearer`) holding the real key, methods/paths limited to what Hermes calls (`POST /search`, `POST /extract`)
 - Access bundle `hermes` containing `tavily`
 - Session on bundle `hermes`, label `hermes`, TTL `never`
@@ -89,7 +89,7 @@ Plain manifests (no chart exists), via an ArgoCD `Application` pointing at `appl
 ## 6. Execution plan
 
 0. **Verify:** done, findings in §12.
-1. In Infisical: create the project, proxy, service, bundle and session (5b); this also confirms Agent Vault works on unlicensed self-hosted. Store the proxy token and session token in the password manager. *(human step)*
+1. In Infisical: in the default project, create the proxy, service, bundle and session (5b); this also confirms Agent Vault works on unlicensed self-hosted. Store the proxy token and session token in the password manager. *(human step)*
 2. Seal `agent-vault-proxy-token` (namespace `agent-vault`) and `hermes-agent-vault` (namespace `hermes`). *(human step)*
 3. PR to `homekube-apps`: 5a. Merge, sync, check the proxy shows as connected in the Infisical UI.
 4. PR to herminator: chart changes (5c). PR to `homekube-apps`: Hermes values, with the CA fetched via port-forward and its fingerprint checked against the Proxies page (§4). Merge herminator first.
@@ -138,9 +138,12 @@ Coder workspaces, egress NetworkPolicy, automated session minting, the Infisical
 
 ## 12. Step 0 findings (2026-11-05)
 
-From `infisical/cli` `0.44.15` (source tag `v0.44.15`, `packages/agentvault/`), Infisical backend `v0.167.0`, and the running `hermes-agent:v0.22.2` image. Cross-checked against Infisical's [Hermes gateway guide](https://infisical.com/docs/documentation/platform/agent-vault/guides/hermes-gateway). UI-side checks (proxy creation on unlicensed self-hosted) happen in step 1.
+From `infisical/cli` `0.44.15` (source tag `v0.44.15`, `packages/agentvault/`), Infisical backend `v0.167.0` (bootstrap flow checked against `v0.167.6`), and the running `hermes-agent:v0.22.2` image. Cross-checked against Infisical's [Hermes gateway guide](https://infisical.com/docs/documentation/platform/agent-vault/guides/hermes-gateway). UI-side checks (proxy creation on unlicensed self-hosted) happen in step 1.
 
 ### Proxy
+
+The proxy-token flow below needs Infisical `>= v0.167.2` and CLI `>= 0.44.7`; older pairs use a one-time enrollment token and a proxy-generated CA. Infisical was bumped to `v0.167.6` for this.
+
 
 | Item | Finding |
 |---|---|
