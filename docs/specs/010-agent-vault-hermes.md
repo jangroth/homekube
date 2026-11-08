@@ -97,7 +97,7 @@ Plain manifests (no chart exists), via an ArgoCD `Application` pointing at `appl
 6. Check: the proxy log in Loki shows a `brokered` request for service `tavily`; a non-Tavily HTTPS fetch works; Aperture and Dex calls still work (bypass); Telegram still works and no `api.telegram.org` line is in the proxy log; nothing Hermes reaches by IP fails on the proxy; a pod outside `hermes` can't connect to the proxy; proxy memory use.
 7. Rotation: create a new session, reseal `hermes-agent-vault`, restart Hermes, then revoke the old session; check searches keep working. Then revoke the new session and check all proxied web access gets `403` within one poll interval; create another session and reseal to recover. This is the rotation runbook. A CA change (proxy re-enrolment) repeats the fingerprint-checked fetch from step 4.
 8. Rotate the Tavily key at Tavily, update the service in Infisical. If Hermes saw a 401 in between, it has marked the key exhausted: `hermes auth reset <provider>` and restart. *(human step)*
-9. Telegram: add a `telegram` service to the bundle (host `api.telegram.org`, path substitution of a placeholder bot token), set the placeholder as `TELEGRAM_BOT_TOKEN`, drop `api.telegram.org` from `NO_PROXY`, repeat 5–6. The gateway exits instead of retrying when Telegram rejects its token, so a placeholder mismatch shows as a restarting pod.
+9. Telegram: add a `telegram` service to the bundle (host `api.telegram.org`, path substitution of a placeholder bot token), set the placeholder as `TELEGRAM_BOT_TOKEN`, drop `api.telegram.org` from `NO_PROXY`, repeat 5–6. When Telegram rejects its token the gateway parks the platform until `hermes gateway restart`, so a placeholder mismatch shows as a silent bot, not a restarting pod.
 10. CHANGELOG entry; amend decision 080 with anything else that differs; set this spec to Done.
 
 ## 7. Acceptance criteria
@@ -107,7 +107,7 @@ Plain manifests (no chart exists), via an ArgoCD `Application` pointing at `appl
 - [x] Hermes web search works; the proxy log shows the request as `brokered` for service `tavily`
 - [x] Revoking the session stops credential injection within one poll interval
 - [ ] Hermes's general web access, Aperture LLM calls and Dex login unaffected
-- [ ] No proxy log line contains the real Telegram token
+- [x] No proxy log line contains the real Telegram token
 - [ ] Proxy token and session token in the password manager
 - [x] Rotation runbook (new session → reseal → restart → revoke old; CA change → fingerprint-checked `agentVault.caCert` in homekube-apps; `hermes auth reset` after an upstream 401) in the homekube-apps README
 
