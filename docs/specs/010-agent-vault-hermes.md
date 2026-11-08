@@ -106,9 +106,9 @@ Plain manifests (no chart exists), via an ArgoCD `Application` pointing at `appl
 - [x] No real Tavily key in the Hermes pod's env, `/opt/data/.env` or `config.yaml`; the key Hermes held before is rotated, covering copies in its history, state export and backups
 - [x] Hermes web search works; the proxy log shows the request as `brokered` for service `tavily`
 - [x] Revoking the session stops credential injection within one poll interval
-- [ ] Hermes's general web access, Aperture LLM calls and Dex login unaffected
+- [x] Hermes’s general web access, Aperture LLM calls and Dex login unaffected
 - [x] No proxy log line contains the real Telegram token
-- [ ] Proxy token and session token in the password manager
+- [x] Proxy token and session token in the password manager
 - [x] Rotation runbook (new session → reseal → restart → revoke old; CA change → fingerprint-checked `agentVault.caCert` in homekube-apps; `hermes auth reset` after an upstream 401) in the homekube-apps README
 
 ## 8. Risks
