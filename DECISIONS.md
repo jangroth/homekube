@@ -14,6 +14,8 @@ Current quarter only. Prior quarters: [2026 Q2](DECISIONS-2026-Q2.md), [2026 Q3]
 
 **Trade-offs accepted:** Agent Vault is in Infisical's `ee/` directory, described as needing a licence, though nothing in `v0.167.0` gates it; acceptable for a study cluster. It is young (about one DB migration a week since 2026-09). The proxy decrypts all of Hermes's HTTPS and becomes a single point of failure for its web access. Session logs need a paid plan, so the proxy's own stdout in Loki is the only request record. The session token is still a static secret in the pod, protected by scope, request logging and manual revocation rather than expiry. No egress NetworkPolicy yet, so Hermes can bypass the proxy, though only without credentials. The operator only knows Infisical, and one operator watching several namespaces lets them reference each other's `InfisicalAuth`; strict isolation would need an operator per namespace.
 
+**Amended 2026-11-08:** Telegram is brokered too: the proxy substitutes a placeholder bot token into the URL path, and logs the agent's pre-substitution path, so the real token reaches no log. Proxy tokens need Infisical `>= v0.167.2`; `v0.167.6` still gates nothing. The proxy decrypts every HTTPS host under either traffic policy, and logs passthrough requests only at debug, so Loki holds brokered and blocked requests only, and the proxy must never run at debug. Node's `fetch` honours `HTTPS_PROXY` only with `NODE_USE_ENV_PROXY=1`. Revoking a session took effect within one 60s poll.
+
 ## 079 — Self-hosted Infisical as the secret store, sealed-secrets kept for bootstrap (2026-11-01)
 
 **Area:** security
