@@ -17,7 +17,26 @@ Current quarter only. Prior quarters: [2026 Q2](CHANGELOG-2026-Q2.md), [2026 Q3]
 
 ---
 
+## 2026-11-10
+
+### Changed
+- `homekube-apps` — **Coder sized from measurements**, step 6 of [spec 011](docs/specs/011-coder-install.md) (PR #117, `homekube-apps@fd4acfc`). Over two days coderd idled at 177Mi and peaked at 334Mi during a workspace build (CPU 127m), so it stays at 256Mi / 1Gi. Postgres used 57–75Mi against a 64Mi request, now 128Mi. The workspace `dev` container idled at 50–84Mi and 26m, so its requests went from 250m / 256Mi to 100m / 128Mi with the limits unchanged. The template also sets `run_as_non_root = true` on each container: the Kubernetes provider writes a container-level `runAsNonRoot: false` otherwise, which overrode the pod's `true`. Template version `crowded_santos52` pushed; workspace `tan-boa-53` updated onto it and shows both.
+
+### Operational
+- **Coder workspace smoke test**, step 5 of spec 011. A file in home survived stop/start and a template update; deleting the workspace removed its pod, PVC, PV and Longhorn volume. Postgres `data-postgres-0` already has completed `daily` backups (2026-11-08, 2026-11-09), so step 7's manual backup was skipped; it stays a pre-bump step.
+- **Workspace builds failed on `terraform init`** twice. On 2026-11-08 and 2026-11-09, GitHub returned 504 for release downloads, including the `coder/coder` provider's `SHA256SUMS`, from coderd, the pis and darth alike (GitHub incident "Increased timeouts due to surge in anonymous users"). Every build, stop and delete included, fetches provider checksums from the registry and GitHub despite coderd's plugin cache. A local provider mirror makes `init` work offline (tested) but was not adopted. Separately, an offline test run against coderd's live plugin cache replaced its entries with symlinks to a deleted temp directory, failing builds with "is a symlink" until the links were removed.
+
+### Decisions
+- [Decision 081](DECISIONS.md): Coder as the workspace platform for agents. [Spec 011](docs/specs/011-coder-install.md) Done.
+
 ## 2026-11-08
+
+### Added
+- `homekube-apps` — **Coder**, steps 2–4 of [spec 011](docs/specs/011-coder-install.md). Chart `coder` 2.39.0 in namespace `coder` at sync wave 3 with its own Postgres 17 (5Gi, `daily` backup group). coderd terminates TLS itself on `192.168.86.248` with a homekube-ca certificate and trusts homekube-ca for the Dex issuer. Login is Dex OIDC with signups off; a `+breakglass` password owner and the daily OIDC owner were created by hand. Workspaces run in `coder-workspaces` through the chart's namespace Role. A new Dex static client `coder` reads its secret through `secretEnv`, and Homepage gained a Coder entry. Renovate tracks the template image with a regex manager and raises Coder chart bumps as their own PR (PR #109, `homekube-apps@5c6d24f`). The Kubernetes template in `manual/coder-templates/kubernetes/` was pushed by hand (PR #112, `homekube-apps@f3a9793`). It runs one pod per running workspace with an init container that builds a CA bundle, so it needs no root, plus a home PVC that survives stop.
+
+### Fixed
+- `homekube-apps` — **Coder Service always OutOfSync**: the chart renders `nodePort: null`, so `ignoreDifferences` on `.spec.ports[].nodePort` with `RespectIgnoreDifferences` (PR #110, `homekube-apps@ba02a34`).
+- `homekube-apps` — **coderd CrashLoopBackOff** after #110. As env, `CODER_EXTERNAL_AUTH_GITHUB_DEFAULT_PROVIDER_ENABLE` is parsed as a numbered external-auth provider and fails startup; it moved to the server flag `--external-auth-github-default-provider-enable=false`. The old pod kept serving throughout (PR #111, `homekube-apps@8151dfc`).
 
 ### Changed
 - `homekube-apps` — **Agent Vault rotation runbook** in the README, step 7 of [spec 010](docs/specs/010-agent-vault-hermes.md). It covers brokered keys as `.env` placeholders and rotating a brokered key, the session and the proxy token. The **Infisical backend memory request** went from 512Mi to 768Mi; the limit stays 1Gi. Its working set had held at 730–760Mi for four days (PR #107, `homekube-apps@b8733a9`). The rolling update moved the pod from pi1 to pi3, and it was Healthy within about 2 minutes. Its only errors were two Redis connection errors at startup, and the Agent Vault proxy logged no warnings.
@@ -27,6 +46,7 @@ Current quarter only. Prior quarters: [2026 Q2](CHANGELOG-2026-Q2.md), [2026 Q3]
 - **Agent Vault revocation test**, step 6 of spec 010. A throwaway session `revoke-test` on bundle `hermes` sent a Tavily search through the proxy every 10s. It was revoked at 20:51:44Z. The last brokered request was at 20:52:09Z and the proxy blocked it from 20:52:19Z on, 35s after the revocation and within the 60s poll interval. Each refusal is a 403 on `CONNECT`, logged at warn as `blocked` with "the session is no longer valid", so the request never reaches Tavily. Hermes's own session was not touched.
 - **Tavily key rotated**, step 8 of spec 010. A new key was created at Tavily and the old one deleted, so the copies in `state.db` and Longhorn backups are dead. The new key exists only in the `tavily` credential of bundle `hermes`. Hermes searches with the old key still in Infisical got `brokered` 401s at 21:18Z and 21:20Z. After the credential was swapped, a search at 21:22Z got 200. Hermes needed no `hermes auth reset`.
 - **Telegram brokered through Agent Vault**, step 9 of [spec 010](docs/specs/010-agent-vault-hermes.md). Service `telegram` on bundle `hermes` substitutes the placeholder `agent-vault-telegram` in the URL path; `api.telegram.org` left Hermes's `NO_PROXY` (herminator chart 0.1.16, `herminator@c724991`). The substitution was first created on surface Header, so it never fired: Telegram rejected the placeholder and Hermes parked the platform, with nothing in the proxy log. Switched to Path, Hermes restarted. Every Telegram call is now `brokered` with `"substituted":["path"]`, including a file download (`/file/bot…/documents/…` 200), and no proxy log line holds a token. The bot token was then revoked in BotFather and the new one exists only in the substitution, so the copy in `state.db` is dead. Runbook updated in the homekube-apps README.
+- **Coder's default GitHub login closed.** After the first sync, `authmethods` showed GitHub login enabled through Coder's own OAuth app, with no users yet, so anyone on the LAN could have claimed the owner account. The break-glass owner was created at once, then the default OAuth2 and external-auth GitHub providers were disabled (PRs #110, #111). Login methods are now password and OIDC only.
 
 ### Decisions
 - [Decision 080](DECISIONS.md) amended: Telegram brokered by path substitution, Infisical version floor, proxy logging and Node proxy behaviour. [Spec 010](docs/specs/010-agent-vault-hermes.md) Done.

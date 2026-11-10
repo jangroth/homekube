@@ -4,6 +4,16 @@ Current quarter only. Prior quarters: [2026 Q2](DECISIONS-2026-Q2.md), [2026 Q3]
 
 ---
 
+## 081 — Coder as the workspace platform for agents, Dex login, template pushed from git (2026-11-10)
+
+**Area:** platform-engineering
+
+**Decision:** Agent workspaces run on self-hosted Coder ([spec 011](docs/specs/011-coder-install.md)): the official chart on the mainline channel, its own Postgres, `coderd` terminating TLS on an LB-IPAM IP with a homekube-ca certificate, one built-in provisioner, telemetry off. Login is Dex OIDC with signups off. A `+breakglass` password owner and the daily OIDC owner are both created by hand, and Coder's default GitHub providers are disabled. Workspaces are bare pods in `coder-workspaces`, managed through a namespace Role. They run as uid 1000 with no privilege escalation and get homekube-ca from an init container, not through root. The template lives in `homekube-apps/manual/coder-templates/` and is pushed by hand from `main`, never edited in the UI. Coder chart bumps come as their own Renovate PR, with a manual Postgres backup before merging.
+
+**Rationale:** Hermes needs isolated places to run code (spec 013), and Coder supplies the lifecycle (create, stop, delete, agent, SSH) without a custom controller. Its own Postgres keeps an Infisical migration or restore from taking Coder down. Dex is the cluster's one identity source. The two owners give a way in when OIDC breaks without converting the daily account, since conversion removes its password. A workspace with no root at runtime keeps the agent from installing anything, so its tools are baked into the image. The template is Coder state that ArgoCD can't own, so git-first plus a hand push is the only way to keep it reviewable. Coder runs DB migrations without a down path, hence the separate bump PR and the backup step.
+
+**Trade-offs accepted:** A new Coder deployment opens GitHub login through Coder's own app to anyone until a first user exists. Here that window was closed by hand, and a rebuild has the same window. Every workspace build, stop and delete included, needs registry.terraform.io and github.com. A local provider mirror would remove that dependency but is deferred. Template pushes and image changes are manual steps after a merge. Tools need image changes (image bakery, #77). The `example-base` image (373 MB, `sudo` inert) stays until then. Workspace egress is open until spec 012.
+
 ## 080 — Infisical Agent Vault brokers Hermes's API credentials; the Infisical operator replaces ESO (2026-11-05)
 
 **Area:** security
