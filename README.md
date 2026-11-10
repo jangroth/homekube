@@ -209,6 +209,7 @@ Cilium (CNI + LB) · Longhorn · ArgoCD · Prometheus · Grafana · Loki
 | Infisical | `infisical` | 02 | `192.168.86.247:443` (local admin) |
 | Homepage | `homepage` | 03 | `192.168.86.245:80` |
 | Hermes | `hermes` | 03 | `192.168.86.246:443` (Dex OIDC) |
+| Coder | `coder`, workspaces in `coder-workspaces` | 03 | `192.168.86.248:443` (Dex OIDC), `coder` CLI |
 
 Pinned versions live only in source (`homekube-main/ansible/group_vars/all.yml`, `homekube-apps/applications/*.yaml`) — run `/check-versions` for current vs. latest. Keep both tables current when adding/removing a component — see "source reflects runtime" in `CLAUDE.md`.
 
@@ -239,7 +240,8 @@ Rough RAM allocation, sized for 4×8 GiB = 32 GiB total. Numbers are `requests`;
 | 9 | Dex | 128 MiB | |
 | 10 | Hermes (hermes + nginx + tailscale sidecar) | ~640 MiB | requests: hermes 512 MiB, nginx 64 MiB, tailscale sidecar 64 MiB (herminator chart `values.yaml`); limits 1Gi/128Mi/128Mi |
 | 1 | Infisical (infisical + tls-proxy sidecar, Postgres, Redis) | ~688 MiB | requests: infisical 512 MiB, tls-proxy 16 MiB, postgres 128 MiB, redis 32 MiB; limits 1Gi/64Mi/512Mi/128Mi (spec 009) |
-| — | **Subtotal (deployed)** | **~9.9 GiB** | |
+| 10 | Coder (coderd, Postgres) | ~384 MiB | requests: coderd 256 MiB, postgres 128 MiB; limits 1Gi/256Mi (spec 011). Each running workspace adds 128 MiB request, 1–2 GiB limit |
+| — | **Subtotal (deployed)** | **~10.3 GiB** | |
 
 ### Planned
 
@@ -254,10 +256,10 @@ Rough RAM allocation, sized for 4×8 GiB = 32 GiB total. Numbers are `requests`;
 | | RAM |
 |---|---|
 | System reserved (4 nodes) | ~4 GiB |
-| Deployed workload subtotal | ~9.9 GiB |
-| **Current headroom** | **~18.1 GiB** |
+| Deployed workload subtotal | ~10.3 GiB |
+| **Current headroom** | **~17.7 GiB** |
 | Planned workload subtotal | ~1.25 GiB |
-| **Headroom after planned deploys** | **~16.85 GiB** |
+| **Headroom after planned deploys** | **~16.45 GiB** |
 
 Sidecar overhead is *not* in either subtotal — each opted-in namespace adds ~80–120 MiB per pod. Audit before enabling injection in a busy namespace.
 
