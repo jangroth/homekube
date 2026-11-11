@@ -19,8 +19,9 @@ Workspaces are small, headless shells: SSH and the web terminal, no IDE or brows
 | Spec    | Scope                                                                                     |
 | ------- | ----------------------------------------------------------------------------------------- |
 | **011** | `coderd` + Postgres, Dex login, one Kubernetes template, one workspace driven by hand     | this spec |
-| 012     | Workspaces send HTTPS through Agent Vault; egress NetworkPolicy so they can't bypass it   | later     |
-| 013     | Hermes creates and stops workspaces through Coder's API/CLI with a scoped, brokered token | later     |
+| 012     | Workspace egress: Aperture path, GitHub App credential via Agent Vault, egress NetworkPolicy, OpenCode ([spec 012](012-workspace-egress.md)) | later |
+| 013     | Hermes drives Coder over `coder ssh`, one workspace per task, a PR as the result          | later     |
+| 014     | The issue loop: Hermes works `agent-safe` issues on a schedule                            | later     |
 
 ## 3. Decisions within this spec
 
