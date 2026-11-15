@@ -17,6 +17,11 @@ Current quarter only. Prior quarters: [2026 Q2](CHANGELOG-2026-Q2.md), [2026 Q3]
 
 ---
 
+## 2026-11-15
+
+### Changed
+- `homekube-apps` — **Coder workspaces on the bakery image** (PR #123, `homekube-apps@b8a9bef`, #77). The template uses `ghcr.io/jangroth/homekube-bakery/coder-workspace:0.3.0`, pinned by tag and digest, instead of `codercom/example-base:ubuntu-20261105`: Debian 13 slim with OpenCode 2.3.0 and `gh` 2.104.0, no sudo, no setuid binaries. The Renovate regex for the template captures the digest separately; the `example-base` versioning rule is gone. Template version `condemned_cunningham98` pushed; a workspace updated onto it runs `opencode` and `gh` as `coder`. The Hermes image switch is still open on #77.
+
 ## 2026-11-10
 
 ### Changed
