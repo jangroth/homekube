@@ -17,6 +17,12 @@ Current quarter only. Prior quarters: [2026 Q2](CHANGELOG-2026-Q2.md), [2026 Q3]
 
 ---
 
+## 2026-11-18
+
+### Added
+- `homekube-apps` — homepage **Metrics** bookmark group: Grafana dashboard deep links (last 1h) for the same 17 services as the Logs group. Services with their own dashboard (Alertmanager, Prometheus, Grafana, CoreDNS, Longhorn, API server for the control plane) link to it. Services that share a namespace (Alloy, Loki, Cilium, sealed-secrets) link to *Compute Resources / Workload*. The rest link to *Compute Resources / Namespace (Workloads)*.
+- `homekube-apps` — homepage bookmark for `jangroth/ai-gateway`.
+
 ## 2026-11-15
 
 ### Changed
