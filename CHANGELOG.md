@@ -28,7 +28,7 @@ Current quarter only. Prior quarters: [2026 Q2](CHANGELOG-2026-Q2.md), [2026 Q3]
 - `homekube` — the end-of-session slash command (#83). `CLAUDE.md` already requires decisions, changes and issues to be recorded during the work.
 
 ### Changed
-- `homekube`, `homekube-main`, `homekube-apps` — the PR and merge rule moved to the user-level `CLAUDE.md`; each repo's `CLAUDE.md` keeps only its exceptions ([decision 083](DECISIONS.md)).
+- `homekube`, `homekube-main`, `homekube-apps` — the PR and merge rule moved to the user-level `CLAUDE.md`; each repo's `CLAUDE.md` keeps only its exceptions. `homekube` takes a PR per change instead of batching doc changes ([decision 083](DECISIONS.md)).
 - `homekube` — issue tracker switched to the shared triage labels: `agent-safe` renamed to `ready-for-agent`, `needs-triage`/`needs-info`/`ready-for-human` added, unused GitHub default labels deleted. `area:*`, `criticality:*` and `repo:*` stay.
 
 ### Operational
@@ -36,7 +36,7 @@ Current quarter only. Prior quarters: [2026 Q2](CHANGELOG-2026-Q2.md), [2026 Q3]
 
 ### Decisions
 - [Decision 082](DECISIONS.md): every repo reaches `main` through a PR; root-repo docs batched.
-- [Decision 083](DECISIONS.md): decision 082's merge rule applies to every repo, defined in the user-level `CLAUDE.md`.
+- [Decision 083](DECISIONS.md): one merge rule for every repo, defined in the user-level `CLAUDE.md`; supersedes 082, so this repo no longer batches doc PRs.
 
 ## 2026-11-15
 
