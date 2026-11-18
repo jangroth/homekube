@@ -4,6 +4,18 @@ Current quarter only. Prior quarters: [2026 Q2](DECISIONS-2026-Q2.md), [2026 Q3]
 
 ---
 
+## 083 — One merge rule for every repo, defined in the user-level `CLAUDE.md` (2026-11-18)
+
+**Area:** process
+
+**Decision:** Decision 082's rule (PR to `main`, rebased onto `main` before merging, merged with a merge commit) applies to every repo except `herminator-state`, and lives in the user-level `CLAUDE.md`. The rebase before merging is strict, including when parallel PRs leave a branch behind. Each repo's GitHub settings allow merge commits only and auto-delete head branches. Repo `CLAUDE.md` files keep only their exceptions: this repo's batched doc PRs, and `homekube-apps`' "`main` is the live cluster". 082 otherwise stands.
+
+**Rationale:** Merge rules differed across repos: merge commits here, squash in `homekube-bakery`, unstated elsewhere. One rule in one place means agents don't have to look it up per repo. Merge commits after a rebase keep PR boundaries in `git log --first-parent` and leave branch SHAs intact, unlike rebase-merge.
+
+**Trade-offs accepted:** GitHub has no semi-linear setting, so only the merge method is enforced; the rebase is a convention, except in `homekube-bakery`, whose required `ci` check enforces an up-to-date branch. Parallel PRs need an "Update with rebase" before each merge.
+
+---
+
 ## 082 — Every repo reaches `main` through a PR; root-repo docs batched (2026-11-18)
 
 **Area:** process
