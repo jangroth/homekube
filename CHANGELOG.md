@@ -22,9 +22,21 @@ Current quarter only. Prior quarters: [2026 Q2](CHANGELOG-2026-Q2.md), [2026 Q3]
 ### Added
 - `homekube-apps` — homepage **Metrics** bookmark group: Grafana dashboard deep links (last 1h) for the same 17 services as the Logs group. Services with their own dashboard (Alertmanager, Prometheus, Grafana, CoreDNS, Longhorn, API server for the control plane) link to it. Services that share a namespace (Alloy, Loki, Cilium, sealed-secrets) link to *Compute Resources / Workload*. The rest link to *Compute Resources / Namespace (Workloads)*.
 - `homekube-apps` — homepage bookmark for `jangroth/ai-gateway`.
+- `homekube`, `homekube-main`, `homekube-apps` — each `CLAUDE.md` states its branching rule: PR per change in the two code repos, batched doc PR in the root repo (#82 (document the branching rule)).
 
 ### Removed
 - `homekube` — the end-of-session slash command (#83). `CLAUDE.md` already requires decisions, changes and issues to be recorded during the work.
+
+### Changed
+- `homekube`, `homekube-main`, `homekube-apps` — the PR and merge rule moved to the user-level `CLAUDE.md`; each repo's `CLAUDE.md` keeps only its exceptions. `homekube` takes a PR per change instead of batching doc changes ([decision 083](DECISIONS.md)).
+- `homekube` — issue tracker switched to the shared triage labels: `agent-safe` renamed to `ready-for-agent`, `needs-triage`/`needs-info`/`ready-for-human` added, unused GitHub default labels deleted. `area:*`, `criticality:*` and `repo:*` stay.
+
+### Operational
+- `homekube`, `homekube-main`, `homekube-apps` — GitHub merge settings: merge commits only (squash and rebase-merge disabled), head branches auto-deleted.
+
+### Decisions
+- [Decision 082](DECISIONS.md): every repo reaches `main` through a PR; root-repo docs batched.
+- [Decision 083](DECISIONS.md): one merge rule for every repo, defined in the user-level `CLAUDE.md`; supersedes 082, so this repo no longer batches doc PRs.
 
 ## 2026-11-15
 

@@ -4,6 +4,30 @@ Current quarter only. Prior quarters: [2026 Q2](DECISIONS-2026-Q2.md), [2026 Q3]
 
 ---
 
+## 083 — One merge rule for every repo, defined in the user-level `CLAUDE.md`; no batched doc PRs (2026-11-18)
+
+**Area:** process
+
+**Decision:** Supersedes 082. Every repo except `herminator-state` takes a PR per change, rebased onto `main` before merging and merged with a merge commit; the rule lives in the user-level `CLAUDE.md`. This repo no longer batches doc changes on a local branch. The rebase before merging is strict, including when parallel PRs leave a branch behind. Each repo's GitHub settings allow merge commits only and auto-delete head branches. Repo `CLAUDE.md` files keep only their exceptions, such as `homekube-apps`' "`main` is the live cluster".
+
+**Rationale:** Merge rules differed across repos: merge commits here, squash in `homekube-bakery`, unstated elsewhere. One rule in one place means agents don't have to look it up per repo. Merge commits after a rebase keep PR boundaries in `git log --first-parent` and leave branch SHAs intact, unlike rebase-merge. Batching saved a few doc-only PRs but left decisions and changelog entries unpushed while the changes they describe merged in other repos, and a long-lived branch is the one most likely to conflict on rebase.
+
+**Trade-offs accepted:** GitHub has no semi-linear setting, so only the merge method is enforced; the rebase is a convention, except in `homekube-bakery`, whose required `ci` check enforces an up-to-date branch. Parallel PRs need an "Update with rebase" before each merge. Small doc edits here each carry a PR round trip.
+
+---
+
+## 082 — Every repo reaches `main` through a PR; root-repo docs batched (2026-11-18)
+
+**Area:** process
+
+**Decision:** No commits go directly to `main` in `homekube`, `homekube-main` or `homekube-apps`. `homekube-main` and `homekube-apps` take a branch and PR per change. The root `homekube` repo collects doc changes on one local branch and opens a single PR at a natural batch point, such as the end of a spec. PRs are rebased onto `main` and merged with a merge commit, never squashed. Each repo's `CLAUDE.md` states its rule (#82 (document the branching rule)).
+
+**Rationale:** History since 2026-09 was mixed, and no `CLAUDE.md` said which way to go, so agents guessed. `homekube-apps` `main` is the live cluster, since ArgoCD syncs on push, so a PR is the only review point before a change lands. `homekube-main` applies nothing on push, but one rule for both code repos is easier for agents to follow than a per-kind exception. Root-repo changes are docs that accompany sub-repo work, and a PR per tweak adds review noise without catching anything.
+
+**Trade-offs accepted:** One-line fixes in the code repos carry the full PR round trip. Root-repo docs can sit unmerged on a local branch for the length of a spec.
+
+---
+
 ## 081 — Coder as the workspace platform for agents, Dex login, template pushed from git (2026-11-10)
 
 **Area:** platform-engineering
