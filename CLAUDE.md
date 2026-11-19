@@ -54,7 +54,7 @@ Hardware: Raspberry Pi 5 (8GB), Raspberry Pi OS Lite 64-bit (aarch64), 1TB NVMe 
 
 ## SSH Access
 
-State depends on phase. After phase 2 (current state), only the `boot` user exists; the `homekube` user is created during phase 3.
+All pis are past phase 3: `homekube` is the operational user and `boot` is disabled. A rebuilt pi goes through the phases again.
 
 - **Bootstrap user:** `boot` / `boot` — password auth. Created at image-build time, used for Tailscale join (phase 1) and ansible bootstrap. Active through phases 1–2; **disabled during phase 3** (`disable_password_auth.yml` + sshd lockdown) once `homekube` is in place.
 - **Operational user (post phase 3):** `homekube` — created by ansible, key-auth only, sudoer.
