@@ -1,7 +1,7 @@
 # Spec 012 — Workspace credentials and egress
 
 **Status:** Draft (2026-11-11), waiting on #77 (template on the bakery image, `coder-workspace` 0.3.0 with OpenCode and `gh`)
-**Related decisions:** [Decision 080](../../DECISIONS.md) — Agent Vault; egress NetworkPolicy deferred to the Coder work. [Decision 081](../../DECISIONS.md) — Coder as the workspace platform.
+**Related decisions:** [Decision 080](../archive/decisions/DECISIONS.md) — Agent Vault; egress NetworkPolicy deferred to the Coder work. [Decision 081](../archive/decisions/DECISIONS.md) — Coder as the workspace platform.
 **Related specs:** [Spec 010](010-agent-vault-hermes.md) — Agent Vault proxy, session-as-Secret, header credentials. [Spec 011](011-coder-install.md) — Coder, the workspace template.
 **Related issues:** #77 (workspace image from the external bakery), #79 (Hermes pod hardening).
 **Bakery:** [`homekube-bakery`](https://github.com/jangroth/homekube-bakery), image `ghcr.io/jangroth/homekube-bakery/coder-workspace`, contract in its `CONTRACT.md`.
