@@ -1,5 +1,7 @@
 # Spec 012 — Workspace credentials and egress
 
+> **Frozen 2026-11-21.** Superseded by spec issue [#89](https://github.com/jangroth/homekube/issues/89) (workspace egress); history only.
+
 **Status:** Draft (2026-11-11), waiting on #77 (template on the bakery image, `coder-workspace` 0.3.0 with OpenCode and `gh`)
 **Related decisions:** [Decision 080](../archive/decisions/DECISIONS.md) — Agent Vault; egress NetworkPolicy deferred to the Coder work. [Decision 081](../archive/decisions/DECISIONS.md) — Coder as the workspace platform.
 **Related specs:** [Spec 010](010-agent-vault-hermes.md) — Agent Vault proxy, session-as-Secret, header credentials. [Spec 011](011-coder-install.md) — Coder, the workspace template.
