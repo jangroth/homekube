@@ -1,8 +1,6 @@
 # Homekube — AI Workspace
 
-Running vanilla Kubernetes on 4x Raspberry Pi 5 (8GB).
-
-**Dual purpose**: study Kubernetes + study AI-driven development.
+Vanilla Kubernetes on 4x Raspberry Pi 5 (8GB), run as a study project for both Kubernetes and AI-driven development.
 
 ---
 
@@ -48,31 +46,15 @@ Hardware: Raspberry Pi 5 (8GB), Raspberry Pi OS Lite 64-bit (aarch64), 1TB NVMe 
 | Provisioning | Ansible + Task |
 | Cloud IaC | Terraform (AWS-account resources — decision 058) |
 
-**Versions are not recorded here** — they live in `homekube-main/ansible/group_vars/all.yml` (Renovate-owned, decision 064) and `homekube-apps/applications/**/*.yaml` → `targetRevision`. Renovate bumps those automatically, so any copy kept here could only be correct between bumps. Run `task verify-drift` in `homekube-main` to check runtime against them (decision 066).
+Versions live in `homekube-main/ansible/group_vars/all.yml` (Renovate-owned, decision 064) and `homekube-apps/applications/**/*.yaml` → `targetRevision`. `task verify-drift` in `homekube-main` checks runtime against them (decision 066).
 
 ---
 
 ## SSH Access
 
-All pis are past phase 3: `homekube` is the operational user and `boot` is disabled. A rebuilt pi goes through the phases again.
+`ssh homekube@piN` from darth over Tailscale MagicDNS: key auth only, sudoer. Darth's key is `homekube-main/ansible/roles/raspberry-pi/files/pub_keys/id_darth_homekube.pub`.
 
-- **Bootstrap user:** `boot` / `boot` — password auth. Created at image-build time, used for Tailscale join (phase 1) and ansible bootstrap. Active through phases 1–2; **disabled during phase 3** (`disable_password_auth.yml` + sshd lockdown) once `homekube` is in place.
-- **Operational user (post phase 3):** `homekube` — created by ansible, key-auth only, sudoer.
-- **From darth:** `ssh homekube@pi0` (or pi1/pi2/pi3) — resolves via Tailscale MagicDNS. Works after phase 3.
-- **Darth's key:** `homekube-main/ansible/roles/raspberry-pi/files/pub_keys/id_darth_homekube.pub` is deployed to `authorized_keys` on every pi by `create_user_account.yml`.
-
-All post-bootstrap access goes over Tailscale. No home network or static external IP required.
-
----
-
-## NVMe Boot — Manual Checkpoint
-
-Each pi has a 1TB NVMe drive. Booting from NVMe requires a **one-time physical step per pi** (vendor instruction, involves physically configuring the NVMe hardware). This is a human checkpoint — it cannot be automated.
-
-After the physical step, ansible handles the rest:
-1. Enable PCIe (`enable_pciex.yml`)
-2. Configure NVMe boot (`configure_nvme.yml`)
-3. Copy SD card to NVMe (`copy_mmc_to_nvme.yml`)
+A rebuilt pi goes through the bootstrap again (see `homekube-main/CLAUDE.md`), starting with a **one-time physical NVMe step** a human has to do; ansible handles the rest.
 
 ---
 
@@ -80,16 +62,8 @@ After the physical step, ansible handles the rest:
 
 - **Spec-driven**: write a spec in `docs/specs/NNN-title.md` before any significant implementation. Specs define the problem, acceptance criteria, and approach.
 - **Decision log**: record key decisions in `DECISIONS.md`, newest decision first. Decisions capture **why**. Every entry gets a `**Area:**` tag matching the GitHub issue `area:*` taxonomy (`observability`, `networking`, `storage`, `security`, `identity`, `workload`, `service-mesh`, `platform-engineering`, `process`, `cloud`) — lets a search narrow to one area without reading the whole file.
-- **Change log**: append every material change to `CHANGELOG.md` (top-level, reverse-chronological, [Keep a Changelog](https://keepachangelog.com) format). Captures **what was done**: additions, removals, fixes, operational interventions. Distinct from `DECISIONS.md`. Version bumps are logged only when git can't show the story: a manual or risky rollout (node restart, migration, incident), a deliberate hold or pin change, or a breaking/behaviour change that needed handling. Routine Renovate bumps that roll out cleanly are not logged.
-- **Quarterly archiving**: at the close of each quarter, split both `DECISIONS.md` and `CHANGELOG.md` — move that quarter's entries into `DECISIONS-YYYY-QN.md`/`CHANGELOG-YYYY-QN.md`, leave the live file holding only the new quarter onward. Old content stays retrievable via context-mode search (`ctx_index`/`ctx_search`) regardless of which archive file it landed in — the split is for read-cost, not for losing history.
-- **Todo**: open tasks tracked as GitHub Issues on `jangroth/homekube` (single tracker for all three repos). Triage labels come from the user-level `CLAUDE.md`; on top, issues are labelled `area:*` (component), `criticality:blocker`/`degraded`/`polish` (workload-readiness impact) and `repo:*` (which repo the fix lands in — `homekube`/`homekube-main`/`homekube-apps`). `ready-for-agent` issues in `homekube-apps` and `homekube-main` are picked up nightly by scheduled routines that open a PR for human review — don't assume an open `ready-for-agent` issue is still unclaimed without checking for an in-flight `auto/issue-<n>-*` PR first.- **Trust**: Claude proposes, human approves for destructive/irreversible operations (this policy evolves over time as trust is established)
+- **Change log**: append every material change to `CHANGELOG.md` (top-level, spans all three repos, reverse-chronological, [Keep a Changelog](https://keepachangelog.com) format). Captures **what was done**: additions, removals, fixes, operational interventions. Distinct from `DECISIONS.md`. Version bumps are logged only when git can't show the story: a manual or risky rollout (node restart, migration, incident), a deliberate hold or pin change, or a breaking/behaviour change that needed handling. Routine Renovate bumps that roll out cleanly are not logged.
+- **Quarterly archiving**: at the close of each quarter, split both `DECISIONS.md` and `CHANGELOG.md` — move that quarter's entries into `DECISIONS-YYYY-QN.md`/`CHANGELOG-YYYY-QN.md`, leave the live file holding only the new quarter onward. Old content stays retrievable via context-mode search (`ctx_index`/`ctx_search`) regardless of which archive file it landed in.
+- **Todo**: open tasks tracked as GitHub Issues on `jangroth/homekube` (single tracker for all three repos). Triage labels come from the user-level `CLAUDE.md`; on top, issues are labelled `area:*` (component), `criticality:blocker`/`degraded`/`polish` (workload-readiness impact) and `repo:*` (which repo the fix lands in — `homekube`/`homekube-main`/`homekube-apps`). `ready-for-agent` issues in `homekube-apps` and `homekube-main` are picked up nightly by scheduled routines that open a PR for human review; before taking one, check for an in-flight `auto/issue-<n>-*` PR.
+- **Trust**: Claude proposes, human approves for destructive/irreversible operations.
 - **Source reflects runtime**: when a change is made to a running cluster (static pod manifest, sysctl, Ansible variable), always propagate it back to the canonical source file (`kubeadm-config.yaml`, Ansible role, Helm values) in the same piece of work. The source must be sufficient to rebuild the cluster from scratch.
-
----
-
-## Key Files
-
-- Open tasks — GitHub Issues on `jangroth/homekube`, not a file (see Working Approach)
-- `DECISIONS.md` — decision log (why), current quarter only; prior quarters in `DECISIONS-YYYY-QN.md`
-- `CHANGELOG.md` — change log (what was done), top-level, spans all three repos, current quarter only; prior quarters in `CHANGELOG-YYYY-QN.md`
-- `docs/specs/` — specs for significant work items
