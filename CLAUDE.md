@@ -38,15 +38,15 @@ Hardware: Raspberry Pi 5 (8GB), Raspberry Pi OS Lite 64-bit (aarch64), 1TB NVMe 
 | Layer | Component |
 |-------|-----------|
 | Kubernetes | kubeadm (vanilla) |
-| CNI | Cilium — **held**, do not bump (decision 065) |
+| CNI | Cilium — **held**, do not bump (ADR-0004) |
 | CSI | Longhorn |
 | GitOps | ArgoCD (App-of-Apps) |
 | Monitoring | Prometheus + Grafana + Loki |
 | Load Balancer | Cilium LB-IPAM + L2 |
 | Provisioning | Ansible + Task |
-| Cloud IaC | Terraform (AWS-account resources — decision 058) |
+| Cloud IaC | Terraform (AWS-account resources — ADR-0010) |
 
-Versions live in `homekube-main/ansible/group_vars/all.yml` (Renovate-owned, decision 064) and `homekube-apps/applications/**/*.yaml` → `targetRevision`. `task verify-drift` in `homekube-main` checks runtime against them (decision 066).
+Versions live in `homekube-main/ansible/group_vars/all.yml` (Renovate-owned, ADR-0008) and `homekube-apps/applications/**/*.yaml` → `targetRevision`. `task verify-drift` in `homekube-main` checks runtime against them (ADR-0009).
 
 ---
 
@@ -61,9 +61,26 @@ A rebuilt pi goes through the bootstrap again (see `homekube-main/CLAUDE.md`), s
 ## Working Approach
 
 - **Spec-driven**: write a spec in `docs/specs/NNN-title.md` before any significant implementation. Specs define the problem, acceptance criteria, and approach.
-- **Decision log**: record key decisions in `DECISIONS.md`, newest decision first. Decisions capture **why**. Every entry gets a `**Area:**` tag matching the GitHub issue `area:*` taxonomy (`observability`, `networking`, `storage`, `security`, `identity`, `workload`, `service-mesh`, `platform-engineering`, `process`, `cloud`) — lets a search narrow to one area without reading the whole file.
-- **Change log**: append every material change to `CHANGELOG.md` (top-level, spans all three repos, reverse-chronological, [Keep a Changelog](https://keepachangelog.com) format). Captures **what was done**: additions, removals, fixes, operational interventions. Distinct from `DECISIONS.md`. Version bumps are logged only when git can't show the story: a manual or risky rollout (node restart, migration, incident), a deliberate hold or pin change, or a breaking/behaviour change that needed handling. Routine Renovate bumps that roll out cleanly are not logged.
-- **Quarterly archiving**: at the close of each quarter, split both `DECISIONS.md` and `CHANGELOG.md` — move that quarter's entries into `DECISIONS-YYYY-QN.md`/`CHANGELOG-YYYY-QN.md`, leave the live file holding only the new quarter onward. Old content stays retrievable via context-mode search (`ctx_index`/`ctx_search`) regardless of which archive file it landed in.
+- **Decisions**: ADRs in `docs/adr/`, written through `domain-modeling` and only for decisions that are hard to reverse, surprising without context, and the result of a real trade-off.
+- **Archive**: `docs/archive/` (decision log, changelog) is read-only history; never append to it. Search them (`ctx_search`) when an old decision number is cited. What changed is recorded by merged PRs.
 - **Todo**: open tasks tracked as GitHub Issues on `jangroth/homekube` (single tracker for all three repos). Triage labels come from the user-level `CLAUDE.md`; on top, issues are labelled `area:*` (component), `criticality:blocker`/`degraded`/`polish` (workload-readiness impact) and `repo:*` (which repo the fix lands in — `homekube`/`homekube-main`/`homekube-apps`). `ready-for-agent` issues in `homekube-apps` and `homekube-main` are picked up nightly by scheduled routines that open a PR for human review; before taking one, check for an in-flight `auto/issue-<n>-*` PR.
 - **Trust**: Claude proposes, human approves for destructive/irreversible operations.
 - **Source reflects runtime**: when a change is made to a running cluster (static pod manifest, sysctl, Ansible variable), always propagate it back to the canonical source file (`kubeadm-config.yaml`, Ansible role, Helm values) in the same piece of work. The source must be sufficient to rebuild the cluster from scratch.
+
+---
+
+## Agent skills
+
+Use a Matt Pocock skill whenever one covers the task (spec, tickets, grilling, glossary/ADRs, triage, PR body, review); never hand-write the equivalent. Many run only as slash commands (`/to-spec`, `/to-tickets`, `/grill-with-docs`, `/triage`): ask the user to run the command.
+
+### Issue tracker
+
+GitHub Issues on `jangroth/homekube`, the single tracker for all three repos. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+The five default labels (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`). See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: `GLOSSARY.md` at the root, ADRs in `docs/adr/`. See `docs/agents/domain.md`.

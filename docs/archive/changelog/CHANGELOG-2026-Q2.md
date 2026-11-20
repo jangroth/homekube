@@ -1,5 +1,7 @@
 # Changelog — 2026 Q2 (archived)
 
+> **Frozen 2026-11-21.** Read-only history; merged PRs record what changed.
+
 Archived from `CHANGELOG.md` at Q3 2026 close. Entries 2026-04-19 through 2026-06-30. See [CHANGELOG.md](CHANGELOG.md) for current entries.
 
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
@@ -13,7 +15,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Removed stale MetalLB / NodePort `:30003` references from cap-8; Grafana TLS deferred from cap-8 to cap-9 (cap-9 §gains the IP-SAN cert constraint + acceptance box)
 
 ### Decisions
-- [DECISION-036](DECISIONS-2026-Q2.md) — Grafana as kube-prometheus-stack subchart; LB VIP `.243`; TLS deferred to cap-9
+- [DECISION-036](../decisions/DECISIONS-2026-Q2.md) — Grafana as kube-prometheus-stack subchart; LB VIP `.243`; TLS deferred to cap-9
 
 ---
 
@@ -37,7 +39,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - MetalLB: `metallb.yaml` Application, `metallb/` CRs, `metallb-system` namespace; 9 MetalLB CRDs manually deleted post-ArgoCD-prune (Helm safety policy prevents auto-deletion)
 
 ### Decisions
-- [DECISION-032](DECISIONS-2026-Q2.md) — add `tailscale0` to Cilium devices so `cil_from_netdev` intercepts Tailscale → VIP traffic on pi0; validated 36/36 over 3 min. Wi-Fi path intermittent (wlan0 dual-use + BPF reload windows); tracked in Backlog.
+- [DECISION-032](../decisions/DECISIONS-2026-Q2.md) — add `tailscale0` to Cilium devices so `cil_from_netdev` intercepts Tailscale → VIP traffic on pi0; validated 36/36 over 3 min. Wi-Fi path intermittent (wlan0 dual-use + BPF reload windows); tracked in Backlog.
 
 ---
 
@@ -51,7 +53,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `TODO.md` — capability 4 metallb item replaced with the spec 006 cutover step list (Steps 0–5).
 
 ### Decisions
-- [DECISION-031](DECISIONS-2026-Q2.md) — replace MetalLB with Cilium-native LB-IPAM + L2 announcements; resolves the DECISION-030 dead end while keeping eBPF kube-proxy replacement and home-Wi-Fi reachability. Pool and Tailscale `192.168.86.240/28` route unchanged.
+- [DECISION-031](../decisions/DECISIONS-2026-Q2.md) — replace MetalLB with Cilium-native LB-IPAM + L2 announcements; resolves the DECISION-030 dead end while keeping eBPF kube-proxy replacement and home-Wi-Fi reachability. Pool and Tailscale `192.168.86.240/28` route unchanged.
 
 ---
 

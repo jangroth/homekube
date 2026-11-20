@@ -1,7 +1,7 @@
 # Spec 011 — Coder install
 
 **Status:** Done (2026-11-10)
-**Related decisions:** [Decision 079](../../DECISIONS.md) — Infisical adopted for the Coder + Hermes goal. [Decision 080](../../DECISIONS.md) — Agent Vault; egress NetworkPolicy deferred to the Coder work. [Decision 039](../../DECISIONS-2026-Q3.md) — Dex issuer on `.ts.net`. [Decision 074](../../DECISIONS.md) — static homepage entries.
+**Related decisions:** [Decision 079](../archive/decisions/DECISIONS.md) — Infisical adopted for the Coder + Hermes goal. [Decision 080](../archive/decisions/DECISIONS.md) — Agent Vault; egress NetworkPolicy deferred to the Coder work. [Decision 039](../archive/decisions/DECISIONS-2026-Q3.md) — Dex issuer on `.ts.net`. [Decision 074](../archive/decisions/DECISIONS.md) — static homepage entries.
 **Related specs:** [Spec 009](009-infisical-phase-1.md) — Postgres, TLS and backup patterns reused here. [Spec 010](010-agent-vault-hermes.md) — Agent Vault for Hermes.
 
 ---

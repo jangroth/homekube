@@ -265,12 +265,6 @@ Sidecar overhead is *not* in either subtotal — each opted-in namespace adds ~8
 
 Update this table in the same piece of work whenever a workload's resource requests/limits change (new component, resize, removal) — see "source reflects runtime" in `CLAUDE.md`.
 
-## Quarterly archive routine
-
-A Claude Code cloud routine ("homekube - quarterly changelog/decisions archive", 00:00 AEST on 2 Jan/Apr/Jul/Oct, 14:00 UTC on the 1st) runs `scripts/archive_quarter.py` and opens a PR that moves the closed quarter's entries into `CHANGELOG-YYYY-QN.md` / `DECISIONS-YYYY-QN.md`. Its config lives in the repo:
-
-- `.claude/routines/quarterly-archive.md` — the routine's instructions and settings, including the exact routine prompt, which points to this file and authorises the branch, commit, push and PR
-- `.claude/routines/cloud-environment.md` — the cloud environment's settings: name, network allowlist, setup script
 
 ## References / Inspiration
 
@@ -281,5 +275,5 @@ A Claude Code cloud routine ("homekube - quarterly changelog/decisions archive",
 ## Navigation
 
 - [GitHub Issues](https://github.com/jangroth/homekube/issues) — open tasks (single tracker for all three repos)
-- [`DECISIONS.md`](DECISIONS.md) — decision log
+- [`docs/archive/`](docs/archive/) — frozen decision log and changelog (history only)
 - [`docs/specs/`](docs/specs/) — specs for significant work items

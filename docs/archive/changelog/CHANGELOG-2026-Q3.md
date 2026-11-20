@@ -1,5 +1,7 @@
 # Changelog — 2026 Q3 (archived)
 
+> **Frozen 2026-11-21.** Read-only history; merged PRs record what changed.
+
 Archived from `CHANGELOG.md` at 2026 Q4 close. Entries 2026-07-02 through 2026-09-15. See [CHANGELOG.md](CHANGELOG.md) for current entries.
 
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
@@ -15,7 +17,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `homekube-main@1a8d32e` (PR #11): `display_dependencies.yml` no longer shadowed the `containerd_version` group_var with a command-result dict, no longer used the `.index()` loop anti-pattern, and no longer hit `api.github.com` for containerd's "latest" release on every node/run. Superseded same-day by its removal above.
 
 ### Decisions
-- [064](DECISIONS.md#064--renovate-is-the-source-of-truth-for-dependency-versions-drop-manual-displayevaluate-tasks-from-ansible-runbooks-2026-09-15): Renovate owns dependency-version tracking; drop manual display/evaluate Ansible tasks.
+- [064](../decisions/DECISIONS.md#064--renovate-is-the-source-of-truth-for-dependency-versions-drop-manual-displayevaluate-tasks-from-ansible-runbooks-2026-09-15): Renovate owns dependency-version tracking; drop manual display/evaluate Ansible tasks.
 
 ---
 
@@ -30,8 +32,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Live-patched the `kubeadm-config` ConfigMap in `kube-system` and edited `/etc/kubernetes/manifests/{kube-scheduler,kube-controller-manager,etcd}.yaml` on pi0 directly to restore `bind-address=0.0.0.0`/`listen-metrics-urls=http://0.0.0.0:2381`; kubelet restarted each static pod in turn with no apiserver interruption. Verified all three Prometheus targets returned to `up`.
 
 ### Decisions
-- [063](DECISIONS.md#063--disable-longhorn-networkpoliciesrestrictinternaltraffic-2026-09-14): disable Longhorn's `restrictInternalTraffic` NetworkPolicy default.
-- [062](DECISIONS.md#062--kube-schedulerkube-controller-manageretcd-bind-address-reverted-to-loopback-by-the-1370-upgrade-live-patched--guarded-2026-09-14): kube-scheduler/controller-manager/etcd bind-address drift, live fix + ansible guard.
+- [063](../decisions/DECISIONS.md#063--disable-longhorn-networkpoliciesrestrictinternaltraffic-2026-09-14): disable Longhorn's `restrictInternalTraffic` NetworkPolicy default.
+- [062](../decisions/DECISIONS.md#062--kube-schedulerkube-controller-manageretcd-bind-address-reverted-to-loopback-by-the-1370-upgrade-live-patched--guarded-2026-09-14): kube-scheduler/controller-manager/etcd bind-address drift, live fix + ansible guard.
 
 ---
 
@@ -49,8 +51,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - pi3's drain separately blocked on `alertmanager-prometheus-kube-prometheus-alertmanager-0`'s PodDisruptionBudget (`minAvailable: 1`, single replica — structurally can never permit eviction). Deleted the pod directly; its StatefulSet recreated it on pi1 within seconds.
 
 ### Decisions
-- [061](DECISIONS.md#061--pi0--pi2-correlated-crash-during-the-1370-rollout-longhorn-blocks-instance-managers-on-cordoned-nodes-2026-09-13): pi0/pi2 correlated crash, unexplained; Longhorn-cordon-blocks-instance-manager gotcha.
-- [060](DECISIONS.md#060--add-orchestrated-kubeadm-upgrade-playbook-kubernetes-1361--1370-2026-09-13): orchestrated kubeadm upgrade playbook design, why the existing package-bump flow wasn't sufficient.
+- [061](../decisions/DECISIONS.md#061--pi0--pi2-correlated-crash-during-the-1370-rollout-longhorn-blocks-instance-managers-on-cordoned-nodes-2026-09-13): pi0/pi2 correlated crash, unexplained; Longhorn-cordon-blocks-instance-manager gotcha.
+- [060](../decisions/DECISIONS.md#060--add-orchestrated-kubeadm-upgrade-playbook-kubernetes-1361--1370-2026-09-13): orchestrated kubeadm upgrade playbook design, why the existing package-bump flow wasn't sufficient.
 
 ---
 
@@ -99,7 +101,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `homekube-main/terraform/backup-target/`: S3 bucket (`homekube-backups-010316939032-ap-southeast-2-an`, account-regional namespace), public-access block, 30-day lifecycle safety net, and IAM user `homekube-backup` with bucket-scoped credentials for Longhorn/Velero. Applied under the `homekube-terraform` SSO profile. Closes issue #20, unblocks #19/#21.
 
 ### Decisions
-- [059](DECISIONS.md#059--apply-spec-008-s3-backup-target--scoped-terraform-identity-2026-09-01): applied spec 008 — storage-class rationale, tagging as first-class, and the IAM Identity Center permission-set reprovisioning gotcha.
+- [059](../decisions/DECISIONS.md#059--apply-spec-008-s3-backup-target--scoped-terraform-identity-2026-09-01): applied spec 008 — storage-class rationale, tagging as first-class, and the IAM Identity Center permission-set reprovisioning gotcha.
 
 ---
 
@@ -109,7 +111,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `homekube-apps@ba50b7b`: `CPUThrottlingHigh` (severity=info) was firing continuously on all 4 node-exporter pods plus the grafana-sc-dashboard sidecar — their CPU limits are intentionally tight for the Pi-scale budget, so brief bursts tripped the default threshold with no actual degradation, and the alertmanager route had no severity split so it paged Telegram same as anything critical. Added a `severity=info` sub-route to the `null` receiver; alert stays visible in Prometheus/Grafana, stops paging. Closes issue #3. See decision 057.
 
 ### Decisions
-- [057](DECISIONS.md#057--route-severityinfo-alerts-to-null-receiver-instead-of-disabling-or-resizing-2026-08-23): scoped issue #3 via the live cluster's active alerts, routed info-severity noise away from Telegram instead of disabling the rule or resizing CPU limits.
+- [057](../decisions/DECISIONS.md#057--route-severityinfo-alerts-to-null-receiver-instead-of-disabling-or-resizing-2026-08-23): scoped issue #3 via the live cluster's active alerts, routed info-severity noise away from Telegram instead of disabling the rule or resizing CPU limits.
 
 ---
 
@@ -124,9 +126,9 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `homekube-main@37013d8`: `argocd-application-controller` OOMKilled 23 times over 31 days on pi1 — its 512Mi limit (set by issue #6 off a July 12 baseline) no longer covered actual usage as the managed-Applications count grew to 18. Raised to 768Mi (requests 128Mi → 192Mi). Root-caused issue #26; a separate historical `argocd-repo-server` OOM pattern on pi2 (pre-issue-#6, no recurrence) was also investigated and closed as resolved. See decision 055.
 
 ### Decisions
-- [056](DECISIONS.md#056--root-cause-kubelet-memory-leak-issue-40-restart-as-interim-mitigation-upgrade-tracked-separately-2026-08-22): root-caused kubelet memory leak (issue #40) to a known upstream v1.36 regression, fixed in v1.36.3+.
-- [055](DECISIONS.md#055--raise-argocd-application-controller-memory-limit-512mi--768mi-2026-08-22): raised argocd-application-controller memory limit, root-causing issue #26's OOM investigation.
-- [053](DECISIONS.md#053--fix-prometheus-argocd-app-sealed-grafana-admin-secret--cert-manager-admission-webhook-2026-08-22): sealed Grafana admin secret + cert-manager admission webhook, root-causing the `prometheus` app's stuck sync.
+- [056](../decisions/DECISIONS.md#056--root-cause-kubelet-memory-leak-issue-40-restart-as-interim-mitigation-upgrade-tracked-separately-2026-08-22): root-caused kubelet memory leak (issue #40) to a known upstream v1.36 regression, fixed in v1.36.3+.
+- [055](../decisions/DECISIONS.md#055--raise-argocd-application-controller-memory-limit-512mi--768mi-2026-08-22): raised argocd-application-controller memory limit, root-causing issue #26's OOM investigation.
+- [053](../decisions/DECISIONS.md#053--fix-prometheus-argocd-app-sealed-grafana-admin-secret--cert-manager-admission-webhook-2026-08-22): sealed Grafana admin secret + cert-manager admission webhook, root-causing the `prometheus` app's stuck sync.
 
 ### Operational
 - Restarted `kubelet` on pi1/pi2/pi3 to reclaim leaked memory (1483MB/806MB/1439MB → ~50MB each) — interim mitigation for issue #40's kubelet memory leak, pending the v1.36.4 upgrade. All nodes stayed `Ready`, no pods disrupted.
@@ -153,7 +155,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `herminator@6018e57` + `herminator@0b4aa23`: hermes tailscale sidecar crashlooped with `invalid key` — the sealed `TS_AUTHKEY` didn't match any key in the tailnet; the first reseal re-encrypted the same stale plaintext. Revoked it and sealed a genuinely new key. Chart 0.1.3/0.1.4.
 
 ### Decisions
-- [052](DECISIONS.md#052) — Wire up Hermes: Dex static client + ArgoCD Application.
+- [052](../decisions/DECISIONS.md#052) — Wire up Hermes: Dex static client + ArgoCD Application.
 
 ## 2026-07-22
 
@@ -164,7 +166,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `homekube-apps@d8f5d7a`: Grafana had no datasources and all dashboards were empty — the `grafana-sc-datasources`/`grafana-sc-dashboard` sidecars were POSTing their reload webhook over plain HTTP against an HTTPS-only Grafana (since Cap-9), so provisioning files written to disk were never actually loaded. Pointed both `reloadURL`s at HTTPS and set `REQ_SKIP_TLS_VERIFY: "true"`. See decision 051.
 
 ### Decisions
-- [051](DECISIONS.md#051) — Fix Grafana sidecar reload webhooks for HTTPS.
+- [051](../decisions/DECISIONS.md#051) — Fix Grafana sidecar reload webhooks for HTTPS.
 
 ## 2026-07-21
 
@@ -175,9 +177,9 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `homekube-apps@ea6516d`: Loki's main-container `resources` (1Gi/2Gi memory, 100m/500m CPU) were misnested under the top-level `loki:` key instead of `singleBinary:` (chart has no `resources` field under `loki:` for `deploymentMode: SingleBinary`) — never applied since #9, so `loki-0`'s main container ran with no requests/limits at all. Moved to `singleBinary.resources`. See decision 049.
 
 ### Decisions
-- [047](DECISIONS.md#047) — Raise `k8s-sidecar` memory limits for Loki/Grafana config-reload sidecars.
-- [048](DECISIONS.md#048) — Fix misnested Alloy `configReloader` values key; raise Alloy memory limit.
-- [049](DECISIONS.md#049) — Fix misnested Loki `resources` values key.
+- [047](../decisions/DECISIONS.md#047) — Raise `k8s-sidecar` memory limits for Loki/Grafana config-reload sidecars.
+- [048](../decisions/DECISIONS.md#048) — Fix misnested Alloy `configReloader` values key; raise Alloy memory limit.
+- [049](../decisions/DECISIONS.md#049) — Fix misnested Loki `resources` values key.
 
 ### Operational
 - Applied `homekube-main` PR #9 (Cilium/Hubble resource requests/limits) to the live cluster via `task 40-cni`; verified `cilium-agent`, `cilium-envoy`, `cilium-operator`, `hubble-relay`, and `hubble-ui` (frontend+backend) all show the PR's declared requests/limits. Added corresponding Deployed line item to `README.md` Resource Budget (~1 GiB requests). Note: most init containers on the `cilium` DaemonSet (`config`, `mount-cgroup`, `apply-sysctl-overwrites`, `mount-bpf-fs`, `clean-cilium-state`) remain unbounded — the top-level `resources:` key only reaches the main `cilium-agent` container, narrower than the PR description implies; not addressed here since these are short-lived.
@@ -217,9 +219,9 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Diagnosed open-meteo widget "API Error" as an upstream outage — `api.open-meteo.com` unreachable from both the pis and darth while general egress was healthy; no config change
 
 ### Decisions
-- [DECISION-042](DECISIONS.md) — Homepage installed from vendored raw manifests, not a community Helm chart
-- [DECISION-043](DECISIONS.md) — Homepage open (no auth) on its LB VIP, plain HTTP; SSO + TLS deferred to the ingress story
-- [DECISION-044](DECISIONS.md) — Homepage's Grafana entry is link-only; live widget dropped
+- [DECISION-042](../decisions/DECISIONS.md) — Homepage installed from vendored raw manifests, not a community Helm chart
+- [DECISION-043](../decisions/DECISIONS.md) — Homepage open (no auth) on its LB VIP, plain HTTP; SSO + TLS deferred to the ingress story
+- [DECISION-044](../decisions/DECISIONS.md) — Homepage's Grafana entry is link-only; live widget dropped
 
 ---
 
@@ -246,7 +248,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Recovered ArgoCD from broken state caused by `configs.cm.create: false` (Helm deleted `argocd-cm`; informer invisible to unlabelled CM); fix: moved config to Helm values with `create: true`
 
 ### Decisions
-- [DECISION-040](DECISIONS.md) — ArgoCD OIDC + RBAC config owned by Helm, not standalone ArgoCD CMs
-- [DECISION-041](DECISIONS.md) — ArgoCD LB service HTTPS-only; port 80 dropped
+- [DECISION-040](../decisions/DECISIONS.md) — ArgoCD OIDC + RBAC config owned by Helm, not standalone ArgoCD CMs
+- [DECISION-041](../decisions/DECISIONS.md) — ArgoCD LB service HTTPS-only; port 80 dropped
 
 ---

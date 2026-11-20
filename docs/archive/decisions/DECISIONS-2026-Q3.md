@@ -1,5 +1,7 @@
 # Decision Log — 2026 Q3 (archived)
 
+> **Frozen 2026-11-21.** Read-only history; new decisions are ADRs in [`docs/adr/`](../../adr/).
+
 Archived from `DECISIONS.md` at 2026 Q4 close. Entries 2026-07-01 – 2026-09-15. See [DECISIONS.md](DECISIONS.md) for current-quarter entries.
 
 ---

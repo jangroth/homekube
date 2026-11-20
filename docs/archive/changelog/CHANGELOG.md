@@ -1,5 +1,7 @@
 # Changelog
 
+> **Frozen 2026-11-21.** Read-only history; merged PRs record what changed.
+
 All notable changes to the homekube project (`homekube/`, `homekube-main/`, `homekube-apps/`).
 
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Entries are reverse-chronological; each dated section groups changes by type:
@@ -28,15 +30,15 @@ Current quarter only. Prior quarters: [2026 Q2](CHANGELOG-2026-Q2.md), [2026 Q3]
 - `homekube` — the end-of-session slash command (#83). `CLAUDE.md` already requires decisions, changes and issues to be recorded during the work.
 
 ### Changed
-- `homekube`, `homekube-main`, `homekube-apps` — the PR and merge rule moved to the user-level `CLAUDE.md`; each repo's `CLAUDE.md` keeps only its exceptions. `homekube` takes a PR per change instead of batching doc changes ([decision 083](DECISIONS.md)).
+- `homekube`, `homekube-main`, `homekube-apps` — the PR and merge rule moved to the user-level `CLAUDE.md`; each repo's `CLAUDE.md` keeps only its exceptions. `homekube` takes a PR per change instead of batching doc changes ([decision 083](../decisions/DECISIONS.md)).
 - `homekube` — issue tracker switched to the shared triage labels: `agent-safe` renamed to `ready-for-agent`, `needs-triage`/`needs-info`/`ready-for-human` added, unused GitHub default labels deleted. `area:*`, `criticality:*` and `repo:*` stay.
 
 ### Operational
 - `homekube`, `homekube-main`, `homekube-apps` — GitHub merge settings: merge commits only (squash and rebase-merge disabled), head branches auto-deleted.
 
 ### Decisions
-- [Decision 082](DECISIONS.md): every repo reaches `main` through a PR; root-repo docs batched.
-- [Decision 083](DECISIONS.md): one merge rule for every repo, defined in the user-level `CLAUDE.md`; supersedes 082, so this repo no longer batches doc PRs.
+- [Decision 082](../decisions/DECISIONS.md): every repo reaches `main` through a PR; root-repo docs batched.
+- [Decision 083](../decisions/DECISIONS.md): one merge rule for every repo, defined in the user-level `CLAUDE.md`; supersedes 082, so this repo no longer batches doc PRs.
 
 ## 2026-11-15
 
@@ -46,41 +48,41 @@ Current quarter only. Prior quarters: [2026 Q2](CHANGELOG-2026-Q2.md), [2026 Q3]
 ## 2026-11-10
 
 ### Changed
-- `homekube-apps` — **Coder sized from measurements**, step 6 of [spec 011](docs/specs/011-coder-install.md) (PR #117, `homekube-apps@fd4acfc`). Over two days coderd idled at 177Mi and peaked at 334Mi during a workspace build (CPU 127m), so it stays at 256Mi / 1Gi. Postgres used 57–75Mi against a 64Mi request, now 128Mi. The workspace `dev` container idled at 50–84Mi and 26m, so its requests went from 250m / 256Mi to 100m / 128Mi with the limits unchanged. The template also sets `run_as_non_root = true` on each container: the Kubernetes provider writes a container-level `runAsNonRoot: false` otherwise, which overrode the pod's `true`. Template version `crowded_santos52` pushed; workspace `tan-boa-53` updated onto it and shows both.
+- `homekube-apps` — **Coder sized from measurements**, step 6 of [spec 011](../../specs/011-coder-install.md) (PR #117, `homekube-apps@fd4acfc`). Over two days coderd idled at 177Mi and peaked at 334Mi during a workspace build (CPU 127m), so it stays at 256Mi / 1Gi. Postgres used 57–75Mi against a 64Mi request, now 128Mi. The workspace `dev` container idled at 50–84Mi and 26m, so its requests went from 250m / 256Mi to 100m / 128Mi with the limits unchanged. The template also sets `run_as_non_root = true` on each container: the Kubernetes provider writes a container-level `runAsNonRoot: false` otherwise, which overrode the pod's `true`. Template version `crowded_santos52` pushed; workspace `tan-boa-53` updated onto it and shows both.
 
 ### Operational
 - **Coder workspace smoke test**, step 5 of spec 011. A file in home survived stop/start and a template update; deleting the workspace removed its pod, PVC, PV and Longhorn volume. Postgres `data-postgres-0` already has completed `daily` backups (2026-11-08, 2026-11-09), so step 7's manual backup was skipped; it stays a pre-bump step.
 - **Workspace builds failed on `terraform init`** twice. On 2026-11-08 and 2026-11-09, GitHub returned 504 for release downloads, including the `coder/coder` provider's `SHA256SUMS`, from coderd, the pis and darth alike (GitHub incident "Increased timeouts due to surge in anonymous users"). Every build, stop and delete included, fetches provider checksums from the registry and GitHub despite coderd's plugin cache. A local provider mirror makes `init` work offline (tested) but was not adopted. Separately, an offline test run against coderd's live plugin cache replaced its entries with symlinks to a deleted temp directory, failing builds with "is a symlink" until the links were removed.
 
 ### Decisions
-- [Decision 081](DECISIONS.md): Coder as the workspace platform for agents. [Spec 011](docs/specs/011-coder-install.md) Done.
+- [Decision 081](../decisions/DECISIONS.md): Coder as the workspace platform for agents. [Spec 011](../../specs/011-coder-install.md) Done.
 
 ## 2026-11-08
 
 ### Added
-- `homekube-apps` — **Coder**, steps 2–4 of [spec 011](docs/specs/011-coder-install.md). Chart `coder` 2.39.0 in namespace `coder` at sync wave 3 with its own Postgres 17 (5Gi, `daily` backup group). coderd terminates TLS itself on `192.168.86.248` with a homekube-ca certificate and trusts homekube-ca for the Dex issuer. Login is Dex OIDC with signups off; a `+breakglass` password owner and the daily OIDC owner were created by hand. Workspaces run in `coder-workspaces` through the chart's namespace Role. A new Dex static client `coder` reads its secret through `secretEnv`, and Homepage gained a Coder entry. Renovate tracks the template image with a regex manager and raises Coder chart bumps as their own PR (PR #109, `homekube-apps@5c6d24f`). The Kubernetes template in `manual/coder-templates/kubernetes/` was pushed by hand (PR #112, `homekube-apps@f3a9793`). It runs one pod per running workspace with an init container that builds a CA bundle, so it needs no root, plus a home PVC that survives stop.
+- `homekube-apps` — **Coder**, steps 2–4 of [spec 011](../../specs/011-coder-install.md). Chart `coder` 2.39.0 in namespace `coder` at sync wave 3 with its own Postgres 17 (5Gi, `daily` backup group). coderd terminates TLS itself on `192.168.86.248` with a homekube-ca certificate and trusts homekube-ca for the Dex issuer. Login is Dex OIDC with signups off; a `+breakglass` password owner and the daily OIDC owner were created by hand. Workspaces run in `coder-workspaces` through the chart's namespace Role. A new Dex static client `coder` reads its secret through `secretEnv`, and Homepage gained a Coder entry. Renovate tracks the template image with a regex manager and raises Coder chart bumps as their own PR (PR #109, `homekube-apps@5c6d24f`). The Kubernetes template in `manual/coder-templates/kubernetes/` was pushed by hand (PR #112, `homekube-apps@f3a9793`). It runs one pod per running workspace with an init container that builds a CA bundle, so it needs no root, plus a home PVC that survives stop.
 
 ### Fixed
 - `homekube-apps` — **Coder Service always OutOfSync**: the chart renders `nodePort: null`, so `ignoreDifferences` on `.spec.ports[].nodePort` with `RespectIgnoreDifferences` (PR #110, `homekube-apps@ba02a34`).
 - `homekube-apps` — **coderd CrashLoopBackOff** after #110. As env, `CODER_EXTERNAL_AUTH_GITHUB_DEFAULT_PROVIDER_ENABLE` is parsed as a numbered external-auth provider and fails startup; it moved to the server flag `--external-auth-github-default-provider-enable=false`. The old pod kept serving throughout (PR #111, `homekube-apps@8151dfc`).
 
 ### Changed
-- `homekube-apps` — **Agent Vault rotation runbook** in the README, step 7 of [spec 010](docs/specs/010-agent-vault-hermes.md). It covers brokered keys as `.env` placeholders and rotating a brokered key, the session and the proxy token. The **Infisical backend memory request** went from 512Mi to 768Mi; the limit stays 1Gi. Its working set had held at 730–760Mi for four days (PR #107, `homekube-apps@b8733a9`). The rolling update moved the pod from pi1 to pi3, and it was Healthy within about 2 minutes. Its only errors were two Redis connection errors at startup, and the Agent Vault proxy logged no warnings.
+- `homekube-apps` — **Agent Vault rotation runbook** in the README, step 7 of [spec 010](../../specs/010-agent-vault-hermes.md). It covers brokered keys as `.env` placeholders and rotating a brokered key, the session and the proxy token. The **Infisical backend memory request** went from 512Mi to 768Mi; the limit stays 1Gi. Its working set had held at 730–760Mi for four days (PR #107, `homekube-apps@b8733a9`). The rolling update moved the pod from pi1 to pi3, and it was Healthy within about 2 minutes. Its only errors were two Redis connection errors at startup, and the Agent Vault proxy logged no warnings.
 
 ### Operational
-- **Tavily key moved out of Hermes**, step 5 of [spec 010](docs/specs/010-agent-vault-hermes.md). `TAVILY_API_KEY` in `/opt/data/.env` is now the placeholder `agent-vault-tavily`, and Hermes still picks `tavily` as its search and extract backend. A stale copy of `.env` (`backups/config/.env.pre-docker-migrate.20261021-062538`) was deleted. A Telegram web search produced three `brokered` lines on bundle `hermes`: `/search` 200, `/search` 400 (Tavily rejected a `site:` query with a path), and `/extract` 200. The old key is still in `state.db` and Longhorn backups until it is rotated at Tavily (step 8).
+- **Tavily key moved out of Hermes**, step 5 of [spec 010](../../specs/010-agent-vault-hermes.md). `TAVILY_API_KEY` in `/opt/data/.env` is now the placeholder `agent-vault-tavily`, and Hermes still picks `tavily` as its search and extract backend. A stale copy of `.env` (`backups/config/.env.pre-docker-migrate.20261021-062538`) was deleted. A Telegram web search produced three `brokered` lines on bundle `hermes`: `/search` 200, `/search` 400 (Tavily rejected a `site:` query with a path), and `/extract` 200. The old key is still in `state.db` and Longhorn backups until it is rotated at Tavily (step 8).
 - **Agent Vault revocation test**, step 6 of spec 010. A throwaway session `revoke-test` on bundle `hermes` sent a Tavily search through the proxy every 10s. It was revoked at 20:51:44Z. The last brokered request was at 20:52:09Z and the proxy blocked it from 20:52:19Z on, 35s after the revocation and within the 60s poll interval. Each refusal is a 403 on `CONNECT`, logged at warn as `blocked` with "the session is no longer valid", so the request never reaches Tavily. Hermes's own session was not touched.
 - **Tavily key rotated**, step 8 of spec 010. A new key was created at Tavily and the old one deleted, so the copies in `state.db` and Longhorn backups are dead. The new key exists only in the `tavily` credential of bundle `hermes`. Hermes searches with the old key still in Infisical got `brokered` 401s at 21:18Z and 21:20Z. After the credential was swapped, a search at 21:22Z got 200. Hermes needed no `hermes auth reset`.
-- **Telegram brokered through Agent Vault**, step 9 of [spec 010](docs/specs/010-agent-vault-hermes.md). Service `telegram` on bundle `hermes` substitutes the placeholder `agent-vault-telegram` in the URL path; `api.telegram.org` left Hermes's `NO_PROXY` (herminator chart 0.1.16, `herminator@c724991`). The substitution was first created on surface Header, so it never fired: Telegram rejected the placeholder and Hermes parked the platform, with nothing in the proxy log. Switched to Path, Hermes restarted. Every Telegram call is now `brokered` with `"substituted":["path"]`, including a file download (`/file/bot…/documents/…` 200), and no proxy log line holds a token. The bot token was then revoked in BotFather and the new one exists only in the substitution, so the copy in `state.db` is dead. Runbook updated in the homekube-apps README.
+- **Telegram brokered through Agent Vault**, step 9 of [spec 010](../../specs/010-agent-vault-hermes.md). Service `telegram` on bundle `hermes` substitutes the placeholder `agent-vault-telegram` in the URL path; `api.telegram.org` left Hermes's `NO_PROXY` (herminator chart 0.1.16, `herminator@c724991`). The substitution was first created on surface Header, so it never fired: Telegram rejected the placeholder and Hermes parked the platform, with nothing in the proxy log. Switched to Path, Hermes restarted. Every Telegram call is now `brokered` with `"substituted":["path"]`, including a file download (`/file/bot…/documents/…` 200), and no proxy log line holds a token. The bot token was then revoked in BotFather and the new one exists only in the substitution, so the copy in `state.db` is dead. Runbook updated in the homekube-apps README.
 - **Coder's default GitHub login closed.** After the first sync, `authmethods` showed GitHub login enabled through Coder's own OAuth app, with no users yet, so anyone on the LAN could have claimed the owner account. The break-glass owner was created at once, then the default OAuth2 and external-auth GitHub providers were disabled (PRs #110, #111). Login methods are now password and OIDC only.
 
 ### Decisions
-- [Decision 080](DECISIONS.md) amended: Telegram brokered by path substitution, Infisical version floor, proxy logging and Node proxy behaviour. [Spec 010](docs/specs/010-agent-vault-hermes.md) Done.
+- [Decision 080](../decisions/DECISIONS.md) amended: Telegram brokered by path substitution, Infisical version floor, proxy logging and Node proxy behaviour. [Spec 010](../../specs/010-agent-vault-hermes.md) Done.
 
 ## 2026-11-07
 
 ### Added
-- `homekube-apps` — **Infisical Agent Vault proxy**, steps 1–3 of [spec 010](docs/specs/010-agent-vault-hermes.md), decision [080](DECISIONS.md) (PR #105, `homekube-apps@9e1d66d`). `infisical/cli` 0.44.15 runs `agent-vault proxy` in namespace `agent-vault`, at sync wave 3, on port 17323. Its traffic policy is Any host, it logs JSON at info level, and its data dir is an `emptyDir`. The proxy token is a sealed secret. An ingress NetworkPolicy admits only namespace `hermes`; a curl from `default` timed out. The proxy, the `hermes` bundle (service `tavily`) and the session were created in the Infisical UI. The README's human-step section describes the setup.
+- `homekube-apps` — **Infisical Agent Vault proxy**, steps 1–3 of [spec 010](../../specs/010-agent-vault-hermes.md), decision [080](../decisions/DECISIONS.md) (PR #105, `homekube-apps@9e1d66d`). `infisical/cli` 0.44.15 runs `agent-vault proxy` in namespace `agent-vault`, at sync wave 3, on port 17323. Its traffic policy is Any host, it logs JSON at info level, and its data dir is an `emptyDir`. The proxy token is a sealed secret. An ingress NetworkPolicy admits only namespace `hermes`; a curl from `default` timed out. The proxy, the `hermes` bundle (service `tavily`) and the session were created in the Infisical UI. The README's human-step section describes the setup.
 
 ### Changed
 - `homekube-apps` — **Infisical server pinned to `v0.167.6`** (PR #104, `homekube-apps@ddf5250`). The chart's default `v0.167.0` only issues enrollment tokens, which `infisical/cli` 0.44.x can't use. Infisical held no data yet, so the upgrade needed no backup.
@@ -89,7 +91,7 @@ Current quarter only. Prior quarters: [2026 Q2](CHANGELOG-2026-Q2.md), [2026 Q3]
 ## 2026-11-04
 
 ### Added
-- `homekube-apps` — **Infisical installed** as the self-hosted secret store, phase 1 of [spec 009](docs/specs/009-infisical-phase-1.md), decision [079](DECISIONS.md) (PR #100, `homekube-apps@9c5cc15`):
+- `homekube-apps` — **Infisical installed** as the self-hosted secret store, phase 1 of [spec 009](../../specs/009-infisical-phase-1.md), decision [079](../decisions/DECISIONS.md) (PR #100, `homekube-apps@9c5cc15`):
   - The `infisical-standalone` chart 1.12.0 (app `v0.167.0`) runs in namespace `infisical`, at sync wave 2, on data-plane nodes only. The chart's bundled Bitnami Postgres, Redis and ingress are disabled.
   - Postgres runs from the official `postgres:17.11` image and Redis from `redis:7.4.12`, each as a StatefulSet on Longhorn: 5Gi for Postgres, 1Gi for Redis. Redis has append-only persistence and `noeviction`, as Infisical's requirements specify.
   - The backend only serves HTTP, so an `nginx-unprivileged` sidecar terminates TLS with a homekube-ca certificate. The UI is at `https://192.168.86.247` through LB Service `infisical-https`.
@@ -122,7 +124,7 @@ Current quarter only. Prior quarters: [2026 Q2](CHANGELOG-2026-Q2.md), [2026 Q3]
 - `homekube` — The quarterly archive routine's instructions and settings now live in `.claude/routines/quarterly-archive.md`, and its cloud environment in `.claude/routines/cloud-environment.md` (PR #67, [#65](https://github.com/jangroth/homekube/issues/65)). The layout matches the nightly routines. The PR is opened and assigned through `gh api` because GraphQL is blocked in cloud sessions, and the run stops if files other than the CHANGELOG/DECISIONS files change. No setup script is needed, since `archive_quarter.py` only uses the standard library.
 
 ### Operational
-- **"homekube-main - nightly todo" routine (`trig_01TrV6VfMXKVEGr9cdMVw4EL`) moved to its own cloud environment, `claude-code-homekube-main`**, with the prompt reduced to a pointer to the repo file and the model changed to `claude-opus-5-5`. A manual run succeeded: setup installed the Python dependencies and collections through the allowlist, and the agent exited cleanly with no eligible issue. Decision [078](DECISIONS.md) updated to name the new environment.
+- **"homekube-main - nightly todo" routine (`trig_01TrV6VfMXKVEGr9cdMVw4EL`) moved to its own cloud environment, `claude-code-homekube-main`**, with the prompt reduced to a pointer to the repo file and the model changed to `claude-opus-5-5`. A manual run succeeded: setup installed the Python dependencies and collections through the allowlist, and the agent exited cleanly with no eligible issue. Decision [078](../decisions/DECISIONS.md) updated to name the new environment.
 - **homekube-apps routine setup verified.** A manual run's setup output showed `kubectl` v1.37.1 installed in `claude-code-homekube-apps`, so the version lookup, allowlist and download work ([#66](https://github.com/jangroth/homekube/issues/66) closed).
 - **"homekube - quarterly changelog/decisions archive" routine (`trig_01PyasKTeDUn91Vfumf91FYr`) updated via `RemoteTrigger`:**
   - The prompt is now a pointer to `quarterly-archive.md`.
@@ -142,7 +144,7 @@ Current quarter only. Prior quarters: [2026 Q2](CHANGELOG-2026-Q2.md), [2026 Q3]
 - **"homekube-apps - nightly todo" routine (`trig_01P852NPoKhaxLW2pNwLoinN`) moved to its own cloud environment, `claude-code-homekube-apps`**, which runs the repo's setup script. `claude-code-homekube` stays with homekube-main, because a homekube-apps setup script would fail on homekube-main runs. The prompt was reduced to a pointer to the repo file and the model changed to `claude-opus-5-5`. A manual run succeeded but had no eligible issue, so the `kubectl` install is still untested ([#66](https://github.com/jangroth/homekube/issues/66)).
 
 ### Decisions
-- [078](DECISIONS.md) — One cloud environment per routine repo, setup script in the repo.
+- [078](../decisions/DECISIONS.md) — One cloud environment per routine repo, setup script in the repo.
 
 ### Fixed
 - `homekube-apps` — Alertmanager routes `alertname = InfoInhibitor` to the `null` receiver (PR #96). InfoInhibitor carries `severity=none`, so the `severity = info` route missed it, and because the rule matches *pending* info alerts it sent a Telegram FIRING/RESOLVED pair on every short `CPUThrottlingHigh` pending window: about 10 messages a day instead of about 2. The rise started on 2026-10-25, when Hermes' `state-export` sidecar began throttling on each hourly run. `state-export`'s 500m CPU limit is kept as it is: the throttling comes from short multi-threaded bursts (peak about 54m, average under 1m), the job has no deadline, and the limit caps a runaway export.
@@ -158,13 +160,13 @@ Current quarter only. Prior quarters: [2026 Q2](CHANGELOG-2026-Q2.md), [2026 Q3]
 - `homekube-main` — Cilium L2 announcements: `l2announcements` block removed from `cilium-helm-values.yaml` and the docs table (PR #28, [#61](https://github.com/jangroth/homekube/issues/61)). No `CiliumL2AnnouncementPolicy` has existed since LB access became Tailscale-only.
 
 ### Changed
-- `homekube-apps` — Longhorn `defaultReplicaCount` and `defaultClassReplicaCount` 2 → 3, matching the three volumes patched by hand on 2026-10-03. See [decision 077](DECISIONS.md).
+- `homekube-apps` — Longhorn `defaultReplicaCount` and `defaultClassReplicaCount` 2 → 3, matching the three volumes patched by hand on 2026-10-03. See [decision 077](../decisions/DECISIONS.md).
 
 ### Operational
 - **Cilium rolled out with `task 40-cni` (helm rev 9, chart still 1.20.1), then the agents were restarted.** The agents still started with `--enable-l2-announcements='true'`: a `kubectl patch` on 2026-06-22 had made `kubectl-patch` a field manager of that `cilium-config` key, and Helm's server-side apply does not remove fields another manager also owns. Removed the key by hand and restarted the agents again; all four now report `false`, `cilium-dbg status` is OK, and all LoadBalancer VIPs answer over Tailscale. The patch's other three keys (`devices`, `k8s-client-qps`, `k8s-client-burst`) match the Helm values. The cluster-wide scan for hand-owned fields is now [#62](https://github.com/jangroth/homekube/issues/62).
 
 ### Decisions
-- [077](DECISIONS.md) — Longhorn default replica count is 3.
+- [077](../decisions/DECISIONS.md) — Longhorn default replica count is 3.
 
 ## 2026-10-25
 
@@ -173,36 +175,36 @@ Current quarter only. Prior quarters: [2026 Q2](CHANGELOG-2026-Q2.md), [2026 Q3]
 - `homekube-apps` — `hermes` Application pins `stateExport.betterleaks.tag: v1.9.0` for herminator's new state-export sidecar, tracked by Renovate and limited to plain `vX.Y.Z` (homekube-apps@4040640, [homekube-apps#92](https://github.com/jangroth/homekube-apps/pull/92), [herminator#9](https://github.com/jangroth/herminator/issues/9)).
 
 ### Changed
-- `homekube-apps` — sealed-secrets: automatic key renewal disabled (`keyrenewperiod: "0"`). `homekube-main/docs/restore-sealed-secrets-key.md` updated to match. See [decision 076](DECISIONS.md).
+- `homekube-apps` — sealed-secrets: automatic key renewal disabled (`keyrenewperiod: "0"`). `homekube-main/docs/restore-sealed-secrets-key.md` updated to match. See [decision 076](../decisions/DECISIONS.md).
 
 ### Operational
 - Re-exported all six sealed-secrets keys (including `sealed-secrets-key8hhrf`, renewed 2026-10-22) to the password-manager note, replacing the five-key export from 2026-10-21 ([#60](https://github.com/jangroth/homekube/issues/60)).
 
 ### Decisions
-- [076](DECISIONS.md) — Disable automatic sealed-secrets key renewal.
+- [076](../decisions/DECISIONS.md) — Disable automatic sealed-secrets key renewal.
 
 ## 2026-10-21
 
 ### Fixed
-- `homekube-apps` — homepage lost its Longhorn, Grafana and Dex cards: PR #70 (2026-10-18) moved them to `gethomepage.dev/*` Service annotations, but homepage only discovers Ingress annotations, so nothing matched. Restored the static entries in `services.yaml` and removed the annotations from the Longhorn Service and the Grafana and Dex Helm values ([decision 074](DECISIONS.md)).
+- `homekube-apps` — homepage lost its Longhorn, Grafana and Dex cards: PR #70 (2026-10-18) moved them to `gethomepage.dev/*` Service annotations, but homepage only discovers Ingress annotations, so nothing matched. Restored the static entries in `services.yaml` and removed the annotations from the Longhorn Service and the Grafana and Dex Helm values ([decision 074](../decisions/DECISIONS.md)).
 
 ### Added
 - `homekube-apps` — homepage bookmark for `jangroth/herminator`.
 - `homekube-main` — `docs/restore-sealed-secrets-key.md`: export and restore procedure for the sealed-secrets controller keys ([#58](https://github.com/jangroth/homekube/issues/58)).
 
 ### Changed
-- `homekube-apps` — `hermes` Application pins `hermes-agent` `v0.22.2` and `tailscale` `v1.104.2` under `helm.valuesObject`; `renovate.json` gains a regex custom manager and a plain-semver filter for them (PR #91, `homekube-apps@34e892e`). Rolled out as a real upgrade from Hermes v0.20.4 / Tailscale 1.104.1. See [decision 075](DECISIONS.md).
+- `homekube-apps` — `hermes` Application pins `hermes-agent` `v0.22.2` and `tailscale` `v1.104.2` under `helm.valuesObject`; `renovate.json` gains a regex custom manager and a plain-semver filter for them (PR #91, `homekube-apps@34e892e`). Rolled out as a real upgrade from Hermes v0.20.4 / Tailscale 1.104.1. See [decision 075](../decisions/DECISIONS.md).
 
 ### Operational
 - Exported all 5 `sealed-secrets-key*` secrets from `kube-system` to a secure note in the password manager, outside the cluster and git. Re-export after each 30-day rotation (next about 2026-10-22).
 
 ### Decisions
-- [075](DECISIONS.md) — Hermes image versions are pinned in homekube-apps and bumped by Renovate.
+- [075](../decisions/DECISIONS.md) — Hermes image versions are pinned in homekube-apps and bumped by Renovate.
 
 ## 2026-10-20
 
 ### Changed
-- `homekube-main` — `terraform/backup-target`: removed the 30-day object expiry from the bucket lifecycle (rule renamed `abort-incomplete-multipart`, which keeps only the 7-day multipart abort). Applied by hand; plan showed one in-place update. See [decision 071](DECISIONS.md).
+- `homekube-main` — `terraform/backup-target`: removed the 30-day object expiry from the bucket lifecycle (rule renamed `abort-incomplete-multipart`, which keeps only the 7-day multipart abort). Applied by hand; plan showed one in-place update. See [decision 071](../decisions/DECISIONS.md).
 
 ### Changed
 - `homekube-main` — `renovate.json` now tracks `kubernetes_version` against `kubernetes/kubernetes` releases, patch updates only, one PR per release (minor/major disabled; excluded from the grouped Ansible-pins PR). Merging one means running `task 32-k8s-upgrade`; `verify-drift` flags the gap until then. README's stale "excluded (see #44)" line corrected.
@@ -211,12 +213,12 @@ Current quarter only. Prior quarters: [2026 Q2](CHANGELOG-2026-Q2.md), [2026 Q3]
 - **Kubernetes 1.37.0 → 1.37.1 on all four nodes via `task 32-k8s-upgrade`, the first live run of the Longhorn-gated, cordon-only play from PR #24 ([#56](https://github.com/jangroth/homekube/issues/56) closed).** pi0 was staged alone with `--limit pi0`, then pi1–pi3 ran one at a time. All volumes stayed healthy and `verify-drift` passed afterwards. The pin was bumped by hand: a manual Renovate dispatch on a Tuesday created no PR because `schedule:weekly` only opens branches before 4am UTC Monday; the lookup itself resolved 1.37.1 correctly. The token's missing issues scope is [#59](https://github.com/jangroth/homekube/issues/59).
 
 ### Removed
-- `homekube-main` — kube-bench: `install_kube_bench.yml` and its import, `kube_bench_version`, the Renovate rule and doc references ([#12](https://github.com/jangroth/homekube/issues/12), [decision 073](DECISIONS.md)). The binary installed on pi0 is not removed by this change.
+- `homekube-main` — kube-bench: `install_kube_bench.yml` and its import, `kube_bench_version`, the Renovate rule and doc references ([#12](https://github.com/jangroth/homekube/issues/12), [decision 073](../decisions/DECISIONS.md)). The binary installed on pi0 is not removed by this change.
 - Closed `homekube-apps` PRs #80, #81 and #84 unmerged, and [#15](https://github.com/jangroth/homekube/issues/15), [#16](https://github.com/jangroth/homekube/issues/16), [#55](https://github.com/jangroth/homekube/issues/55) as not planned: the L2 announcement policy was removed in `homekube-apps@b924efa` (Tailscale-only LB access), so the failover and Wi-Fi diagnostic scripts had nothing to test, and no stale pods remain.
 - Closed `homekube-apps` PR #73 (Velero) and [#21](https://github.com/jangroth/homekube/issues/21) as won't-do. Opened [#58](https://github.com/jangroth/homekube/issues/58) for backing up the sealed-secrets key.
 
 ### Decisions
-- [071](DECISIONS.md) — Longhorn owns backup retention; no S3 object expiry. [072](DECISIONS.md) — no Velero. [073](DECISIONS.md) — remove kube-bench.
+- [071](../decisions/DECISIONS.md) — Longhorn owns backup retention; no S3 object expiry. [072](../decisions/DECISIONS.md) — no Velero. [073](../decisions/DECISIONS.md) — remove kube-bench.
 
 ## 2026-10-19
 
@@ -236,47 +238,47 @@ Current quarter only. Prior quarters: [2026 Q2](CHANGELOG-2026-Q2.md), [2026 Q3]
 - `homekube-main` — `-e force_reboot=yes` for `ansible/23-rolling-reboot.yml`: reboots every node even when none has a pending kernel (`_reboot_node` fact in `roles/k8s-node/tasks/reboot_node.yml`). Without it the play skips all four nodes now that they are on 6.18.50, so it cannot serve as a power load test.
 
 ### Changed
-- `homekube-apps@5e042bc` (PR #70) — `gethomepage.dev/*` discovery annotations on the Longhorn Service and, via Helm values, Grafana and Dex; their static entries removed from `homepage/configmap.yaml`. ArgoCD stays a static entry (its widget key is a `HOMEPAGE_VAR` placeholder; substitution in discovered annotations unverified). Closes [#10](https://github.com/jangroth/homekube/issues/10); its Tailscale-widget item is won't-do (see [decision 070](DECISIONS.md)).
+- `homekube-apps@5e042bc` (PR #70) — `gethomepage.dev/*` discovery annotations on the Longhorn Service and, via Helm values, Grafana and Dex; their static entries removed from `homepage/configmap.yaml`. ArgoCD stays a static entry (its widget key is a `HOMEPAGE_VAR` placeholder; substitution in discovered annotations unverified). Closes [#10](https://github.com/jangroth/homekube/issues/10); its Tailscale-widget item is won't-do (see [decision 070](../decisions/DECISIONS.md)).
 - `CLAUDE.md` — changelog scope: version bumps are logged only for manual/risky rollouts, deliberate holds or pin changes, or breaking changes; routine Renovate bumps are not.
 
 ### Fixed
-- `homekube-main@8ee6c60` (PR #24) — `ansible/32-k8s-upgrade.yml` no longer drains: it asserts Longhorn volumes healthy, cordons, upgrades, then waits for three consecutive healthy samples before the next node, matching [decision 067](DECISIONS-2026-Q3.md). Removes the drain deadlock on Longhorn instance-manager PDBs ([#53](https://github.com/jangroth/homekube/issues/53)). Syntax-checked only; first live run is the next Kubernetes upgrade ([#56](https://github.com/jangroth/homekube/issues/56)).
+- `homekube-main@8ee6c60` (PR #24) — `ansible/32-k8s-upgrade.yml` no longer drains: it asserts Longhorn volumes healthy, cordons, upgrades, then waits for three consecutive healthy samples before the next node, matching [decision 067](../decisions/DECISIONS-2026-Q3.md). Removes the drain deadlock on Longhorn instance-manager PDBs ([#53](https://github.com/jangroth/homekube/issues/53)). Syntax-checked only; first live run is the next Kubernetes upgrade ([#56](https://github.com/jangroth/homekube/issues/56)).
 
 ### Operational
-- Disabled Tailscale node key expiry on darth and pi0–pi3 in the admin console ([decision 070](DECISIONS.md)).
-- Rewrote `homekube-main` `main` history once: PR #24's merge was redone on a branch rebased onto `main` (`065fdc7` → `8ee6c60`, force-push with lease); tree identical. Closed PR #26 (CI verify-drift workflow) and [#54](https://github.com/jangroth/homekube/issues/54) as won't-do per [decision 069](DECISIONS.md).
+- Disabled Tailscale node key expiry on darth and pi0–pi3 in the admin console ([decision 070](../decisions/DECISIONS.md)).
+- Rewrote `homekube-main` `main` history once: PR #24's merge was redone on a branch rebased onto `main` (`065fdc7` → `8ee6c60`, force-push with lease); tree identical. Closed PR #26 (CI verify-drift workflow) and [#54](https://github.com/jangroth/homekube/issues/54) as won't-do per [decision 069](../decisions/DECISIONS.md).
 - **Rolling reboot as a load test of the new PSUs ([#52](https://github.com/jangroth/homekube/issues/52)):** `task 23-rolling-reboot -- -e confirm_reboot=yes -e force_reboot=yes` rebooted pi1, pi2, pi3, pi0 (07:01–07:20) with `failed=0` and the Longhorn rebuild wait passing between nodes. No node dropped, including pi0 and pi2. Afterwards `get_throttled=0x0` and no undervoltage or NVMe lines in any kernel log; all volumes healthy. pi3 logged `Buffer I/O error on dev sda`, which is the iSCSI-attached 50Gi Longhorn volume reattaching, not hardware. The first run without `force_reboot` changed nothing (every node already on the installed kernel).
 - Deleted 46 stale `Completed`/`Error` pods left by the node shutdowns (`kubectl delete pods -A --field-selector=status.phase=Failed` / `Succeeded`); every one already had a running replacement. The ArgoCD `prometheus` app showed `Unknown/Missing` while pi0 was down and recovered after a refresh.
 
 ### Decisions
-- [069](DECISIONS.md) — no CI access to the cluster; verify-drift stays manual. [070](DECISIONS.md) — disable Tailscale key expiry instead of a Tailscale widget.
+- [069](../decisions/DECISIONS.md) — no CI access to the cluster; verify-drift stays manual. [070](../decisions/DECISIONS.md) — disable Tailscale key expiry instead of a Tailscale widget.
 
 ## 2026-10-17
 
 ### Operational
-- **Replaced the shared 8-port USB charging station with four per-node official Raspberry Pi 27W PSUs**, fixing the power starvation root-caused in [decision 068](DECISIONS.md) ([#52](https://github.com/jangroth/homekube/issues/52)). Before the swap the cluster was in a bad state with heaps of Prometheus alerts. After the nodes came back up (~16:48), all four report `max_current=5000` (was 3000) and `get_throttled=0x0`. The kernel logs since boot show no undervoltage or NVMe errors, all ArgoCD apps are Synced/Healthy and Longhorn volumes rebuilt to healthy. Only `CPUThrottlingHigh` (info) alerts remained, from the post-boot startup burst. #52 stays open pending a load test (`task 23-rolling-reboot`) and turning the drift check into an assertion.
+- **Replaced the shared 8-port USB charging station with four per-node official Raspberry Pi 27W PSUs**, fixing the power starvation root-caused in [decision 068](../decisions/DECISIONS.md) ([#52](https://github.com/jangroth/homekube/issues/52)). Before the swap the cluster was in a bad state with heaps of Prometheus alerts. After the nodes came back up (~16:48), all four report `max_current=5000` (was 3000) and `get_throttled=0x0`. The kernel logs since boot show no undervoltage or NVMe errors, all ArgoCD apps are Synced/Healthy and Longhorn volumes rebuilt to healthy. Only `CPUThrottlingHigh` (info) alerts remained, from the post-boot startup burst. #52 stays open pending a load test (`task 23-rolling-reboot`) and turning the drift check into an assertion.
 
 ## 2026-10-03
 
 ### Added
-- `homekube-main` — drift verification in IaC: `ansible/90-verify-drift.yml` (`task verify-drift`), a read-only playbook comparing runtime against `ansible/group_vars/all.yml` (kernel, kube packages, containerd, etcdctl, watchdog, Cilium image) and checking the four nodes agree with each other, exiting non-zero on drift. Kernel staleness comes from a reusable `roles/k8s-node/tasks/check_pending_reboot.yml` that reads `dpkg-query -W -f='${Depends}' linux-image-rpi-2712`, because `/var/run/reboot-required` is never written on RPi OS Lite (no `update-notifier-common`). See [decision 066](DECISIONS.md).
+- `homekube-main` — drift verification in IaC: `ansible/90-verify-drift.yml` (`task verify-drift`), a read-only playbook comparing runtime against `ansible/group_vars/all.yml` (kernel, kube packages, containerd, etcdctl, watchdog, Cilium image) and checking the four nodes agree with each other, exiting non-zero on drift. Kernel staleness comes from a reusable `roles/k8s-node/tasks/check_pending_reboot.yml` that reads `dpkg-query -W -f='${Depends}' linux-image-rpi-2712`, because `/var/run/reboot-required` is never written on RPi OS Lite (no `update-notifier-common`). See [decision 066](../decisions/DECISIONS.md).
   - First run found **every node running a stale kernel**: pi0/pi2 on 6.18.39, pi1/pi3 on 6.18.29, with 6.18.50 installed on all four. Nothing else drifted — `group_vars/all.yml` matches runtime on every pin, and kube packages (1.37.0-1.1), containerd 2.4.1, etcdctl 3.7.2, Tailscale 1.102.4 and `RuntimeWatchdogUSec=10min` are uniform across pi0–pi3. Rebooting into 6.18.50 does not unlock Cilium 1.20.2 (no BTF in any 6.18.x RPi kernel, decision 065) — it is hygiene, not an escape route.
-- `homekube-main` — `ansible/23-rolling-reboot.yml` (`task 23-rolling-reboot`) plus `roles/k8s-node/tasks/reboot_node.yml`: reboots nodes into their installed kernel one at a time, pi1→pi2→pi3→pi0, by cordoning rather than draining. Longhorn's three `instance-manager-*` PDBs allow **0** disruptions, so `kubectl drain` deadlocks and times out — see [decision 067](DECISIONS.md), which also covers the single-replica window this accepts. Per node it gates on Longhorn being healthy, verifies the booted kernel, and blocks on replica rebuild before advancing. Runs as a preview and changes nothing unless given `-e confirm_reboot=yes`; verified in preview against all four nodes (`changed=0`). **Not yet executed** — the kernel drift above is still open.
+- `homekube-main` — `ansible/23-rolling-reboot.yml` (`task 23-rolling-reboot`) plus `roles/k8s-node/tasks/reboot_node.yml`: reboots nodes into their installed kernel one at a time, pi1→pi2→pi3→pi0, by cordoning rather than draining. Longhorn's three `instance-manager-*` PDBs allow **0** disruptions, so `kubectl drain` deadlocks and times out — see [decision 067](../decisions/DECISIONS.md), which also covers the single-replica window this accepts. Per node it gates on Longhorn being healthy, verifies the booted kernel, and blocks on replica rebuild before advancing. Runs as a preview and changes nothing unless given `-e confirm_reboot=yes`; verified in preview against all four nodes (`changed=0`). **Not yet executed** — the kernel drift above is still open.
 
 ### Changed
-- `homekube-main` — `cilium_version` 1.20.2→1.20.1 in `ansible/group_vars/all.yml`, and Renovate updates for the `cilium` dep disabled (`enabled: false` packageRule in `renovate.json`). The version is now deliberately held, not tracked; see [decision 065](DECISIONS.md). Rolled out to the cluster via `task 40-cni` the same day, without incident — this clears the endpoint-creation block, so new pods can be scheduled on all four nodes again.
+- `homekube-main` — `cilium_version` 1.20.2→1.20.1 in `ansible/group_vars/all.yml`, and Renovate updates for the `cilium` dep disabled (`enabled: false` packageRule in `renovate.json`). The version is now deliberately held, not tracked; see [decision 065](../decisions/DECISIONS.md). Rolled out to the cluster via `task 40-cni` the same day, without incident — this clears the endpoint-creation block, so new pods can be scheduled on all four nodes again.
 - `homekube-main` — `roles/k8s-node/tasks/update_system.yml` now reports a pending kernel reboot after its apt tasks (report-only). In `roles/raspberry-pi/tasks/update_system.yml` the dead `/var/run/reboot-required` stat was replaced with the same check and the `reboot:` task gated behind `-e allow_reboot=true` — that task had never once fired, so making the check work would otherwise have started rebooting nodes during provisioning.
-- `CLAUDE.md` — versions removed from the Stack table, which now points at `homekube-main/ansible/group_vars/all.yml` and `homekube-apps/applications/**/*.yaml` → `targetRevision`. All three versions it carried (Kubernetes v1.36.1, Cilium 1.19.4, Longhorn 1.11) were simultaneously stale against runtime (v1.37.0, 1.20.1, 1.12.1); since [decision 064](DECISIONS-2026-Q3.md) gave Renovate ownership of those pins, a hand-maintained copy can only be correct between bumps. The Cilium hold stays in the table as a constraint.
+- `CLAUDE.md` — versions removed from the Stack table, which now points at `homekube-main/ansible/group_vars/all.yml` and `homekube-apps/applications/**/*.yaml` → `targetRevision`. All three versions it carried (Kubernetes v1.36.1, Cilium 1.19.4, Longhorn 1.11) were simultaneously stale against runtime (v1.37.0, 1.20.1, 1.12.1); since [decision 064](../decisions/DECISIONS-2026-Q3.md) gave Renovate ownership of those pins, a hand-maintained copy can only be correct between bumps. The Cilium hold stays in the table as a constraint.
 - `homekube-main` — `docs/ref_operations.md` watchdog section gained a `status` block recording the standing state while #22 is open: the four occurrences through 2026-08-22 were vendor-1min load stalls, the 2026-09-13 double outage is unattributed, and no reset has occurred since 2026-09-14 across two Helm rollouts. Verified against boot history on all four nodes (pi0 up since 2026-09-14 17:03, pi2 2026-09-13 14:52, pi1 2026-06-16, pi3 2026-05-27) and `RuntimeWatchdogUSec=10min` live on each, matching `roles/k8s-node/files/50-homekube-watchdog.conf`.
 
 ### Operational
 - **All four nodes rebooted into kernel 6.18.50**, closing the drift found this morning — pi1 16:08, pi2 16:16, pi3 16:57 via `task 23-rolling-reboot`; pi0 16:28 as a side effect of the outage below. `task verify-drift` now reports "Runtime matches declared state on all nodes" (it failed on all four at the start of the day).
-- **Unplanned two-node outage mid-rollout.** pi0 stopped logging at 16:17:04 and pi2 at 16:17:41 — 37s apart, pi2 only 75s after its planned reboot. Both needed manual power-cycles. Root-caused to power starvation, not the watchdog — see [decision 068](DECISIONS.md). pi1 recorded `Undervoltage detected!` at 16:18:08 and survived, which is the evidence that settles it. No data lost; the rolling-reboot play's Longhorn pre-flight correctly refused to continue onto pi3 while the cluster was degraded, on both halted runs.
-- **Second pi0+pi2 outage the same evening**, 16:59:23 (pi2) and 16:59:25 (pi0) — 2 seconds apart, two minutes after pi3 finished rebooting. pi1 logged `Undervoltage detected!` at 16:59:43 and survived, its second witness event of the day. Both nodes stayed dead until manually power-cycled at 21:15 and have been stable for ~11h since; the cluster is fine at idle and fails on load spikes. Recorded against [decision 068](DECISIONS.md).
+- **Unplanned two-node outage mid-rollout.** pi0 stopped logging at 16:17:04 and pi2 at 16:17:41 — 37s apart, pi2 only 75s after its planned reboot. Both needed manual power-cycles. Root-caused to power starvation, not the watchdog — see [decision 068](../decisions/DECISIONS.md). pi1 recorded `Undervoltage detected!` at 16:18:08 and survived, which is the evidence that settles it. No data lost; the rolling-reboot play's Longhorn pre-flight correctly refused to continue onto pi3 while the cluster was degraded, on both halted runs.
+- **Second pi0+pi2 outage the same evening**, 16:59:23 (pi2) and 16:59:25 (pi0) — 2 seconds apart, two minutes after pi3 finished rebooting. pi1 logged `Undervoltage detected!` at 16:59:43 and survived, its second witness event of the day. Both nodes stayed dead until manually power-cycled at 21:15 and have been stable for ~11h since; the cluster is fine at idle and fails on load spikes. Recorded against [decision 068](../decisions/DECISIONS.md).
 - Longhorn `numberOfReplicas` raised 2→3 on all three volumes before rebooting pi3, so redundancy stayed at two running replicas throughout. Recommended to keep at 3: with three data-plane nodes that is one copy per node, costs ~58Gi against 1TB NVMe each, and the nodes demonstrably die unpredictably.
 
 ### Removed
-- Closed [PR #20](https://github.com/jangroth/homekube-main/pull/20) (watchdog investigation conclusion) unmerged. It was opened 2026-09-15, ~40h after #22 was reopened for an unmet exit criterion, and asserted the 10min watchdog fix proven; it also carried a `Closes #22` reference that would have auto-closed the issue a second time (PR #16 already did once). Its root-cause line omitted the 2026-09-13 pi0+pi2 double outage, which [decision 061](DECISIONS-2026-Q3.md) leaves unattributed. [Issue #22](https://github.com/jangroth/homekube/issues/22) stays open.
+- Closed [PR #20](https://github.com/jangroth/homekube-main/pull/20) (watchdog investigation conclusion) unmerged. It was opened 2026-09-15, ~40h after #22 was reopened for an unmet exit criterion, and asserted the 10min watchdog fix proven; it also carried a `Closes #22` reference that would have auto-closed the issue a second time (PR #16 already did once). Its root-cause line omitted the 2026-09-13 pi0+pi2 double outage, which [decision 061](../decisions/DECISIONS-2026-Q3.md) leaves unattributed. [Issue #22](https://github.com/jangroth/homekube/issues/22) stays open.
 - Closed [issue #43](https://github.com/jangroth/homekube/issues/43) (high pod restart counts) as not reproducing, and [PR #21](https://github.com/jangroth/homekube-main/pull/21) (pod restart triage runbook) unmerged. The 212/84/49 counts recorded on 2026-09-12 belonged to the pod cohort that predated Cilium ControllerRevision 9 (oldest revision 2026-05-20), accumulated over ~4 months on nodes with uptimes back to May. That revision — `855858b5d4`, Cilium 1.20.1, the same template running again after the rollback above — ran 2026-09-12→10-01 with 3 cilium-agent and 5 cilium-operator restarts total, and `increase(kube_pod_container_status_restarts_total[14d])` is 0 cluster-wide. Prometheus retention (15d) cannot reach 2026-09-12, so the original cause is unrecoverable; `KubePodCrashLooping` and `KubeContainerWaiting` cover regression. The PR's content was generic kubectl triage rather than cluster-specific reference material.
 
 ### Fixed
@@ -287,10 +289,10 @@ Current quarter only. Prior quarters: [2026 Q2](CHANGELOG-2026-Q2.md), [2026 Q3]
 - Confirmed the 2026-10-02 claim that BTF is absent on RPi OS kernels, and that the staged 6.18.50 reboot would not have helped: no `/sys/kernel/btf/` on pi0–pi3, zero `DEBUG_INFO_BTF` in `bcm2712_defconfig`, no `.BTF` module section in either 6.18.39 or 6.18.50.
 
 ### Decisions
-- [068 — The node crashes are power starvation, not the watchdog; supersedes the premise of 054](DECISIONS.md)
-- [067 — Reboot Longhorn nodes by cordon-and-rebuild, not drain](DECISIONS.md)
-- [066 — Drift detection belongs in IaC; kernel reboots are deliberate, never a side effect](DECISIONS.md)
-- [065 — Hold Cilium at 1.20.1; kernel BTF is becoming a hard Cilium requirement that Raspberry Pi OS does not satisfy](DECISIONS.md)
+- [068 — The node crashes are power starvation, not the watchdog; supersedes the premise of 054](../decisions/DECISIONS.md)
+- [067 — Reboot Longhorn nodes by cordon-and-rebuild, not drain](../decisions/DECISIONS.md)
+- [066 — Drift detection belongs in IaC; kernel reboots are deliberate, never a side effect](../decisions/DECISIONS.md)
+- [065 — Hold Cilium at 1.20.1; kernel BTF is becoming a hard Cilium requirement that Raspberry Pi OS does not satisfy](../decisions/DECISIONS.md)
 
 ---
 
@@ -301,7 +303,7 @@ Current quarter only. Prior quarters: [2026 Q2](CHANGELOG-2026-Q2.md), [2026 Q3]
 - `homekube-main@405bf76`: added `update_repo_cache: true` to the `gitops` role's ArgoCD Helm install/upgrade task, matching the `cni` role's existing Cilium task — without it, a stale local Helm index on darth can reject a chart version released after the last `helm repo update`, as happened on this rollout's first `task 50-gitops` attempt.
 
 ### Operational
-- `task 40-cni`'s Cilium 1.20.2 upgrade applied cleanly to all 4 agents/operator, but the Helm release itself is stuck `failed` (revision 7): `hubble-relay`/`hubble-ui` can't get a CNI endpoint on pi3 — the Cilium agent's `cil_sock4/6_*` eBPF programs (required by `kubeProxyReplacement: true`'s socket-level LB) fail to load with "no BTF found for kernel version 6.18.29+rpt-rpi-2712: not supported". Confirmed cluster-wide (pi0/pi1/pi3 all lack `/sys/kernel/btf/vmlinux`). Restarting the agent doesn't help — re-enters the same loop and additionally forces all of that node's existing endpoints into `restoring`/`regenerating` (no actual workload impact observed: ArgoCD/Longhorn pods on pi3 stayed `Running`/`Healthy` throughout via already-programmed datapath rules). Root cause and proposed fix (`socketLB.enabled: false`) filed as [issue #51](https://github.com/jangroth/homekube/issues/51). **Superseded 2026-10-03** — the proposed fix is a no-op, the impact was blocker-level rather than workload-neutral, and the root cause is an upstream Cilium regression; see the 2026-10-03 entry and [decision 065](DECISIONS.md).
+- `task 40-cni`'s Cilium 1.20.2 upgrade applied cleanly to all 4 agents/operator, but the Helm release itself is stuck `failed` (revision 7): `hubble-relay`/`hubble-ui` can't get a CNI endpoint on pi3 — the Cilium agent's `cil_sock4/6_*` eBPF programs (required by `kubeProxyReplacement: true`'s socket-level LB) fail to load with "no BTF found for kernel version 6.18.29+rpt-rpi-2712: not supported". Confirmed cluster-wide (pi0/pi1/pi3 all lack `/sys/kernel/btf/vmlinux`). Restarting the agent doesn't help — re-enters the same loop and additionally forces all of that node's existing endpoints into `restoring`/`regenerating` (no actual workload impact observed: ArgoCD/Longhorn pods on pi3 stayed `Running`/`Healthy` throughout via already-programmed datapath rules). Root cause and proposed fix (`socketLB.enabled: false`) filed as [issue #51](https://github.com/jangroth/homekube/issues/51). **Superseded 2026-10-03** — the proposed fix is a no-op, the impact was blocker-level rather than workload-neutral, and the root cause is an upstream Cilium regression; see the 2026-10-03 entry and [decision 065](../decisions/DECISIONS.md).
 
 ### Decisions
 - None — the gitops role fix and the socketLB root-cause analysis didn't rise to a standalone decision; captured here and in issue #51 instead.
