@@ -16,6 +16,10 @@ _Avoid_: the agent
 A Coder workspace: an isolated pod where one coding task runs.
 _Avoid_: sandbox, dev box
 
+**Task**:
+One issue handed to one workspace, from claim to PR or failure.
+_Avoid_: job, run
+
 **Template**:
 The Coder template that defines what a workspace is.
 
