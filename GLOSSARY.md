@@ -19,6 +19,16 @@ _Avoid_: sandbox, dev box
 **Template**:
 The Coder template that defines what a workspace is.
 
+**Routine**:
+A scheduled Claude Code agent in the cloud that implements issues.
+
+**Executor**:
+The agent that takes an issue: Hermes or a routine.
+_Avoid_: worker, runner
+
+**Routing label**:
+The `agent:*` label that names an issue's executor.
+
 **Bakery**:
 The external repo `homekube-bakery` that builds the workspace and agent images.
 
