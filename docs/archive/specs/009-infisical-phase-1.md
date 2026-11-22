@@ -1,7 +1,7 @@
 # Spec 009 — Infisical, phase 1: self-hosted install
 
 **Status:** Done (2026-11-04) — 2FA deferred; one-week memory check tracked in [#72](https://github.com/jangroth/homekube/issues/72)
-**Related decisions:** [Decision 079](../archive/decisions/DECISIONS.md) — Infisical adopted as the secret store, phased; amends [decision 020](../archive/decisions/DECISIONS-2026-Q2.md). [Decision 022](../archive/decisions/DECISIONS-2026-Q2.md) — caution on Bitnami images.
+**Related decisions:** [Decision 079](../decisions/DECISIONS.md) — Infisical adopted as the secret store, phased; amends [decision 020](../decisions/DECISIONS-2026-Q2.md). [Decision 022](../decisions/DECISIONS-2026-Q2.md) — caution on Bitnami images.
 **Related issues:** [#69](https://github.com/jangroth/homekube/issues/69) — Hermes backup label not in source (uses the shared backup job introduced here). [#72](https://github.com/jangroth/homekube/issues/72) — one-week memory check. [#73](https://github.com/jangroth/homekube/issues/73) — event-loop stats log noise.
 
 ---

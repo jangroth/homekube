@@ -46,10 +46,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## 2026-06-20
 
 ### Added
-- `docs/specs/006-cilium-native-loadbalancer.md` — executable spec to replace MetalLB with Cilium-native LB-IPAM + L2 announcements; written self-contained for execution in a later session. No cluster changes yet — planning only.
+- `docs/archive/specs/006-cilium-native-loadbalancer.md` — executable spec to replace MetalLB with Cilium-native LB-IPAM + L2 announcements; written self-contained for execution in a later session. No cluster changes yet — planning only.
 
 ### Changed
-- `docs/specs/005-production-cluster-setup.md` — capability 4 marked **superseded by spec 006**; its acceptance boxes flagged as not actually met (LB IPs unreachable per DECISION-030).
+- `docs/archive/specs/005-production-cluster-setup.md` — capability 4 marked **superseded by spec 006**; its acceptance boxes flagged as not actually met (LB IPs unreachable per DECISION-030).
 - `TODO.md` — capability 4 metallb item replaced with the spec 006 cutover step list (Steps 0–5).
 
 ### Decisions
@@ -81,7 +81,7 @@ End of Phase 5 bootstrap. Cluster is a working, minimalistic Kubernetes installa
 - `argocd-config` synced (NodePort `:30000`)
 - ArgoCD waves wired: `wave-00-init` active; `wave-01-apps`, `wave-02-custom` placeholders
 
-### Not yet present (Phase 5 targets — see `docs/specs/005-production-cluster-setup.md`)
+### Not yet present (Phase 5 targets — see `docs/archive/specs/005-production-cluster-setup.md`)
 - Persistent storage (Longhorn)
 - Service exposure (MetalLB)
 - Observability (Prometheus / Loki / Grafana)

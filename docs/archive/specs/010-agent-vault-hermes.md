@@ -1,7 +1,7 @@
 # Spec 010 — Infisical Agent Vault for Hermes
 
 **Status:** Done (2026-11-08)
-**Related decisions:** [Decision 080](../archive/decisions/DECISIONS.md) — Agent Vault for Hermes, Infisical operator instead of ESO; reorders the phases of [decision 079](../archive/decisions/DECISIONS.md). [Decision 075](../archive/decisions/DECISIONS.md) — Hermes image pins.
+**Related decisions:** [Decision 080](../decisions/DECISIONS.md) — Agent Vault for Hermes, Infisical operator instead of ESO; reorders the phases of [decision 079](../decisions/DECISIONS.md). [Decision 075](../decisions/DECISIONS.md) — Hermes image pins.
 **Related specs:** [Spec 009](009-infisical-phase-1.md) — Infisical install. [herminator spec 001](https://github.com/jangroth/herminator/blob/main/docs/specs/001-deploy-hermes-to-homekube.md) — Hermes deployment.
 
 ---

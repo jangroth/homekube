@@ -60,9 +60,9 @@ A rebuilt pi goes through the bootstrap again (see `homekube-main/CLAUDE.md`), s
 
 ## Working Approach
 
-- **Spec-driven**: write a spec in `docs/specs/NNN-title.md` before any significant implementation. Specs define the problem, acceptance criteria, and approach.
+- **Spec-driven**: significant work starts from a spec issue created with `/to-spec`. Specs define the problem, acceptance criteria, and approach.
 - **Decisions**: ADRs in `docs/adr/`, written through `domain-modeling` and only for decisions that are hard to reverse, surprising without context, and the result of a real trade-off.
-- **Archive**: `docs/archive/` (decision log, changelog) is read-only history; never append to it. Search them (`ctx_search`) when an old decision number is cited. What changed is recorded by merged PRs.
+- **Archive**: `docs/archive/` (decision log, changelog, specs 001–012) is read-only history; never append to it. Search them (`ctx_search`) when an old decision number is cited. What changed is recorded by merged PRs.
 - **Todo**: open tasks tracked as GitHub Issues on `jangroth/homekube` (single tracker for all three repos). Triage labels come from the user-level `CLAUDE.md`; on top, issues are labelled `area:*` (component), `criticality:blocker`/`degraded`/`polish` (workload-readiness impact) and `repo:*` (which repo the fix lands in — `homekube`/`homekube-main`/`homekube-apps`). `ready-for-agent` issues in `homekube-apps` and `homekube-main` are picked up nightly by scheduled routines that open a PR for human review; before taking one, check for an in-flight `auto/issue-<n>-*` PR.
 - **Trust**: Claude proposes, human approves for destructive/irreversible operations.
 - **Source reflects runtime**: when a change is made to a running cluster (static pod manifest, sysctl, Ansible variable), always propagate it back to the canonical source file (`kubeadm-config.yaml`, Ansible role, Helm values) in the same piece of work. The source must be sufficient to rebuild the cluster from scratch.

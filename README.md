@@ -275,5 +275,4 @@ Update this table in the same piece of work whenever a workload's resource reque
 ## Navigation
 
 - [GitHub Issues](https://github.com/jangroth/homekube/issues) — open tasks (single tracker for all three repos)
-- [`docs/archive/`](docs/archive/) — frozen decision log and changelog (history only)
-- [`docs/specs/`](docs/specs/) — specs for significant work items
+- [`docs/archive/`](docs/archive/) — frozen decision log, changelog and specs 001–012 (history only); new specs are issues

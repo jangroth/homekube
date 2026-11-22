@@ -1,10 +1,10 @@
 # Spec 008 — S3 Backup Target via Terraform
 
 **Status:** Done (2026-09-01)
-**Amended 2026-10-20:** the 30-day object expiry was removed from the bucket; Longhorn owns retention. See [decision 071](../archive/decisions/DECISIONS.md). §2, §4b and the lifecycle acceptance item below describe the original design. Issue #21 (Velero) was closed as won't-do, [decision 072](../archive/decisions/DECISIONS.md).
+**Amended 2026-10-20:** the 30-day object expiry was removed from the bucket; Longhorn owns retention. See [decision 071](../decisions/DECISIONS.md). §2, §4b and the lifecycle acceptance item below describe the original design. Issue #21 (Velero) was closed as won't-do, [decision 072](../decisions/DECISIONS.md).
 **Closes:** issue #20 (`homekube`)
 **Unblocks:** issue #21 (Velero + Longhorn backup target), issue #19 (Longhorn scheduled backups)
-**Related decisions:** [Decision 058](../archive/decisions/DECISIONS.md) — Terraform adopted as the standard tool for AWS/cloud-account-level infrastructure (wider policy, logged ahead of implementation). A second, bucket-specific DECISIONS.md entry (storage class choice) still gets added on completion per §5 Step 5.
+**Related decisions:** [Decision 058](../decisions/DECISIONS.md) — Terraform adopted as the standard tool for AWS/cloud-account-level infrastructure (wider policy, logged ahead of implementation). A second, bucket-specific DECISIONS.md entry (storage class choice) still gets added on completion per §5 Step 5.
 
 ---
 

@@ -94,7 +94,7 @@ Archived from `DECISIONS.md` at Q3 2026 close. Entries 001–038 (2026-04-19 –
 
 **Area:** networking
 
-**Decision:** Drop MetalLB. Use Cilium 1.19.4's built-in LoadBalancer IPAM (`CiliumLoadBalancerIPPool`) and L2 announcements (`CiliumL2AnnouncementPolicy`) for `type: LoadBalancer` service exposure. The IP pool stays on the home Wi-Fi subnet (`192.168.86.241–251`) and announcements still egress `wlan0` from pi1/pi2/pi3, so DECISION-019's subnet rationale and the existing Tailscale `192.168.86.240/28` subnet route are unchanged. Cilium `devices` becomes `eth0,wlan0`. Full execution plan in `docs/specs/006-cilium-native-loadbalancer.md`.
+**Decision:** Drop MetalLB. Use Cilium 1.19.4's built-in LoadBalancer IPAM (`CiliumLoadBalancerIPPool`) and L2 announcements (`CiliumL2AnnouncementPolicy`) for `type: LoadBalancer` service exposure. The IP pool stays on the home Wi-Fi subnet (`192.168.86.241–251`) and announcements still egress `wlan0` from pi1/pi2/pi3, so DECISION-019's subnet rationale and the existing Tailscale `192.168.86.240/28` subnet route are unchanged. Cilium `devices` becomes `eth0,wlan0`. Full execution plan in `docs/archive/specs/006-cilium-native-loadbalancer.md`.
 
 **Rationale:** This resolves the DECISION-030 dead end. The reason `devices: eth0,wlan0` broke with MetalLB was that Cilium probed MetalLB's VIPs as kernel L3 neighbors on `wlan0`; the VIPs aren't real kernel IPs (MetalLB answers ARP via raw sockets), the probe failed, and the kernel marked them `FAILED`, causing Cilium to drop forwarded traffic. With Cilium owning the VIP end-to-end, the same address is a known *service* VIP in its eBPF datapath — DNAT'd at ingress to a pod backend, never treated as a remote neighbor to forward to. The failing mechanism structurally cannot occur because the announcer and the DNAT engine are the same component.
 
@@ -249,7 +249,7 @@ Of the three options in DECISION-030, this is the only one that **both** keeps C
 
 **Area:** process
 
-**Decision:** All Helm charts, application images, and Kubernetes components in `homekube-apps` track the latest upstream GA release. No release candidates, betas, alphas, or `*-pre.*` builds enter any wave. Patch and minor bumps applied on the cadence Renovate (or equivalent) surfaces them; major bumps reviewed for breaking values-schema changes, then applied promptly. The Pinned Versions table in `docs/specs/005-production-cluster-setup.md` is the source of truth at any given time and is re-verified at the start of each implementation session.
+**Decision:** All Helm charts, application images, and Kubernetes components in `homekube-apps` track the latest upstream GA release. No release candidates, betas, alphas, or `*-pre.*` builds enter any wave. Patch and minor bumps applied on the cadence Renovate (or equivalent) surfaces them; major bumps reviewed for breaking values-schema changes, then applied promptly. The Pinned Versions table in `docs/archive/specs/005-production-cluster-setup.md` is the source of truth at any given time and is re-verified at the start of each implementation session.
 
 **Rationale:** Home cluster is a learning environment — accumulating tech debt from N-2 versions defeats the purpose, and the "let's not bump that until we have to" pattern silently builds upgrade cliffs. Renovate-style PRs into `homekube-apps` are cheap; merging them through ArgoCD is the same flow as any other change. Trade-off accepted: occasional values-schema breaks on major chart bumps (e.g. Loki chart `6.x → 7.x`) are absorbed up-front during the upgrade PR rather than amortised by drifting further behind.
 
@@ -403,7 +403,7 @@ Both gotchas are now encoded in `ansible/roles/raspberry-pi/tasks/copy_mmc_to_nv
 
 **Area:** process
 
-**Decision:** Follow spec-driven development for all significant work. Before implementation, write a spec in `docs/specs/NNN-title.md` defining: problem, acceptance criteria, out-of-scope, and approach.
+**Decision:** Follow spec-driven development for all significant work. Before implementation, write a spec in `docs/archive/specs/NNN-title.md` defining: problem, acceptance criteria, out-of-scope, and approach.
 
 **Rationale:** Keeps the human in the driver's seat on *what* gets built. Specs are learning artifacts. Prevents AI from going off in unexpected directions. Aligns with the goal of learning AI-driven development.
 
