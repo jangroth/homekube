@@ -187,7 +187,7 @@ Phase 5 introduces eleven capabilities. Each maps to a sync-wave for ArgoCD exec
 > **not actually reachable** — Cilium's eBPF DNAT only attaches to `eth0`, and adding `wlan0`
 > conflicts with MetalLB's VIPs (DECISION-030). The acceptance boxes were checked optimistically;
 > treat them as **not met**. Replacement: Cilium-native LB-IPAM + L2 announcements — see
-> `docs/specs/006-cilium-native-loadbalancer.md` and DECISION-031. The section below is retained
+> `docs/archive/specs/006-cilium-native-loadbalancer.md` and DECISION-031. The section below is retained
 > as the historical record of the MetalLB design.
 
 **Purpose:** Allocate routable IPs to `type: LoadBalancer` services. Removes the NodePort-only constraint and is a prerequisite for any sensible ingress story later (Gateway API in a future phase).
@@ -447,7 +447,7 @@ Phase 5 introduces eleven capabilities. Each maps to a sync-wave for ArgoCD exec
 
 ## Resource Budget
 
-Moved to the top-level [`README.md`](../../README.md#resource-budget) — resource budget is living information that changes as workload requests/limits change, unlike this spec which is a point-in-time record. This section stays as a pointer only.
+Moved to the top-level [`README.md`](../../../README.md#resource-budget) — resource budget is living information that changes as workload requests/limits change, unlike this spec which is a point-in-time record. This section stays as a pointer only.
 
 ---
 

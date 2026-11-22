@@ -207,9 +207,9 @@ files below.
 |---|---|
 | `DECISIONS.md` (019, 030, 031) | Decision log is append-only history; 031 supersedes but does not erase 019/030. |
 | `CHANGELOG.md` | Append-only; past MetalLB entries are accurate for their date. Add the *new* completion entry (below), don't rewrite old ones. |
-| `docs/specs/004-kubernetes-install.md` (line ~62) | Point-in-time spec describing Phase 5 as planned then; historical. |
-| `docs/specs/005-…md` (capability 4) | Already annotated "superseded by spec 006"; retained as the MetalLB design record. |
-| `docs/specs/006-…md` (this file) | The replacement spec itself. |
+| `docs/archive/specs/004-kubernetes-install.md` (line ~62) | Point-in-time spec describing Phase 5 as planned then; historical. |
+| `docs/archive/specs/005-…md` (capability 4) | Already annotated "superseded by spec 006"; retained as the MetalLB design record. |
+| `docs/archive/specs/006-…md` (this file) | The replacement spec itself. |
 
 **Then, the live-status docs to finalize:**
 - This spec — flip **Status** to `Done`, check the §6 boxes; append an Operational note if execution
