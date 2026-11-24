@@ -58,3 +58,28 @@ Agent Vault's grant on one bundle.
 **Session token**:
 The credential a workspace or Hermes presents to Agent Vault to use a session.
 _Avoid_: session (for the credential)
+
+## Secrets
+
+**Infisical**:
+The self-hosted secret store that holds every cluster secret except bootstrap secrets.
+
+**Bootstrap secret**:
+A secret that stays sealed because the cluster needs it before Infisical is running, or to raise an alert when Infisical is down.
+_Avoid_: sealed secret (for the category)
+
+**Cluster secret**:
+A secret in Infisical that a pod must hold itself, so it is synced into the cluster.
+_Avoid_: Kubernetes secret (for the category)
+
+**Brokered credential**:
+A credential in Infisical that Agent Vault injects into an agent's outbound requests, so the agent never holds it.
+_Avoid_: agent secret
+
+**Upstream model key**:
+An LLM provider's API key; it lives in Aperture and is backed up in the owner's password manager, never in Infisical or the cluster.
+_Avoid_: LLM key, OpenRouter key (for the category)
+
+**Machine identity**:
+A workload's identity in Infisical. Each app reads its cluster secrets with its own, bound to one service account in its namespace and to that app's project.
+_Avoid_: Infisical user, service identity
